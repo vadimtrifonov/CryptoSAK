@@ -29,6 +29,7 @@ public class EtherTransactionFeesExporterImpl: EtherTransactionFeesExporter {
                 let rows = try results
                     .flatMap({ try $0.unwrap() })
                     .filter({ $0.from.lowercased() == address.lowercased() })
+                    .uniqueElements
                     .sorted(by: >)
                     .map(CoinTrackingRow.init)
                 handler(.success(rows))
