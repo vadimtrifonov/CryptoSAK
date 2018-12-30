@@ -5,7 +5,9 @@ public struct Transaction {
     let date: Date
     let from: String
     let to: String
+    let value: Decimal
     let fee: Decimal
+    let tokenSymbol: String?
 }
 
 extension Transaction: Equatable {

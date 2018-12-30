@@ -1,10 +1,10 @@
 import Foundation
 
-public protocol EtherTransactionFeesExporter {
+public protocol EthereumFeesExporter {
     func export(address: String, handler: @escaping (Result<[CoinTrackingRow]>) -> Void)
 }
 
-public class EtherTransactionFeesExporterImpl: EtherTransactionFeesExporter {
+public class EthereumFeesExporterImpl: EthereumFeesExporter {
     let etherscanGateway: EtherscanGateway
     
     public init(etherscanGateway: EtherscanGateway) {

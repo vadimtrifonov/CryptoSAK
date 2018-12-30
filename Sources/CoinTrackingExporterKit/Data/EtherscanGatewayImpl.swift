@@ -23,7 +23,7 @@ public class EtherscanGatewayImpl: EtherscanGateway {
         apiClient.get(
             path: "/api",
             parameters: parameters
-        ) { (result: Result<EtherscanResponse<EtherscanTransaction>>) in
+        ) { (result: Result<Etherscan.TransactionsResponse>) in
             handler(result.flatMap({ try $0.result.map(Transaction.init) }))
         }
     }
@@ -44,46 +44,85 @@ public class EtherscanGatewayImpl: EtherscanGateway {
         apiClient.get(
             path: "/api",
             parameters: parameters
-        ) { (result: Result<EtherscanResponse<EtherscanTransaction>>) in
+        ) { (result: Result<Etherscan.TransactionsResponse>) in
             handler(result.flatMap({ try $0.result.map(Transaction.init) }))
         }
     }
-}
-
-private struct EtherscanResponse<T: Decodable>: Decodable {
-    let status: String
-    let message: String
-    let result: [T]
-}
-
-private struct EtherscanTransaction: Decodable {
-    let hash: String
-    let timeStamp: String
-    let from: String
-    let to: String
-    let gasPrice: String
-    let gasUsed: String
-}
-
-private extension Transaction {
     
-    private static let weiInEther = Decimal(pow(10,18))
+    public func fetchTransaction(hash: String, handler: @escaping (Result<Transaction>) -> Void) {
+        fetchEthereumTransaction(hash: hash) { [weak self] result in
+            do {
+                let transaction = try result.unwrap()
+                self?.fetchEthereumBlock(number: transaction.blockNumber) { result in
+                    do {
+                        let block = try result.unwrap()
+                        self?.fetchEthereumTransactionReceipt(hash: hash) { result in
+                            handler(result.flatMap {
+                                try Transaction(block: block, transaction: transaction, receipt: $0)
+                            })
+                        }
+                    } catch {
+                        handler(.failure(error))
+                    }
+                }
+            } catch {
+                handler(.failure(error))
+            }
+        }
+    }
     
-    init(transaction: EtherscanTransaction) throws {
-        let timeIntreval = try Double.make(string: transaction.timeStamp)
-        let date = Date(timeIntervalSince1970: timeIntreval)
+    private func fetchEthereumTransaction(
+        hash: String,
+        handler: @escaping (Result<Ethereum.Transaction>) -> Void
+    ) {
+        let parameters: [String: Any] = [
+            "module": "proxy",
+            "action": "eth_getTransactionByHash",
+            "txhash": hash
+        ]
         
-        let gasPriceInWei = try Decimal.make(string: transaction.gasPrice)
-        let gasPriceInEther = gasPriceInWei / Transaction.weiInEther
-        let gasUsed = try Decimal.make(string: transaction.gasUsed)
-        let fee = gasPriceInEther * gasUsed
+        apiClient.get(
+            path: "/api",
+            parameters: parameters
+        ) { (result: Result<Ethereum.TransactionResponse>) in
+            handler(result.map({ $0.result }))
+        }
+    }
+    
+    private func fetchEthereumBlock(
+        number: String,
+        handler: @escaping (Result<Ethereum.Block>) -> Void
+    ) {
+        let parameters: [String: Any] = [
+            "module": "proxy",
+            "action": "eth_getBlockByNumber",
+            "boolean": "false",
+            "tag": number
+        ]
         
-        self.init(
-            hash: transaction.hash,
-            date: date,
-            from: transaction.from,
-            to: transaction.to,
-            fee: fee
-        )
+        apiClient.get(
+            path: "/api",
+            parameters: parameters
+        ) { (result: Result<Ethereum.BlockResponse>) in
+            handler(result.map({ $0.result }))
+        }
+    }
+    
+    private func fetchEthereumTransactionReceipt(
+        hash: String,
+        handler: @escaping (Result<Ethereum.TransactionReceipt>) -> Void
+    ) {
+        let parameters: [String: Any] = [
+            "module": "proxy",
+            "action": "eth_getTransactionReceipt",
+            "txhash": hash
+        ]
+        
+        apiClient.get(
+            path: "/api",
+            parameters: parameters
+        ) { (result: Result<Ethereum.TransactionReceiptResponse>) in
+            handler(result.map({ $0.result }))
+        }
     }
 }

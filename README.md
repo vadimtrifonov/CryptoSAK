@@ -4,11 +4,15 @@ CoinTracking Exporter is a tool for exporting cryptocurrency transactions to Coi
 
 Currently supported exports:
 
-* Etherscan transaction fees
+* Ethereum transaction fees
+* Ethereum ICO (experimental)*
+
+\* Requires an input CSV file with the following format: `<ico_name>,<token_symbol>,<contribution_transaction_hash_1>,<contribution_transaction_hash_2>,...`
 
 ## Running
 ```
-swift run CoinTrackingExporter ether-transaction-fees <address>
+swift run CoinTrackingExporter ethereum-fees <address>
+swift run CoinTrackingExporter ethereum-ico <input_csv>
 ```
 
 ## Disclaimer
