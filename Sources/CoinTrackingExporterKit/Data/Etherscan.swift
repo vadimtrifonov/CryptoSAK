@@ -27,16 +27,16 @@ extension Transaction {
         let timeIntreval = try Double.make(string: transaction.timeStamp)
         let date = Date(timeIntervalSince1970: timeIntreval)
         
-        var value = try Decimal.make(string: transaction.value)
+        var amount = try Decimal.make(string: transaction.value)
         
         switch transaction.tokenDecimal {
         case let tokenDecimal? where !tokenDecimal.isEmpty:
             let decimals = try Double.make(string: tokenDecimal)
-            value = value / Decimal(pow(10, decimals))
+            amount = amount / Decimal(pow(10, decimals))
         case _?:
             break
         default:
-            value = value / Transaction.weiInEther
+            amount = amount / Transaction.weiInEther
         }
         
         let gasPriceInWei = try Decimal.make(string: transaction.gasPrice)
@@ -49,7 +49,7 @@ extension Transaction {
             date: date,
             from: transaction.from,
             to: transaction.to,
-            value: value,
+            amount: amount,
             fee: fee,
             tokenSymbol: transaction.tokenSymbol
         )

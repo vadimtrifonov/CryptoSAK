@@ -42,8 +42,8 @@ extension Transaction {
         let timeIntreval = try Double(Int.make(hexadecimal: block.timestamp))
         let date = Date(timeIntervalSince1970: timeIntreval)
         
-        let valueInWei = try Decimal(Int.make(hexadecimal: transaction.value))
-        let valueInEther = valueInWei / Transaction.weiInEther
+        let amountInWei = try Decimal(Int.make(hexadecimal: transaction.value))
+        let amountInEther = amountInWei / Transaction.weiInEther
         
         let gasPriceInWei = try Decimal(Int.make(hexadecimal: transaction.gasPrice))
         let gasPriceInEther = gasPriceInWei / Transaction.weiInEther
@@ -56,7 +56,7 @@ extension Transaction {
             date: date,
             from: transaction.from,
             to: transaction.to,
-            value: valueInEther,
+            amount: amountInEther,
             fee: fee,
             tokenSymbol: nil
         )

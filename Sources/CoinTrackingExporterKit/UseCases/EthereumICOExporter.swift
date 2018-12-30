@@ -43,11 +43,11 @@ public class EthereumICOExporterImpl: EthereumICOExporter {
             do {
                 let transactions = try results.map({ try $0.unwrap() })
                 let address = transactions.first?.from ?? ""
-                let total = transactions.reduce(0, { $0 + $1.value })
-                let rows = transactions.map {
+                let totalAmount = transactions.reduce(0, { $0 + $1.amount })
+                let depositRows = transactions.map {
                     CoinTrackingRow(
                         type: .deposit,
-                        buyAmount: $0.value,
+                        buyAmount: $0.amount,
                         buyCurrency: "ETH",
                         sellAmount: 0,
                         sellCurrency: "",
@@ -61,14 +61,14 @@ public class EthereumICOExporterImpl: EthereumICOExporter {
                 }
                 
                 self?.fetchTokensDepositTransaction(address: address, ico: ico) { result in
-                    let result = result.map {
-                        $0.map { transaction in
-                            return rows + [
+                    let result = result.map { transaction -> [CoinTrackingRow] in
+                        let rows = transaction.map { transaction in
+                            return [
                                 CoinTrackingRow(
                                     type: .trade,
-                                    buyAmount: transaction.value,
+                                    buyAmount: transaction.amount,
                                     buyCurrency: transaction.tokenSymbol ?? "",
-                                    sellAmount: total,
+                                    sellAmount: totalAmount,
                                     sellCurrency: "ETH",
                                     fee: 0,
                                     feeCurrency: "",
@@ -81,7 +81,7 @@ public class EthereumICOExporterImpl: EthereumICOExporter {
                                     type: .withdrawal,
                                     buyAmount: 0,
                                     buyCurrency: "",
-                                    sellAmount: transaction.value,
+                                    sellAmount: transaction.amount,
                                     sellCurrency: transaction.tokenSymbol ?? "",
                                     fee: 0,
                                     feeCurrency: "",
@@ -92,6 +92,7 @@ public class EthereumICOExporterImpl: EthereumICOExporter {
                                 )
                             ]
                         } ?? []
+                        return depositRows + rows
                     }
                     handler(result)
                 }
@@ -115,4 +116,3 @@ public class EthereumICOExporterImpl: EthereumICOExporter {
         }
     }
 }
-
