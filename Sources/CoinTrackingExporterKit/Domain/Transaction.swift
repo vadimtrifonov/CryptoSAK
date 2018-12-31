@@ -8,6 +8,7 @@ public struct Transaction {
     let amount: Decimal
     let fee: Decimal
     let tokenSymbol: String?
+    let isSuccessful: Bool
 }
 
 extension Transaction: Equatable {

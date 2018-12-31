@@ -8,6 +8,7 @@ struct CoinTrackingExporter {
         let commandGroup = Group { group in
             group.addCommand("ethereum-fees", makeFeesExporter())
             group.addCommand("ethereum-ico", makeICOExporter())
+            group.addCommand("ethereum-balance", makeBalanceCalculator())
         }
         commandGroup.run()
     }
@@ -60,6 +61,29 @@ struct CoinTrackingExporter {
         }
     }
     
+    private static func makeBalanceCalculator() -> CommandType {
+        let address = Argument<String>("address", description: "Etherium address")
+        
+        return command(address) { address in
+            var shouldKeepRunning = true
+            
+            let rootDirectory = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            let gateway = try makeEtherscanGateway(rootDirectory: rootDirectory)
+            let calculator = EthereumBalanceCalculatorImpl(etherscanGateway: gateway)
+            
+            calculator.calculate(address: address) { result in
+                do {
+                    print(try result.unwrap())
+                } catch {
+                    print(error)
+                }
+                shouldKeepRunning = false
+            }
+            
+            while shouldKeepRunning && RunLoop.current.run(mode: .default, before: .distantFuture) {}
+        }
+    }
+    
     private static func makeEtherscanGateway(rootDirectory: URL) throws -> EtherscanGateway {
         let apiKey = try etherscanAPIKey(rootDirectory: rootDirectory)
         let url: URL = "https://api.etherscan.io"
@@ -92,7 +116,7 @@ struct CoinTrackingExporter {
             
             print("Done, wrote \(coinTrackingRows.count) rows to \(coinTrackingURL.path)")
         } catch {
-            print(error.localizedDescription)
+            print(error)
         }
     }
 }

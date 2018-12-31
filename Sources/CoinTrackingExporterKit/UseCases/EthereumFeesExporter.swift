@@ -12,30 +12,13 @@ public class EthereumFeesExporterImpl: EthereumFeesExporter {
     }
     
     public func export(address: String, handler: @escaping (Result<[CoinTrackingRow]>) -> Void) {
-        var results = [Result<[Transaction]>]()
-        let group = DispatchGroup()
-        
-        [etherscanGateway.fetchNormalTransactions,
-         etherscanGateway.fetchTokenTransactions].forEach { fetch in
-            group.enter()
-            fetch(address) { result in
-                results.append(result)
-                group.leave()
-            }
-        }
-        
-        group.notify(queue: DispatchQueue.main) {
-            do {
-                let rows = try results
-                    .flatMap({ try $0.unwrap() })
+        etherscanGateway.fetchTokenTransactions(address: address) { result in
+            handler(result.map { transactions in
+                transactions
                     .filter({ $0.from.lowercased() == address.lowercased() })
-                    .uniqueElements
                     .sorted(by: >)
                     .map(CoinTrackingRow.init)
-                handler(.success(rows))
-            } catch {
-                return handler(.failure(error))
-            }
+            })
         }
     }
 }

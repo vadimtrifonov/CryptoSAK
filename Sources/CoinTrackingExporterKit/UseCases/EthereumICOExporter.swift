@@ -1,9 +1,5 @@
 import Foundation
 
-public protocol EthereumICOExporter {
-    func export(ico: ICO, handler: @escaping (Result<[CoinTrackingRow]>) -> Void)
-}
-
 public struct ICO {
     let name: String
     let tokenSymbol: String
@@ -18,6 +14,10 @@ public struct ICO {
         self.tokenSymbol = tokenSymbol
         self.contributionHashes = contributionHashes
     }
+}
+
+public protocol EthereumICOExporter {
+    func export(ico: ICO, handler: @escaping (Result<[CoinTrackingRow]>) -> Void)
 }
 
 public class EthereumICOExporterImpl: EthereumICOExporter {

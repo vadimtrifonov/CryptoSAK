@@ -58,7 +58,8 @@ extension Transaction {
             to: transaction.to,
             amount: amountInEther,
             fee: fee,
-            tokenSymbol: nil
+            tokenSymbol: nil,
+            isSuccessful: true // Ethrescan proxy doesn't return a transaction receipt status
         )
     }
 }

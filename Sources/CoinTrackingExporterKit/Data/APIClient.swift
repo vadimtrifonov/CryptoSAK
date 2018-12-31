@@ -38,7 +38,7 @@ public final class APIClientImpl: APIClient {
         do {
             let request = try makeRequest(path: path, parameters: parameters)
             #if DEBUG
-                NSLog("%@", "\(path) GET: \(parameters)")
+                NSLog("%@", "\(request.hashValue) GET: \(path) \(parameters)")
             #endif
             return dataTask(request: request, handler: handler)
         } catch {
@@ -52,17 +52,15 @@ public final class APIClientImpl: APIClient {
         handler: @escaping (Result<T>) -> Void
     ) -> URLSessionTask  {
         let task = session.dataTask(with: request) { data, response, error in
-            let path = request.url?.path ?? ""
-            
             guard let data = data, error == nil else {
                 #if DEBUG
-                    NSLog("%@", "\(path) ERROR: \(error?.localizedDescription ?? "Unknown")")
+                    NSLog("%@", "\(request.hashValue) ERROR: \(error?.localizedDescription ?? "Unknown")")
                 #endif
                 return handler(.failure(error ?? APIClientError.unknownError))
             }
             
             #if DEBUG
-                NSLog("%@", "\(path) RESPONSE: \(data.description)")
+                NSLog("%@", "\(request.hashValue) RESPONSE: \(data.description)")
             #endif
             
             do {
@@ -72,7 +70,7 @@ public final class APIClientImpl: APIClient {
                 }
             } catch {
                 #if DEBUG
-                    NSLog("%@", "\(path) DECODING FAILURE: \(error.localizedDescription)")
+                    NSLog("%@", "\(request.hashValue) DECODING FAILURE: \(error.localizedDescription)")
                 #endif
                 DispatchQueue.main.async {
                     handler(.failure(error))

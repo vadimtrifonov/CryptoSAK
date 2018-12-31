@@ -1,6 +1,13 @@
 import Foundation
 
 public class EtherscanGatewayImpl: EtherscanGateway {
+    
+    enum TransactionType: String {
+        case normal = "txlist"
+        case `internal` = "txlistinternal"
+        case token = "tokentx"
+    }
+    
     let apiClient: APIClient
     
     public init(apiClient: APIClient) {
@@ -11,30 +18,31 @@ public class EtherscanGatewayImpl: EtherscanGateway {
         address: String,
         handler: @escaping (Result<[Transaction]>) -> Void
     ) {
-        let parameters: [String: Any] = [
-            "module": "account",
-            "action": "txlist",
-            "address": address,
-            "startblock": "0",
-            "endblock": "99999999",
-            "sort": "desc"
-        ]
-        
-        apiClient.get(
-            path: "/api",
-            parameters: parameters
-        ) { (result: Result<Etherscan.TransactionsResponse>) in
-            handler(result.flatMap({ try $0.result.map(Transaction.init) }))
-        }
+        fetchTransactions(type: .normal, address: address, handler: handler)
+    }
+    
+    public func fetchInternalTransactions(
+        address: String,
+        handler: @escaping (Result<[Transaction]>) -> Void
+    ) {
+        fetchTransactions(type: .internal, address: address, handler: handler)
     }
 
     public func fetchTokenTransactions(
         address: String,
         handler: @escaping (Result<[Transaction]>) -> Void
     ) {
+        fetchTransactions(type: .token, address: address, handler: handler)
+    }
+    
+    private func fetchTransactions(
+        type: TransactionType,
+        address: String,
+        handler: @escaping (Result<[Transaction]>) -> Void
+    ) {
         let parameters: [String: Any] = [
             "module": "account",
-            "action": "tokentx",
+            "action": type.rawValue,
             "address": address,
             "startblock": "0",
             "endblock": "99999999",
