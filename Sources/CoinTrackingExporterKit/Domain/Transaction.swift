@@ -7,7 +7,6 @@ public struct Transaction {
     let to: String
     let amount: Decimal
     let fee: Decimal
-    let tokenSymbol: String?
     let isSuccessful: Bool
 }
 

@@ -12,7 +12,7 @@ public class EthereumFeesExporterImpl: EthereumFeesExporter {
     }
     
     public func export(address: String, handler: @escaping (Result<[CoinTrackingRow]>) -> Void) {
-        etherscanGateway.fetchTokenTransactions(address: address) { result in
+        etherscanGateway.fetchNormalTransactions(address: address) { result in
             handler(result.map { transactions in
                 transactions
                     .filter({ $0.from.lowercased() == address.lowercased() })

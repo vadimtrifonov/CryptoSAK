@@ -39,16 +39,16 @@ extension Transaction {
         transaction: Ethereum.Transaction,
         receipt: Ethereum.TransactionReceipt
     ) throws {
-        let timeIntreval = try Double(Int.make(hexadecimal: block.timestamp))
+        let timeIntreval = try Double(UInt64.make(hexadecimal: block.timestamp))
         let date = Date(timeIntervalSince1970: timeIntreval)
         
-        let amountInWei = try Decimal(Int.make(hexadecimal: transaction.value))
+        let amountInWei = try Decimal(UInt64.make(hexadecimal: transaction.value))
         let amountInEther = amountInWei / Transaction.weiInEther
         
-        let gasPriceInWei = try Decimal(Int.make(hexadecimal: transaction.gasPrice))
+        let gasPriceInWei = try Decimal(UInt64.make(hexadecimal: transaction.gasPrice))
         let gasPriceInEther = gasPriceInWei / Transaction.weiInEther
         
-        let gasUsed = try Decimal(Int.make(hexadecimal: receipt.gasUsed))
+        let gasUsed = try Decimal(UInt64.make(hexadecimal: receipt.gasUsed))
         let fee = gasPriceInEther * gasUsed
         
         self.init(
@@ -58,7 +58,6 @@ extension Transaction {
             to: transaction.to,
             amount: amountInEther,
             fee: fee,
-            tokenSymbol: nil,
             isSuccessful: true // Ethrescan proxy doesn't return a transaction receipt status
         )
     }

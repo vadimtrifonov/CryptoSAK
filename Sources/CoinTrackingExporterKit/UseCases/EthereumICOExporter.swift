@@ -43,7 +43,7 @@ public class EthereumICOExporterImpl: EthereumICOExporter {
             do {
                 let transactions = try results.map({ try $0.unwrap() })
                 let address = transactions.first?.from ?? ""
-                let totalAmount = transactions.reduce(0, { $0 + $1.amount })
+                let totalEtherAmount = transactions.reduce(0, { $0 + $1.amount })
                 let depositRows = transactions.map {
                     CoinTrackingRow(
                         type: .deposit,
@@ -60,39 +60,43 @@ public class EthereumICOExporterImpl: EthereumICOExporter {
                     )
                 }
                 
-                self?.fetchTokensDepositTransaction(address: address, ico: ico) { result in
-                    let result = result.map { transaction -> [CoinTrackingRow] in
-                        let rows = transaction.map { transaction in
-                            return [
-                                CoinTrackingRow(
-                                    type: .trade,
-                                    buyAmount: transaction.amount,
-                                    buyCurrency: transaction.tokenSymbol ?? "",
-                                    sellAmount: totalAmount,
-                                    sellCurrency: "ETH",
-                                    fee: 0,
-                                    feeCurrency: "",
-                                    exchange: ico.name,
-                                    group: "",
-                                    comment: "Export",
-                                    date: transaction.date
-                                ),
-                                CoinTrackingRow(
-                                    type: .withdrawal,
-                                    buyAmount: 0,
-                                    buyCurrency: "",
-                                    sellAmount: transaction.amount,
-                                    sellCurrency: transaction.tokenSymbol ?? "",
-                                    fee: 0,
-                                    feeCurrency: "",
-                                    exchange: ico.name,
-                                    group: "",
-                                    comment: "Export \(transaction.hash)",
-                                    date: transaction.date
-                                )
-                            ]
+                self?.fetchTokenWithdrawalTransactions(address: address, ico: ico) { result in
+                    let result = result.map { transactions -> [CoinTrackingRow] in
+                        let totalTokenAmount = transactions.reduce(0, { $0 + $1.amount })
+                        
+                        let tradeRow = transactions.first.map { transaction in
+                            [CoinTrackingRow(
+                                type: .trade,
+                                buyAmount: totalTokenAmount,
+                                buyCurrency: transaction.tokenSymbol,
+                                sellAmount: totalEtherAmount,
+                                sellCurrency: "ETH",
+                                fee: 0,
+                                feeCurrency: "",
+                                exchange: ico.name,
+                                group: "",
+                                comment: "Export",
+                                date: transaction.date
+                            )]
                         } ?? []
-                        return depositRows + rows
+                        
+                        let withdrawalRows = transactions.map { transaction in
+                            CoinTrackingRow(
+                                type: .withdrawal,
+                                buyAmount: 0,
+                                buyCurrency: "",
+                                sellAmount: transaction.amount,
+                                sellCurrency: transaction.tokenSymbol,
+                                fee: 0,
+                                feeCurrency: "",
+                                exchange: ico.name,
+                                group: "",
+                                comment: "Export \(transaction.hash)",
+                                date: transaction.date
+                            )
+                        }
+                        
+                        return depositRows + tradeRow + withdrawalRows
                     }
                     handler(result)
                 }
@@ -102,14 +106,25 @@ public class EthereumICOExporterImpl: EthereumICOExporter {
         }
     }
     
-    private func fetchTokensDepositTransaction(address: String, ico: ICO, handler: @escaping (Result<Transaction?>) -> Void) {
+    private func fetchTokenWithdrawalTransactions(
+        address: String,
+        ico: ICO,
+        handler: @escaping (Result<[TokenTransaction]>) -> Void
+    ) {
         etherscanGateway.fetchTokenTransactions(address: address) { result in
             do {
-                let transaction = try result.unwrap()
+                let transactions = try result.unwrap()
+                
+                let firstWithdrawal = transactions
                     .filter({ $0.to.lowercased() == address.lowercased() })
                     .sorted(by: <)
-                    .first(where: { $0.tokenSymbol?.uppercased() == ico.tokenSymbol.uppercased() })
-                handler(.success(transaction))
+                    .first(where: { $0.tokenSymbol.uppercased() == ico.tokenSymbol.uppercased() })
+                
+                let allWithdrawals = transactions
+                    .filter({ $0.from.lowercased() == firstWithdrawal?.from.lowercased() })
+                    .sorted(by: <)
+                
+                handler(.success(allWithdrawals))
             } catch {
                 handler(.failure(error))
             }
