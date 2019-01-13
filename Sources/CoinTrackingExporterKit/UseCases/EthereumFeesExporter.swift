@@ -15,6 +15,7 @@ public class EthereumFeesExporterImpl: EthereumFeesExporter {
         etherscanGateway.fetchNormalTransactions(address: address) { result in
             handler(result.map { transactions in
                 transactions
+                    .distinct
                     .filter({ $0.from.lowercased() == address.lowercased() })
                     .sorted(by: >)
                     .map(CoinTrackingRow.init)

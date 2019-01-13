@@ -79,12 +79,11 @@ extension TokenTransaction {
         let timeIntreval = try Double.make(string: transaction.timeStamp)
         let date = Date(timeIntervalSince1970: timeIntreval)
         
-        var amount = try Decimal.make(string: transaction.value)
-        
-        if !transaction.tokenDecimal.isEmpty {
-            let decimals = try Double.make(string: transaction.tokenDecimal)
-            amount = amount / Decimal(pow(10, decimals))
-        }
+        // If token decimal is not specified assume 18 as the most common
+        let decimals = !transaction.tokenDecimal.isEmpty
+            ? try Double.make(string: transaction.tokenDecimal)
+            : 18
+        let amount = try Decimal.make(string: transaction.value) / Decimal(pow(10, decimals))
         
         let gasPrice = try Decimal.make(string: transaction.gasPrice) / Transaction.weiInEther
         let gasUsed = try Decimal.make(string: transaction.gasUsed)

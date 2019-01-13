@@ -37,8 +37,8 @@ public class EthereumBalanceCalculatorImpl: EthereumBalanceCalculator {
         group.notify(queue: DispatchQueue.main) {
             do {
                 let all = try results.flatMap({ try $0.unwrap() })
-                let incoming = all.filter({ $0.to.lowercased() == address.lowercased() })
-                let outgoing = all.filter({ $0.from.lowercased() == address.lowercased() })
+                let incoming = all.filter({ $0.to.lowercased() == address.lowercased() }).distinct
+                let outgoing = all.filter({ $0.from.lowercased() == address.lowercased() }).distinct
                 let successfulOutgoing = outgoing.filter({ $0.isSuccessful })
                 
                 let incomingAmount = incoming.reduce(0, { $0 + $1.amount })
