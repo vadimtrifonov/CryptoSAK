@@ -114,15 +114,13 @@ public class EthereumICOExporterImpl: EthereumICOExporter {
         etherscanGateway.fetchTokenTransactions(address: address) { result in
             do {
                 let transactions = try result.unwrap()
-                
-                let firstWithdrawal = transactions
+                    .filter({ $0.tokenSymbol.uppercased() == ico.tokenSymbol.uppercased() })
                     .filter({ $0.to.lowercased() == address.lowercased() })
                     .sorted(by: <)
-                    .first(where: { $0.tokenSymbol.uppercased() == ico.tokenSymbol.uppercased() })
                 
+                let firstWithdrawal = transactions.first
                 let allWithdrawals = transactions
                     .filter({ $0.from.lowercased() == firstWithdrawal?.from.lowercased() })
-                    .sorted(by: <)
                 
                 handler(.success(allWithdrawals))
             } catch {
