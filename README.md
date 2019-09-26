@@ -1,6 +1,6 @@
-# CoinTracking Exporter
+# Crypto SAK
 
-CoinTracking Exporter is a tool for exporting cryptocurrency transactions to CoinTracking format.
+Crypto SAK is a tool for exporting cryptocurrency transactions to CoinTracking format.
 
 Currently supported exports:
 
