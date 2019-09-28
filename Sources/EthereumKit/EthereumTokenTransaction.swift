@@ -9,7 +9,7 @@ public struct EthereumTokenTransaction {
     public let fee: Decimal
     public let token: EthereumToken
     public let isSuccessful: Bool
-    
+
     public init(
         hash: String,
         date: Date,

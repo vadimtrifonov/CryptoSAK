@@ -1,16 +1,14 @@
 import Combine
 import Commander
-import Foundation
-import EtherscanKit
 import EthereumKit
+import EtherscanKit
+import Foundation
 import HTTPClient
 
 struct CryptoSAK {
     static func run() {
         let commandGroup = Group { group in
-            group.addCommand("ethereum-fees", makeFeesExporter())
             group.addCommand("ethereum-ico", makeICOExporter())
-            group.addCommand("ethereum-balance", makeBalanceCalculator())
             group.addCommand("ethereum-statement", makeEthereumStatement())
             group.addCommand("ethereum-tokens-statement", makeEthereumTokensStatement())
             group.addCommand("tezos-statement", makeTezosStatement())
@@ -18,27 +16,11 @@ struct CryptoSAK {
         commandGroup.run()
     }
 
-    private static func makeFeesExporter() -> CommandType {
-        let address = Argument<String>("address", description: "Etherium address")
-
-        return command(address) { address in
-            try EthereumFeesCommand(gateway: makeEthereumGateway()).execute(address: address)
-        }
-    }
-
     private static func makeICOExporter() -> CommandType {
         let inputPath = Argument<String>("input", description: "Path to the input file")
 
         return command(inputPath) { inputPath in
             try EthereumICOCommand(gateway: makeEthereumGateway()).execute(inputPath: inputPath)
-        }
-    }
-
-    private static func makeBalanceCalculator() -> CommandType {
-        let address = Argument<String>("address", description: "Etherium address")
-
-        return command(address) { address in
-            try EthereumBalanceCommand(gateway: makeEthereumGateway()).execute(address: address)
         }
     }
 

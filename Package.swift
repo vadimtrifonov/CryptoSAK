@@ -22,7 +22,7 @@ let package = Package(
                 "FoundationExtensions",
                 "HTTPClient",
                 "TezosKit",
-                "TzScanKit"
+                "TzScanKit",
             ]
         ),
         .target(
@@ -31,14 +31,14 @@ let package = Package(
         ),
         .target(
             name: "EthereumKit",
-            dependencies: ["FoundationExtensions"]
+            dependencies: []
         ),
         .target(
             name: "EtherscanKit",
             dependencies: [
-                "EthereumKit", 
-                "FoundationExtensions", 
-                "HTTPClient"
+                "EthereumKit",
+                "FoundationExtensions",
+                "HTTPClient",
             ]
         ),
         .target(
@@ -47,7 +47,7 @@ let package = Package(
         ),
         .target(
             name: "HTTPClient",
-            dependencies: ["FoundationExtensions"]
+            dependencies: []
         ),
         .testTarget(
             name: "KitTests",
@@ -55,14 +55,14 @@ let package = Package(
         ),
         .target(
             name: "TezosKit",
-            dependencies: ["FoundationExtensions"]
+            dependencies: []
         ),
         .target(
             name: "TzScanKit",
             dependencies: [
-                "TezosKit", 
-                "FoundationExtensions", 
-                "HTTPClient"
+                "TezosKit",
+                "FoundationExtensions",
+                "HTTPClient",
             ]
         ),
     ]

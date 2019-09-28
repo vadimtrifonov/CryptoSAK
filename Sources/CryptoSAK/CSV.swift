@@ -1,5 +1,5 @@
-import Foundation
 import CoinTrackingKit
+import Foundation
 
 enum CSV {
     static func write(

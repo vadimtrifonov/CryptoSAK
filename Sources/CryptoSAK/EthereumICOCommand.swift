@@ -1,13 +1,14 @@
-import Foundation
-import EtherscanKit
+import CoinTrackingKit
+import Combine
 import EthereumKit
+import EtherscanKit
+import Foundation
 
 struct EthereumICOCommand {
     let gateway: EthereumGateway
-    
-    func execute(inputPath: String) throws {
-        let exporter = DefaultEthereumICOExporter(etherscanGateway: gateway)
 
+    func execute(inputPath: String) throws {
+        var subscriptions = Set<AnyCancellable>()
         let csvRows = try CSV.read(path: inputPath)
 
         guard let ico = try csvRows.map(ICO.init).first else {
@@ -15,20 +16,114 @@ struct EthereumICOCommand {
             exit(1)
         }
 
-        exporter.export(ico: ico) { result in
-            do {
-                try write(rows: result.unwrap(), filename: String(describing: self))
-            } catch {
-                print(error)
-            }
-            exit(0)
-        }
+        export(ico: ico)
+            .sink(receiveCompletion: { completion in
+                if case let .failure(error) = completion {
+                    print(error)
+                }
+                exit(0)
+            }, receiveValue: { rows in
+                do {
+                    try write(rows: rows, filename: "ICOExport")
+                } catch {
+                    print(error)
+                }
+            })
+            .store(in: &subscriptions)
 
         RunLoop.main.run()
     }
+
+    private func export(ico: ICO) -> AnyPublisher<[CoinTrackingRow], Error> {
+        return ico.contributionHashes
+            .map(gateway.fetchTransaction)
+            .reduce(Empty().eraseToAnyPublisher()) { $0.merge(with: $1).eraseToAnyPublisher() }
+            .collect()
+            .flatMap(
+                maxPublishers: .max(1)
+            ) { [gateway] contributionTransactions -> AnyPublisher<([EthereumTransaction], [EthereumTokenTransaction]), Error> in
+                let address = contributionTransactions.first?.from ?? ""
+                return gateway.fetchTokenTransactions(
+                    address: address,
+                    startDate: .distantPast
+                )
+                .map { tokenTransactions in
+                    let tokenPayoutTransactions = Self.filterICOTokenPayoutTransactions(
+                        ico: ico,
+                        payoutAddress: address,
+                        tokenTransactions: tokenTransactions
+                    )
+                    return (contributionTransactions, tokenPayoutTransactions)
+                }
+                .eraseToAnyPublisher()
+            }
+            .map { contributionTransactions, tokenPayoutTransactions in
+                Self.makeICOCoinTrackingRows(
+                    ico: ico,
+                    contibutionTransactions: contributionTransactions,
+                    tokenPayoutTransactions: tokenPayoutTransactions
+                )
+            }
+            .eraseToAnyPublisher()
+    }
+
+    static func filterICOTokenPayoutTransactions(
+        ico: ICO,
+        payoutAddress: String,
+        tokenTransactions: [EthereumTokenTransaction]
+    ) -> [EthereumTokenTransaction] {
+        let icoTokenTransactions = tokenTransactions
+            .filter { $0.token.symbol.uppercased() == ico.tokenSymbol.uppercased() }
+            .filter { $0.to.lowercased() == payoutAddress.lowercased() }
+            .sorted(by: <)
+
+        let firstPayout = icoTokenTransactions.first
+        let allPayouts = icoTokenTransactions
+            .filter { $0.from.lowercased() == firstPayout?.from.lowercased() }
+
+        return allPayouts
+    }
+
+    static func makeICOCoinTrackingRows(
+        ico: ICO,
+        contibutionTransactions: [EthereumTransaction],
+        tokenPayoutTransactions: [EthereumTokenTransaction]
+    ) -> [CoinTrackingRow] {
+        let totalContributionAmount = contibutionTransactions.reduce(0) { $0 + $1.amount }
+        let totalTokenPayoutAmount = tokenPayoutTransactions.reduce(0) { $0 + $1.amount }
+
+        let contibutionRows = contibutionTransactions.map { CoinTrackingRow.makeDeposit(ico: ico, transaction: $0) }
+        let tokenPayoutRows = tokenPayoutTransactions.map { CoinTrackingRow.makeWithdrawal(ico: ico, transaction: $0) }
+        let tradeRow = tokenPayoutTransactions.first.map { transaction in
+            [CoinTrackingRow.makeTrade(
+                ico: ico,
+                transaction: transaction,
+                totalContributionAmount: totalContributionAmount,
+                totalTokenPayoutAmount: totalTokenPayoutAmount
+            )]
+        } ?? []
+
+        return (contibutionRows + tradeRow + tokenPayoutRows).sorted(by: >)
+    }
 }
 
-extension ICO {
+public struct ICO {
+    public let name: String
+    public let tokenSymbol: String
+    public let contributionHashes: [String]
+
+    public init(
+        name: String,
+        tokenSymbol: String,
+        contributionHashes: [String]
+    ) {
+        self.name = name
+        self.tokenSymbol = tokenSymbol
+        self.contributionHashes = contributionHashes
+    }
+}
+
+private extension ICO {
     init(csvRow: String) throws {
         let columns = csvRow.split(separator: ",").map(String.init)
 
@@ -45,21 +140,60 @@ extension ICO {
     }
 }
 
-// extension CoinTrackingRow {
-//
-//    static func makeDeposit(ico: ICO, transaction: EthereumTransaction) -> CoinTrackingRow {
-//        return CoinTrackingRow(
-//            type: .incoming(.deposit),
-//            buyAmount: transaction.amount,
-//            buyCurrency: "ETH",
-//            sellAmount: 0,
-//            sellCurrency: "",
-//            fee: 0,
-//            feeCurrency: "",
-//            exchange: ico.name,
-//            group: "",
-//            comment: "Export \(transaction.hash)",
-//            date: transaction.date
-//        )
-//    }
-// }
+private extension CoinTrackingRow {
+    static func makeDeposit(ico: ICO, transaction: EthereumTransaction) -> CoinTrackingRow {
+        CoinTrackingRow(
+            type: .incoming(.deposit),
+            buyAmount: transaction.amount,
+            buyCurrency: "ETH",
+            sellAmount: 0,
+            sellCurrency: "",
+            fee: 0,
+            feeCurrency: "",
+            exchange: ico.name,
+            group: "",
+            comment: "Export. Transaction: \(transaction.hash)",
+            date: transaction.date
+        )
+    }
+
+    static func makeTrade(
+        ico: ICO,
+        transaction: EthereumTokenTransaction,
+        totalContributionAmount: Decimal,
+        totalTokenPayoutAmount: Decimal
+    ) -> CoinTrackingRow {
+        CoinTrackingRow(
+            type: .trade,
+            buyAmount: totalTokenPayoutAmount,
+            buyCurrency: transaction.token.symbol,
+            sellAmount: totalContributionAmount,
+            sellCurrency: "ETH",
+            fee: 0,
+            feeCurrency: "",
+            exchange: ico.name,
+            group: "",
+            comment: "Export",
+            date: transaction.date
+        )
+    }
+
+    static func makeWithdrawal(
+        ico: ICO,
+        transaction: EthereumTokenTransaction
+    ) -> CoinTrackingRow {
+        CoinTrackingRow(
+            type: .outgoing(.withdrawal),
+            buyAmount: 0,
+            buyCurrency: "",
+            sellAmount: transaction.amount,
+            sellCurrency: transaction.token.symbol,
+            fee: 0,
+            feeCurrency: "",
+            exchange: ico.name,
+            group: "",
+            comment: "Export. Transaction: \(transaction.hash)",
+            date: transaction.date
+        )
+    }
+}

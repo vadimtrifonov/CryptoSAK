@@ -1,18 +1,18 @@
-import Combine
-import Foundation
-import EtherscanKit
-import EthereumKit
 import CoinTrackingKit
+import Combine
+import EthereumKit
+import EtherscanKit
+import Foundation
 
 struct EthereumStatementCommand {
     let gateway: EthereumGateway
 
     func execute(address: String, startDate: Date) throws {
         var subscriptions = Set<AnyCancellable>()
-        
+
         Publishers.Zip(
-            gateway.fetchNormalTransactionsPublisher(address: address, startDate: startDate),
-            gateway.fetchInternalTransactionsPublisher(address: address, startDate: startDate)
+            gateway.fetchNormalTransactions(address: address, startDate: startDate),
+            gateway.fetchInternalTransactions(address: address, startDate: startDate)
         )
         .sink(receiveCompletion: { completion in
             if case let .failure(error) = completion {
@@ -21,7 +21,7 @@ struct EthereumStatementCommand {
             exit(0)
         }, receiveValue: { normalTransactions, internalTransactions in
             do {
-                let statement = try EthereumStatement(
+                let statement = EthereumStatement(
                     normalTransactions: normalTransactions,
                     internalTransactions: internalTransactions,
                     address: address

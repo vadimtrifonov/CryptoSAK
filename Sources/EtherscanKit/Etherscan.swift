@@ -1,5 +1,5 @@
-import Foundation
 import EthereumKit
+import Foundation
 
 enum Etherscan {
     struct TransactionsResponse: Decodable {

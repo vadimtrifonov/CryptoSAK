@@ -1,5 +1,4 @@
 import Foundation
-import FoundationExtensions
 
 public struct EthereumStatement {
     public let incomingNormalTransactions: [EthereumTransaction]
@@ -28,25 +27,19 @@ public struct EthereumStatement {
         normalTransactions: [EthereumTransaction],
         internalTransactions: [EthereumTransaction],
         address: String
-    ) throws {
-        // Uniqueness relies on the `Hashable` implementation which takes into account only the transaction hash
+    ) {
         // Ethereum transaction with the same hash can be both outgoing and incoming
-        // (address -> contract -> address, address -> address)
-        // NOTE: no duplicates were founds when I last tried, uniqueness check might be unfounded
+        // (address -> contract -> address, address -> address).
+        // Such transaction is returned twice in the list: (1) as incoming and (2) as outgoing.
+        // To correctly calcuate the balance such transactions should be deduplicated
+        // Deduplication uses Set which relies on the `Hashable` implementation,
+        // which should be implemented to take into account only the transaction hash.
         let incomingNormal = Set(normalTransactions.filter { $0.isIncoming(address: address) })
         let incomingInternal = Set(internalTransactions.filter { $0.isIncoming(address: address) })
-
-        guard incomingNormal.intersection(incomingInternal).isEmpty else {
-            throw "Unexpected hash collision between incoming normal and internal transactions"
-        }
 
         let outgoingNormal = Set(normalTransactions.filter { $0.isOutgoing(address: address) })
         let outgoingInternal = Set(internalTransactions.filter { $0.isOutgoing(address: address) })
         let outgoing = outgoingNormal.union(outgoingInternal)
-
-        guard outgoingNormal.intersection(outgoingInternal).isEmpty else {
-            throw "Unexpected hash collision between outgoing normal and internal transactions"
-        }
 
         let successfulOutgoingNormal = outgoingNormal.filter { $0.isSuccessful }
         let successfulOutgoingInternal = outgoingInternal.filter { $0.isSuccessful }

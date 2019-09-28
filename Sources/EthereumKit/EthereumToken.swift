@@ -5,7 +5,7 @@ public struct EthereumToken {
     public let name: String
     public let symbol: String
     public let decimalPlaces: Int
-    
+
     public init(
         contractAddress: String,
         name: String,

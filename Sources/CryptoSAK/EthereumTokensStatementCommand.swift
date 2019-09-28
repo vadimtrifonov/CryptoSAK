@@ -1,21 +1,21 @@
-import Combine
-import Foundation
-import EtherscanKit
-import EthereumKit
 import CoinTrackingKit
+import Combine
+import EthereumKit
+import EtherscanKit
+import Foundation
 
 struct EthereumTokensStatementCommand {
     let gateway: EthereumGateway
-    
+
     func execute(address: String, tokenListPath: String, startDate: Date) throws {
         var subscriptions = Set<AnyCancellable>()
-        
+
         let rows = tokenListPath.isEmpty ? [] : try CSV.read(path: tokenListPath)
         let tokenContractAddresses = rows.compactMap { row in
             row.split(separator: ",").map(String.init).first
         }
 
-        gateway.fetchTokenTransactionsPublisher(address: address, startDate: startDate)
+        gateway.fetchTokenTransactions(address: address, startDate: startDate)
             .map { transactions in
                 Self.filteredTokenTransactions(
                     transactions: transactions,
@@ -34,8 +34,8 @@ struct EthereumTokensStatementCommand {
                         address: address
                     )
                     statement.balance.printRows()
-                    try CSV.write(rows: statement.balance.toCSVRows(), filename: "EthTokenBalance", encoding: .utf8)
-                    try write(rows: statement.toCoinTrackingRows(), filename: "EthTokenStatement")
+                    try CSV.write(rows: statement.balance.toCSVRows(), filename: "EthereumTokenBalance", encoding: .utf8)
+                    try write(rows: statement.toCoinTrackingRows(), filename: "EthereumTokenStatement")
                 } catch {
                     print(error)
                 }

@@ -1,7 +1,7 @@
 import Combine
 import Foundation
-import TezosKit
 import HTTPClient
+import TezosKit
 
 public final class TzScanGateway: TezosGateway {
     private let httpClient: HTTPClient

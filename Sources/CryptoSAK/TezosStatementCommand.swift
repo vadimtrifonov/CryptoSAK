@@ -1,8 +1,8 @@
+import CoinTrackingKit
 import Combine
 import Foundation
-import TezosKit
-import CoinTrackingKit
 import HTTPClient
+import TezosKit
 import TzScanKit
 
 struct TezosStatementCommand {
@@ -58,7 +58,7 @@ extension TezosStatement {
     }
 }
 
-extension CoinTrackingRow {
+private extension CoinTrackingRow {
     static func makeDelegationReward(operation: TezosOperation) -> CoinTrackingRow {
         self.init(
             type: .incoming(.mining),

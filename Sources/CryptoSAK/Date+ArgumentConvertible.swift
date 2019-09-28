@@ -1,5 +1,5 @@
-import Foundation
 import Commander
+import Foundation
 
 extension Date: ArgumentConvertible {
     public init(parser: ArgumentParser) throws {

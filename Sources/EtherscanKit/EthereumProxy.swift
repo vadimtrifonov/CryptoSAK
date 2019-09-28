@@ -1,6 +1,6 @@
+import EthereumKit
 import Foundation
 import FoundationExtensions
-import EthereumKit
 
 enum EthereumProxy {
     struct TransactionResponse: Decodable {
