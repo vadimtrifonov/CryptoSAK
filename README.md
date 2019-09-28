@@ -2,24 +2,55 @@
 
 Crypto SAK is a tool for exporting cryptocurrency transactions to CoinTracking format.
 
-Currently supported exports:
+## Ethereum statement
 
-* Ethereum transaction fees
-```
-swift run CoinTrackingExporter ethereum-fees <address>
-```
-
-* Ethereum ICO (experimental)*
-```
-swift run CoinTrackingExporter ethereum-ico <input_csv>
+```shell
+swift run CryptoSAK ethereum-statement <address>
 ```
 
-* Ethereum balance
-```
-swift run CoinTrackingExporter ethereum-balance <address>
+Arguments:
+
+1. Ethereum address
+
+
+## Ethereum tokens statement
+
+```shell
+swift run CryptoSAK ethereum-tokens-statement <address> --token-list <tokens_csv>
 ```
 
-\* Requires an input CSV file with the following format: `<ico_name>,<token_symbol>,<contribution_transaction_hash_1>,<contribution_transaction_hash_2>,...`
+Arguments:
+
+1. Ethereum address
+2. [Optional] Path to CSV file
+   - List of tokens to be exported (allows to ignore spam tokens)
+   - Format (no header row): `<token_contract_address>,<token_symbol>`
+
+## Ethereum ICO (experimental)
+
+```shell
+swift run CryptoSAK ethereum-ico <ico_csv>
+```
+
+Arguments:
+
+1. Path to CSV file
+    - File with one row of information about ICO
+    - Format (no header row): `<ico_name>,<token_symbol>,<contribution_transaction_hash_1>,<contribution_transaction_hash_2>,...`
+
+## Tezos statement
+
+```shell
+swift run CryptoSAK tezos-statement <account> --delegate-list <delegates.csv> --start-date <YYYY-MM-DD>
+```
+
+Arguments:
+
+1. Tezos account
+2. [Optional] Path to CSV file
+   - List of delegate payout accounts for detection of baking rewards
+   - Format (no header row): `<delegate_payout_account>,<delegate_name>`
+3. [Optional] Calendar date in ISO format: `YYYY-MM-DD`
 
 ## Disclaimer
 
