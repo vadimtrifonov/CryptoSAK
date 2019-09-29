@@ -95,12 +95,14 @@ struct EthereumICOCommand {
         let contibutionRows = contibutionTransactions.map { CoinTrackingRow.makeDeposit(ico: ico, transaction: $0) }
         let tokenPayoutRows = tokenPayoutTransactions.map { CoinTrackingRow.makeWithdrawal(ico: ico, transaction: $0) }
         let tradeRow = tokenPayoutTransactions.first.map { transaction in
-            [CoinTrackingRow.makeTrade(
-                ico: ico,
-                transaction: transaction,
-                totalContributionAmount: totalContributionAmount,
-                totalTokenPayoutAmount: totalTokenPayoutAmount
-            )]
+            [
+                CoinTrackingRow.makeTrade(
+                    ico: ico,
+                    transaction: transaction,
+                    totalContributionAmount: totalContributionAmount,
+                    totalTokenPayoutAmount: totalTokenPayoutAmount
+                ),
+            ]
         } ?? []
 
         return (contibutionRows + tradeRow + tokenPayoutRows).sorted(by: >)

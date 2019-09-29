@@ -54,7 +54,7 @@ struct EthereumTokensStatementCommand {
         }
 
         return transactions.filter {
-            tokenContractAddresses.map { $0.lowercased() }.contains($0.token.contractAddress.lowercased())
+            tokenContractAddresses.map({ $0.lowercased() }).contains($0.token.contractAddress.lowercased())
         }
     }
 }

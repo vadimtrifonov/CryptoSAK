@@ -10,91 +10,113 @@ public final class TzScanGateway: TezosGateway {
         self.httpClient = httpClient
     }
 
-    public func fetchOperations(account: String, startDate: Date) -> AnyPublisher<[TezosOperation], Error> {
+    public func fetchTransactionOperations(
+        account: String,
+        startDate: Date
+    ) -> AnyPublisher<[TezosTransactionOperation], Error> {
         return recursivelyFetchOperations(
             account: account,
+            type: .transaction,
             accumulatedOperations: [],
             page: 0,
             operationsPerPage: 50,
             startDate: startDate
         )
+        .tryMap { (operations: [TzScanTransactionOperation]) in
+            try operations.map(TezosTransactionOperation.init)
+        }
+        .eraseToAnyPublisher()
     }
 
-    /// https://tzscan.io/api#operation/317
-    public func fetchDelegate() -> AnyPublisher<String, Error> {
-        return Empty().eraseToAnyPublisher()
-    }
-
-    private func recursivelyFetchOperations(
+    public func fetchDelegationOperations(
         account: String,
-        accumulatedOperations: [TezosOperation],
+        startDate: Date
+    ) -> AnyPublisher<[TezosDelegationOperation], Error> {
+        return recursivelyFetchOperations(
+            account: account,
+            type: .delegation,
+            accumulatedOperations: [],
+            page: 0,
+            operationsPerPage: 50,
+            startDate: startDate
+        )
+        .tryMap { (operations: [TzScanDelegationOperation]) in
+            try operations.map(TezosDelegationOperation.init)
+        }
+        .eraseToAnyPublisher()
+    }
+
+    private func recursivelyFetchOperations<Operation: TzScanOperation>(
+        account: String,
+        type: TzScanOperationType,
+        accumulatedOperations: [Operation],
         page: Int,
         operationsPerPage: Int,
         startDate: Date
-    ) -> AnyPublisher<[TezosOperation], Error> {
-        return fetchOperations(account: account, page: page, operationsPerPage: operationsPerPage)
-            .map { newOperations in
-                Self.accumulateOperations(
-                    accumulatedOperations: accumulatedOperations,
-                    newOperations: newOperations,
-                    operationsPerPage: operationsPerPage,
-                    startDate: startDate
-                )
+    ) -> AnyPublisher<[Operation], Error> {
+        return fetchTransactionOperations(
+            account: account,
+            type: type,
+            page: page,
+            operationsPerPage: operationsPerPage
+        )
+        .tryMap { newOperations in
+            try Self.accumulateOperations(
+                accumulatedOperations: accumulatedOperations,
+                newOperations: newOperations,
+                operationsPerPage: operationsPerPage,
+                startDate: startDate
+            )
+        }
+        .flatMap(
+            maxPublishers: .max(1)
+        ) { operations, hasMoreOperations -> AnyPublisher<[Operation], Error> in
+            guard hasMoreOperations else {
+                return Just(operations).eraseToAnyPublisherWithError()
             }
-            .flatMap(
-                maxPublishers: .max(1)
-            ) { operations, hasMoreOperations -> AnyPublisher<[TezosOperation], Error> in
-                guard hasMoreOperations else {
-                    return Just(operations).eraseToAnyPublisherWithError()
-                }
 
-                return self.recursivelyFetchOperations(
-                    account: account,
-                    accumulatedOperations: operations,
-                    page: page + 1,
-                    operationsPerPage: operationsPerPage,
-                    startDate: startDate
-                )
-            }
-            .eraseToAnyPublisher()
+            return self.recursivelyFetchOperations(
+                account: account,
+                type: type,
+                accumulatedOperations: operations,
+                page: page + 1,
+                operationsPerPage: operationsPerPage,
+                startDate: startDate
+            )
+        }
+        .eraseToAnyPublisher()
     }
 
     /// https://tzscan.io/api#operation/323
-    private func fetchOperations(
+    private func fetchTransactionOperations<Operation: TzScanOperation>(
         account: String,
+        type: TzScanOperationType,
         page: Int,
         operationsPerPage: Int
-    ) -> AnyPublisher<[TezosOperation], Error> {
+    ) -> AnyPublisher<[Operation], Error> {
         let path = "/v3/operations/" + account
 
         let parameters: [String: Any] = [
-            "type": "Transaction",
+            "type": type.rawValue,
             "p": page,
             "number": operationsPerPage,
         ]
 
         return httpClient.get(path: path, parameters: parameters)
-            .tryMap { (operations: [TzScanOperation]) in
-                print("Operations count: \(operations.count)")
-                print("Last operation date: \(String(describing: operations.last?.type.operations.first?.timestamp))")
-
-                return try operations.map(TezosOperation.init)
-            }
-            .eraseToAnyPublisher()
     }
 
-    private static func accumulateOperations(
-        accumulatedOperations: [TezosOperation],
-        newOperations: [TezosOperation],
+    private static func accumulateOperations<Operation: TzScanOperation>(
+        accumulatedOperations: [Operation],
+        newOperations: [Operation],
         operationsPerPage: Int,
         startDate: Date
-    ) -> (operations: [TezosOperation], hasMoreOperations: Bool) {
-        let filteredNewOperations = newOperations.filter { operation in
-            operation.timestamp >= startDate
+    ) throws -> (operations: [Operation], hasMoreOperations: Bool) {
+        let filteredNewOperations = try newOperations.filter { operation in
+            try operation.timestamp() >= startDate
         }
 
-        let hasMoreOperations = filteredNewOperations.count == operationsPerPage
-            && filteredNewOperations.last?.timestamp != startDate
+        let hasMoreOperations = try filteredNewOperations.count == operationsPerPage
+            && filteredNewOperations.last?.timestamp() != startDate
 
         let totalOperations = accumulatedOperations + filteredNewOperations
         return (totalOperations, hasMoreOperations)
@@ -103,6 +125,6 @@ public final class TzScanGateway: TezosGateway {
 
 extension Just {
     func eraseToAnyPublisherWithError<Error>() -> AnyPublisher<Output, Error> {
-        mapError { _ in NSError() as! Error }.eraseToAnyPublisher()
+        mapError({ _ in NSError() as! Error }).eraseToAnyPublisher()
     }
 }

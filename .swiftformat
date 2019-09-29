@@ -1,0 +1,18 @@
+# file options
+
+--exclude Package.swift
+
+# format options
+
+--header strip
+--self init-only
+--semicolons never
+--wraparguments before-first
+--wrapcollections before-first
+
+# rules
+
+--enable isEmpty
+--disable trailingClosures,blankLinesAtStartOfScope
+
+

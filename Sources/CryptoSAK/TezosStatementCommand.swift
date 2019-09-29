@@ -19,30 +19,36 @@ struct TezosStatementCommand {
             row.split(separator: ",").map(String.init).first
         }
 
-        tezosGateway.fetchOperations(account: account, startDate: startDate)
-            .sink(receiveCompletion: { completion in
-                if case let .failure(error) = completion {
-                    print(error)
-                }
-                exit(0)
-            }, receiveValue: { operations in
-                do {
-                    print("Final count: \(operations.count)")
-                    print("Final last operation date: \(String(describing: operations.last?.timestamp))")
+        Publishers.Zip(
+            tezosGateway.fetchTransactionOperations(account: account, startDate: startDate),
+            tezosGateway.fetchDelegationOperations(account: account, startDate: startDate)
+        )
+        .sink(receiveCompletion: { completion in
+            if case let .failure(error) = completion {
+                print(error)
+            }
+            exit(0)
+        }, receiveValue: { transactions, delegations in
+            do {
+                print("Transactions count: \(transactions.count)")
+                print("Transactions starting date: \(String(describing: transactions.last?.timestamp))")
+                print("Delegations count: \(delegations.count)")
+                print("Delegations starting date: \(String(describing: delegations.last?.timestamp))")
 
-                    let statement = TezosStatement(
-                        operations: operations,
-                        account: account,
-                        delegateAccounts: delegateAccounts
-                    )
+                let statement = TezosStatement(
+                    transactions: transactions,
+                    delegations: delegations,
+                    account: account,
+                    delegateAccounts: delegateAccounts
+                )
 
-                    print(statement.balance)
-                    try write(rows: statement.toCoinTrackingRows(), filename: "TesosStatement")
-                } catch {
-                    print(error)
-                }
-            })
-            .store(in: &subscriptions)
+                print(statement.balance)
+                try write(rows: statement.toCoinTrackingRows(), filename: "TesosStatement")
+            } catch {
+                print(error)
+            }
+        })
+        .store(in: &subscriptions)
 
         RunLoop.main.run()
     }
@@ -50,16 +56,16 @@ struct TezosStatementCommand {
 
 extension TezosStatement {
     func toCoinTrackingRows() -> [CoinTrackingRow] {
-        let rows = delegationRewards.map(CoinTrackingRow.makeDelegationReward)
-            + otherIncomingOperations.map(CoinTrackingRow.makeDeposit)
-            + successfulOutgoingOperations.map(CoinTrackingRow.makeWithdrawal)
+        let rows = transactions.delegationRewards.map(CoinTrackingRow.makeDelegationReward)
+            + transactions.otherIncoming.map(CoinTrackingRow.makeDeposit)
+            + transactions.successfulOutgoing.map(CoinTrackingRow.makeWithdrawal)
             + feeIncuringOperations.map(CoinTrackingRow.makeFee)
         return rows.sorted(by: >)
     }
 }
 
 private extension CoinTrackingRow {
-    static func makeDelegationReward(operation: TezosOperation) -> CoinTrackingRow {
+    static func makeDelegationReward(operation: TezosTransactionOperation) -> CoinTrackingRow {
         self.init(
             type: .incoming(.mining),
             buyAmount: operation.amount,
@@ -75,7 +81,7 @@ private extension CoinTrackingRow {
         )
     }
 
-    static func makeDeposit(operation: TezosOperation) -> CoinTrackingRow {
+    static func makeDeposit(operation: TezosTransactionOperation) -> CoinTrackingRow {
         self.init(
             type: .incoming(.deposit),
             buyAmount: operation.amount,
@@ -91,7 +97,7 @@ private extension CoinTrackingRow {
         )
     }
 
-    static func makeWithdrawal(operation: TezosOperation) -> CoinTrackingRow {
+    static func makeWithdrawal(operation: TezosTransactionOperation) -> CoinTrackingRow {
         self.init(
             type: .outgoing(.withdrawal),
             buyAmount: 0,
@@ -116,7 +122,7 @@ private extension CoinTrackingRow {
             sellCurrency: "XTZ",
             fee: operation.fee,
             feeCurrency: "XTZ",
-            exchange: operation.source.nameForCoinTracking,
+            exchange: operation.sourceNameForCoinTracking,
             group: "Fee",
             comment: "Export. Operation: \(operation.hash)",
             date: operation.timestamp
@@ -124,14 +130,20 @@ private extension CoinTrackingRow {
     }
 }
 
-extension TezosOperation.Destination {
+extension TezosTransactionOperation.Destination {
     var nameForCoinTracking: String {
         return "Tezos \(account.prefix(8))."
     }
 }
 
-extension TezosOperation.Source {
+extension TezosTransactionOperation.Source {
     var nameForCoinTracking: String {
         return "Tezos \(account.prefix(8))."
+    }
+}
+
+extension TezosOperation {
+    var sourceNameForCoinTracking: String {
+        return "Tezos \(sourceAccount.prefix(8))."
     }
 }

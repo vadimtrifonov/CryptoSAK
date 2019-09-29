@@ -20,7 +20,7 @@ public final class DefaultHTTPClient: HTTPClient {
 
     public init(baseURL: URL, urlSession: URLSession, apiKey: String) {
         self.baseURL = baseURL
-        session = urlSession
+        self.session = urlSession
         self.apiKey = apiKey
     }
 
@@ -46,7 +46,7 @@ public final class DefaultHTTPClient: HTTPClient {
     private func executeRequest<T: Decodable>(request: URLRequest) -> AnyPublisher<T, Error> {
         return session.dataTaskPublisher(for: request).tryMap { data, _ in
             #if DEBUG
-//                os_log("%@", "\(request.hashValue) RESPONSE: \(data.description)")
+                os_log("%@", "\(request.hashValue) RESPONSE: \(data.description)")
             #endif
 
             do {

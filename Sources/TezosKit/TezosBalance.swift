@@ -5,27 +5,28 @@ public struct TezosBalance {
     public let delegationRewards: Decimal
     public let otherIncoming: Decimal
     public let totalIncoming: Decimal
-    public let outgoing: Decimal
+    public let successfulOutgoing: Decimal
     public let fees: Decimal
 
     public init(
-        delegationRewards: [TezosOperation],
-        otherIncomingOperations: [TezosOperation],
-        successfulOutgoingOperations: [TezosOperation],
+        delegationRewards: [TezosTransactionOperation],
+        otherIncomingTransactions: [TezosTransactionOperation],
+        successfulOutgoingTransactions: [TezosTransactionOperation],
         feeIncuringOperations: [TezosOperation]
     ) {
-        let allIncomingOperations = delegationRewards + otherIncomingOperations
+        let allIncomingOperations = delegationRewards + otherIncomingTransactions
         let delegationRewards = delegationRewards.reduce(0) { $0 + $1.amount }
-        let otherIncoming = otherIncomingOperations.reduce(0) { $0 + $1.amount }
+        let otherIncoming = otherIncomingTransactions.reduce(0) { $0 + $1.amount }
         let incoming = allIncomingOperations.reduce(0) { $0 + $1.amount }
-        let outgoing = successfulOutgoingOperations.reduce(0) { $0 + $1.amount }
+
+        let successfulOutgoing = successfulOutgoingTransactions.reduce(0) { $0 + $1.amount }
         let fees = feeIncuringOperations.reduce(0) { $0 + $1.fee }
 
-        balance = incoming - outgoing - fees
+        balance = incoming - successfulOutgoing - fees
         self.delegationRewards = delegationRewards
         self.otherIncoming = otherIncoming
-        totalIncoming = incoming
-        self.outgoing = outgoing
+        self.totalIncoming = incoming
+        self.successfulOutgoing = successfulOutgoing
         self.fees = fees
     }
 }
