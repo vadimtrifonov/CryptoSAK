@@ -1,12 +1,6 @@
 import Foundation
 
 public struct TezosStatement {
-    public struct TransactionsStatement {
-        public let delegationRewards: [TezosTransactionOperation]
-        public let otherIncoming: [TezosTransactionOperation]
-        public let successfulOutgoing: [TezosTransactionOperation]
-    }
-
     public let transactions: TransactionsStatement
     public let successfulDelegations: [TezosDelegationOperation]
     public let feeIncuringOperations: [TezosOperation]
@@ -48,5 +42,11 @@ public struct TezosStatement {
         )
         self.successfulDelegations = successfulDelegations.sorted(by: >)
         self.feeIncuringOperations = feeIncuringOperations
+    }
+    
+    public struct TransactionsStatement {
+        public let delegationRewards: [TezosTransactionOperation]
+        public let otherIncoming: [TezosTransactionOperation]
+        public let successfulOutgoing: [TezosTransactionOperation]
     }
 }

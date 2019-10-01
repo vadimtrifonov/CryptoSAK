@@ -11,7 +11,7 @@ struct TezosStatementCommand {
 
         let baseURL: URL = "https://api6.tzscan.io"
         let urlSession = URLSession(configuration: .default)
-        let httpClient = DefaultHTTPClient(baseURL: baseURL, urlSession: urlSession, apiKey: "none")
+        let httpClient = DefaultHTTPClient(baseURL: baseURL, urlSession: urlSession)
         let tezosGateway = TzScanGateway(httpClient: httpClient)
 
         let rows = delegateListPath.isEmpty ? [] : try CSV.read(path: delegateListPath)

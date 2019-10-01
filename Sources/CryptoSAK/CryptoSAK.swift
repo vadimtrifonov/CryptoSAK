@@ -69,7 +69,7 @@ extension CryptoSAK {
     private static func makeEthereumGateway() throws -> EthereumGateway {
         let url: URL = "https://api.etherscan.io"
         let session = URLSession(configuration: .default)
-        let httpClient = DefaultHTTPClient(baseURL: url, urlSession: session, apiKey: etherscanAPIKey)
+        let httpClient = DefaultHTTPClient(baseURL: url, urlSession: session)
         return EtherscanGateway(httpClient: httpClient)
     }
 }

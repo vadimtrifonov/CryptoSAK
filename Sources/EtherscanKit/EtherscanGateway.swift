@@ -11,7 +11,10 @@ public class EtherscanGateway: EthereumGateway {
         self.httpClient = httpClient
     }
 
-    public func fetchNormalTransactions(address: String, startDate _: Date) -> AnyPublisher<[EthereumTransaction], Error> {
+    public func fetchNormalTransactions(
+        address: String,
+        startDate: Date
+    ) -> AnyPublisher<[EthereumTransaction], Error> {
         let parameters: [String: Any] = [
             "module": "account",
             "action": "txlist",
@@ -23,12 +26,17 @@ public class EtherscanGateway: EthereumGateway {
 
         return httpClient.get(path: "/api", parameters: parameters)
             .tryMap { (response: Etherscan.TransactionsResponse) in
-                try response.result.map(EthereumTransaction.init)
+                try response.result
+                    .map(EthereumTransaction.init)
+                    .filter({ $0.date >= startDate })
             }
             .eraseToAnyPublisher()
     }
 
-    public func fetchInternalTransactions(address: String, startDate _: Date) -> AnyPublisher<[EthereumTransaction], Error> {
+    public func fetchInternalTransactions(
+        address: String,
+        startDate: Date
+    ) -> AnyPublisher<[EthereumTransaction], Error> {
         let parameters: [String: Any] = [
             "module": "account",
             "action": "txlistinternal",
@@ -40,12 +48,17 @@ public class EtherscanGateway: EthereumGateway {
 
         return httpClient.get(path: "/api", parameters: parameters)
             .tryMap { (response: Etherscan.TransactionsResponse) in
-                try response.result.map(EthereumTransaction.init)
+                try response.result
+                    .map(EthereumTransaction.init)
+                    .filter({ $0.date >= startDate })
             }
             .eraseToAnyPublisher()
     }
 
-    public func fetchTokenTransactions(address: String, startDate _: Date) -> AnyPublisher<[EthereumTokenTransaction], Error> {
+    public func fetchTokenTransactions(
+        address: String,
+        startDate: Date
+    ) -> AnyPublisher<[EthereumTokenTransaction], Error> {
         let parameters: [String: Any] = [
             "module": "account",
             "action": "tokentx",
@@ -60,7 +73,9 @@ public class EtherscanGateway: EthereumGateway {
             parameters: parameters
         )
         .tryMap { (response: Etherscan.TokenTransactionsResponse) in
-            try response.result.map(EthereumTokenTransaction.init)
+            try response.result
+                .map(EthereumTokenTransaction.init)
+                .filter({ $0.date >= startDate })
         }
         .eraseToAnyPublisher()
     }

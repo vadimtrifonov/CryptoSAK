@@ -3,36 +3,31 @@ import Foundation
 import os.log
 
 public enum HTTPClientError: Error {
-    case invalidRequest(baseURL: URL, path: String, parameters: [String: Any])
+    case invalidURLComponents(baseURL: URL, path: String, parameters: [String: Any]?)
 }
 
 public protocol HTTPClient {
-    func get<T: Decodable>(
+    func get<Response: Decodable>(
         path: String,
         parameters: [String: Any]
-    ) -> AnyPublisher<T, Error>
+    ) -> AnyPublisher<Response, Error>
 }
 
 public final class DefaultHTTPClient: HTTPClient {
     private let baseURL: URL
     private let session: URLSession
-    private let apiKey: String
 
-    public init(baseURL: URL, urlSession: URLSession, apiKey: String) {
+    public init(baseURL: URL, urlSession: URLSession) {
         self.baseURL = baseURL
         self.session = urlSession
-        self.apiKey = apiKey
     }
 
-    public func get<T: Decodable>(
+    public func get<Response: Decodable>(
         path: String,
         parameters: [String: Any]
-    ) -> AnyPublisher<T, Error> {
-        var parameters = parameters
-        parameters["apiKey"] = apiKey
-
+    ) -> AnyPublisher<Response, Error> {
         do {
-            let request = try makeRequest(path: path, parameters: parameters)
+            let request = try Self.makeRequest(baseURL: baseURL, path: path, parameters: parameters)
             #if DEBUG
                 os_log("%@", "\(request.hashValue) GET: \(path) \(parameters)")
                 os_log("%@", "\(request.hashValue) GET: \(request.url?.absoluteString ?? "")")
@@ -66,17 +61,29 @@ public final class DefaultHTTPClient: HTTPClient {
         }
         .eraseToAnyPublisher()
     }
-
-    private func makeRequest(path: String, parameters: [String: Any]) throws -> URLRequest {
+    
+    static func makeRequest(
+        _ method: String = "GET",
+        baseURL: URL,
+        path: String,
+        parameters: [String: Any]?
+    ) throws -> URLRequest {
         var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)
         components?.percentEncodedPath = path
-        components?.percentEncodedQuery = parameters.formURLEncoded
-
+        components?.percentEncodedQuery = parameters?.formURLEncoded
+        
         guard let url = components?.url else {
-            throw HTTPClientError.invalidRequest(baseURL: baseURL, path: path, parameters: parameters)
+            throw HTTPClientError.invalidURLComponents(
+                baseURL: baseURL,
+                path: path,
+                parameters: parameters
+            )
         }
-
-        return URLRequest(url: url)
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        return request
     }
 }
 
