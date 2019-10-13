@@ -8,7 +8,7 @@ public struct TezosTransactionOperation: TezosOperation {
     public let fee: Decimal
     public let timestamp: Date
     public let isSuccessful: Bool
-    
+
     public var sourceAccount: String {
         source.account
     }

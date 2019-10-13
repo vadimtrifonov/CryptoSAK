@@ -22,7 +22,7 @@ public struct TezosStatement {
     ) {
         let incoming = transactions.filter { $0.isIncoming(account: account) }
         let outgoing = transactions.filter { $0.isOutgoing(account: account) }
-        
+
         let delegationRewards = incoming.filter { transaction in
             delegateAccounts.map({ $0.lowercased() }).contains(transaction.source.account.lowercased())
         }
@@ -30,7 +30,7 @@ public struct TezosStatement {
 
         let successfulOutgoing = outgoing.filter { $0.isSuccessful }
         let successfulDelegations = delegations.filter { $0.isSuccessful }
-        
+
         let feeIncuringOutgoing: [TezosOperation] = outgoing.filter({ !$0.fee.isZero })
         let feeIncuringDelegations: [TezosOperation] = delegations.filter({ !$0.fee.isZero })
         let feeIncuringOperations = feeIncuringOutgoing + feeIncuringDelegations
@@ -43,7 +43,7 @@ public struct TezosStatement {
         self.successfulDelegations = successfulDelegations.sorted(by: >)
         self.feeIncuringOperations = feeIncuringOperations
     }
-    
+
     public struct TransactionsStatement {
         public let delegationRewards: [TezosTransactionOperation]
         public let otherIncoming: [TezosTransactionOperation]

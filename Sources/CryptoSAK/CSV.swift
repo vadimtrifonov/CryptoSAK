@@ -25,7 +25,7 @@ enum CSV {
 func write(
     rows: [CoinTrackingRow],
     to directory: URL = FileManager.default.homeDirectoryForCurrentUser,
-    filename: String = "CoinTracking"
+    filename: String
 ) throws {
     let csv = CoinTrackingCSV.makeCSV(rows: rows)
     let url = directory.appendingPathComponent(filename + ".csv")

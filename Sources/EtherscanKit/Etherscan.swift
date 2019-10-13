@@ -45,17 +45,17 @@ enum Etherscan {
 
 extension EthereumTransaction {
     init(transaction: Etherscan.Transaction) throws {
-        let timeIntreval = try Double.make(string: transaction.timeStamp)
+        let timeIntreval = try Double(string: transaction.timeStamp)
         let date = Date(timeIntervalSince1970: timeIntreval)
 
-        let amount = try Decimal.make(string: transaction.value) / Ethereum.weiInEther
+        let amount = try Decimal(string: transaction.value) / Ethereum.weiInEther
 
         var fee: Decimal = 0
 
         // Internal transactions has no gas price
         if let gasPrice = transaction.gasPrice {
-            let gasPrice = try Decimal.make(string: gasPrice) / Ethereum.weiInEther
-            let gasUsed = try Decimal.make(string: transaction.gasUsed)
+            let gasPrice = try Decimal(string: gasPrice) / Ethereum.weiInEther
+            let gasUsed = try Decimal(string: transaction.gasUsed)
             fee = gasPrice * gasUsed
         }
 
@@ -75,14 +75,14 @@ extension EthereumTransaction {
 
 extension EthereumTokenTransaction {
     init(transaction: Etherscan.TokenTransaction) throws {
-        let timeIntreval = try Double.make(string: transaction.timeStamp)
+        let timeIntreval = try Double(string: transaction.timeStamp)
         let date = Date(timeIntervalSince1970: timeIntreval)
 
-        let decimalPlaces = try Int.make(string: transaction.tokenDecimal)
-        let amount = try Decimal.make(string: transaction.value) / pow(10, decimalPlaces)
+        let decimalPlaces = try Int(string: transaction.tokenDecimal)
+        let amount = try Decimal(string: transaction.value) / pow(10, decimalPlaces)
 
-        let gasPrice = try Decimal.make(string: transaction.gasPrice) / Ethereum.weiInEther
-        let gasUsed = try Decimal.make(string: transaction.gasUsed)
+        let gasPrice = try Decimal(string: transaction.gasPrice) / Ethereum.weiInEther
+        let gasUsed = try Decimal(string: transaction.gasUsed)
         let fee = gasPrice * gasUsed
 
         let isSuccessful = transaction.isError != "1" && transaction.txreceipt_status != "0"

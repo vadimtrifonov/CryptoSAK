@@ -39,16 +39,16 @@ extension EthereumTransaction {
         transaction: EthereumProxy.Transaction,
         receipt: EthereumProxy.TransactionReceipt
     ) throws {
-        let timeIntreval = try Double(UInt64.make(hexadecimal: block.timestamp))
+        let timeIntreval = try Double(UInt64(hexadecimal: block.timestamp))
         let date = Date(timeIntervalSince1970: timeIntreval)
 
-        let amountInWei = try Decimal(UInt64.make(hexadecimal: transaction.value))
+        let amountInWei = try Decimal(UInt64(hexadecimal: transaction.value))
         let amountInEther = amountInWei / Ethereum.weiInEther
 
-        let gasPriceInWei = try Decimal(UInt64.make(hexadecimal: transaction.gasPrice))
+        let gasPriceInWei = try Decimal(UInt64(hexadecimal: transaction.gasPrice))
         let gasPriceInEther = gasPriceInWei / Ethereum.weiInEther
 
-        let gasUsed = try Decimal(UInt64.make(hexadecimal: receipt.gasUsed))
+        let gasUsed = try Decimal(UInt64(hexadecimal: receipt.gasUsed))
         let fee = gasPriceInEther * gasUsed
 
         self.init(

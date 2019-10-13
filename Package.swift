@@ -20,7 +20,9 @@ let package = Package(
                 "EthereumKit",
                 "EtherscanKit",
                 "FoundationExtensions",
+                "GateKit",
                 "HTTPClient",
+                "LambdaKit",
                 "TezosKit",
                 "TzScanKit",
             ]
@@ -46,11 +48,21 @@ let package = Package(
             dependencies: []
         ),
         .target(
+            name: "GateKit",
+            dependencies: [
+                "FoundationExtensions"
+            ]
+        ),
+        .target(
             name: "HTTPClient",
             dependencies: []
         ),
         .testTarget(
             name: "KitTests",
+            dependencies: []
+        ),
+        .target(
+            name: "LambdaKit",
             dependencies: []
         ),
         .target(
@@ -63,6 +75,7 @@ let package = Package(
                 "TezosKit",
                 "FoundationExtensions",
                 "HTTPClient",
+                "LambdaKit"
             ]
         ),
     ]

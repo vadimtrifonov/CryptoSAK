@@ -19,29 +19,19 @@ struct TezosStatementCommand {
             row.split(separator: ",").map(String.init).first
         }
 
-        Publishers.Zip(
-            tezosGateway.fetchTransactionOperations(account: account, startDate: startDate),
-            tezosGateway.fetchDelegationOperations(account: account, startDate: startDate)
+        Self.tezosStatement(
+            transactionsPublisher: tezosGateway.fetchTransactionOperations(account: account, startDate: startDate),
+            delegationsPublisher: tezosGateway.fetchDelegationOperations(account: account, startDate: startDate),
+            account: account,
+            delegateAccounts: delegateAccounts
         )
         .sink(receiveCompletion: { completion in
             if case let .failure(error) = completion {
                 print(error)
             }
             exit(0)
-        }, receiveValue: { transactions, delegations in
+        }, receiveValue: { statement in
             do {
-                print("Transactions count: \(transactions.count)")
-                print("Transactions starting date: \(String(describing: transactions.last?.timestamp))")
-                print("Delegations count: \(delegations.count)")
-                print("Delegations starting date: \(String(describing: delegations.last?.timestamp))")
-
-                let statement = TezosStatement(
-                    transactions: transactions,
-                    delegations: delegations,
-                    account: account,
-                    delegateAccounts: delegateAccounts
-                )
-
                 print(statement.balance)
                 try write(rows: statement.toCoinTrackingRows(), filename: "TesosStatement")
             } catch {
@@ -51,6 +41,32 @@ struct TezosStatementCommand {
         .store(in: &subscriptions)
 
         RunLoop.main.run()
+    }
+
+    static func tezosStatement(
+        transactionsPublisher: AnyPublisher<[TezosTransactionOperation], Error>,
+        delegationsPublisher: AnyPublisher<[TezosDelegationOperation], Error>,
+        account: String,
+        delegateAccounts: [String]
+    ) -> AnyPublisher<TezosStatement, Error> {
+        Publishers.Zip(
+            transactionsPublisher,
+            delegationsPublisher
+        )
+        .map { transactions, delegations in
+            print("Transactions count: \(transactions.count)")
+            print("Transactions starting date: \(String(describing: transactions.last?.timestamp))")
+            print("Delegations count: \(delegations.count)")
+            print("Delegations starting date: \(String(describing: delegations.last?.timestamp))")
+
+            return TezosStatement(
+                transactions: transactions,
+                delegations: delegations,
+                account: account,
+                delegateAccounts: delegateAccounts
+            )
+        }
+        .eraseToAnyPublisher()
     }
 }
 

@@ -8,19 +8,21 @@ import HTTPClient
 struct CryptoSAK {
     static func run() {
         let commandGroup = Group { group in
-            group.addCommand("ethereum-ico", makeICOExporter())
+            group.addCommand("ethereum-ico", makeEthereumICOStatement())
             group.addCommand("ethereum-statement", makeEthereumStatement())
             group.addCommand("ethereum-tokens-statement", makeEthereumTokensStatement())
+            group.addCommand("gate-billing-statement", makeGateBillingStatement())
             group.addCommand("tezos-statement", makeTezosStatement())
+            group.addCommand("tezos-bond-pool-statement", makeTezosBondPoolStatement())
         }
         commandGroup.run()
     }
 
-    private static func makeICOExporter() -> CommandType {
+    private static func makeEthereumICOStatement() -> CommandType {
         let inputPath = Argument<String>("input", description: "Path to the input file")
 
         return command(inputPath) { inputPath in
-            try EthereumICOCommand(gateway: makeEthereumGateway()).execute(inputPath: inputPath)
+            try EthereumICOStatementCommand(gateway: makeEthereumGateway()).execute(inputPath: inputPath)
         }
     }
 
@@ -50,6 +52,14 @@ struct CryptoSAK {
         }
     }
 
+    private static func makeGateBillingStatement() -> CommandType {
+        let csvPath = Argument<String>("input", description: "Path to Gate billing CSV file")
+
+        return command(csvPath) { csvPath in
+            try GateBillingStatementCommand().execute(csvPath: csvPath)
+        }
+    }
+
     private static func makeTezosStatement() -> CommandType {
         let account = Argument<String>("account", description: "Tezos account")
         let delegateListPath = Option<String>("delegate-list", default: "", description: "Path to CSV with delegate payout accounts")
@@ -59,6 +69,18 @@ struct CryptoSAK {
             try TezosStatementCommand().execute(
                 account: account,
                 delegateListPath: delegateListPath,
+                startDate: startDate
+            )
+        }
+    }
+
+    private static func makeTezosBondPoolStatement() -> CommandType {
+        let address = Argument<String>("account", description: "Bond pool address")
+        let startDate = Option("start-date", default: Date.distantPast, description: "Oldest operation date in ISO format")
+
+        return command(address, startDate) { address, startDate in
+            try TezosBondPoolStatementCommand().execute(
+                address: address,
                 startDate: startDate
             )
         }

@@ -11,7 +11,7 @@ public struct TezosDelegationOperation: TezosOperation {
     public var sourceAccount: String {
         source.account
     }
-    
+
     public init(
         hash: String,
         source: Source,

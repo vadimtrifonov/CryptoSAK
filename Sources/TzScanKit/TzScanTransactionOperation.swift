@@ -40,6 +40,6 @@ extension TzScanTransactionOperation: TzScanOperation {
         guard let operation = type.operations.first else {
             throw "No operation in \(self)"
         }
-        return try Self.dateFormatter.makeDate(string: operation.timestamp)
+        return try Self.dateFormatter.date(from: operation.timestamp)
     }
 }

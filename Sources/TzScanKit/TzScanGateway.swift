@@ -1,6 +1,7 @@
 import Combine
 import Foundation
 import HTTPClient
+import LambdaKit
 import TezosKit
 
 public final class TzScanGateway: TezosGateway {
@@ -72,7 +73,7 @@ public final class TzScanGateway: TezosGateway {
             maxPublishers: .max(1)
         ) { operations, hasMoreOperations -> AnyPublisher<[Operation], Error> in
             guard hasMoreOperations else {
-                return Just(operations).eraseToAnyPublisherWithError()
+                return Just(operations).mapError(toError).eraseToAnyPublisher()
             }
 
             return self.recursivelyFetchOperations(
@@ -120,11 +121,5 @@ public final class TzScanGateway: TezosGateway {
 
         let totalOperations = accumulatedOperations + filteredNewOperations
         return (totalOperations, hasMoreOperations)
-    }
-}
-
-extension Just {
-    func eraseToAnyPublisherWithError<Error>() -> AnyPublisher<Output, Error> {
-        mapError({ _ in NSError() as! Error }).eraseToAnyPublisher()
     }
 }

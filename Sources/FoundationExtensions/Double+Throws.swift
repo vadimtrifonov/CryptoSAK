@@ -1,10 +1,10 @@
 import Foundation
 
 extension Double {
-    public static func make(string: String) throws -> Double {
+    public init(string: String) throws {
         guard let double = Double(string) else {
             throw "Invalid double \(string)"
         }
-        return double
+        self = double
     }
 }

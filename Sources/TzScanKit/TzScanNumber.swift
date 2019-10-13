@@ -19,7 +19,7 @@ enum TzScanNumber: Decodable {
     func toDecimal() throws -> Decimal {
         switch self {
         case let .string(string):
-            return try Decimal.make(string: string)
+            return try Decimal(string: string)
         case let .integer(integer):
             return Decimal(integer)
         }

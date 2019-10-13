@@ -4,7 +4,7 @@ import EthereumKit
 import EtherscanKit
 import Foundation
 
-struct EthereumICOCommand {
+struct EthereumICOStatementCommand {
     let gateway: EthereumGateway
 
     func execute(inputPath: String) throws {
@@ -16,49 +16,53 @@ struct EthereumICOCommand {
             exit(1)
         }
 
-        export(ico: ico)
-            .sink(receiveCompletion: { completion in
-                if case let .failure(error) = completion {
-                    print(error)
-                }
-                exit(0)
-            }, receiveValue: { rows in
-                do {
-                    try write(rows: rows, filename: "ICOExport")
-                } catch {
-                    print(error)
-                }
-            })
-            .store(in: &subscriptions)
+        Self.icoTransactions(
+            ico: ico,
+            transaction: gateway.fetchTransaction,
+            tokenTranactions: { self.gateway.fetchTokenTransactions(address: $0, startDate: Date.distantPast) }
+        )
+        .sink(receiveCompletion: { completion in
+            if case let .failure(error) = completion {
+                print(error)
+            }
+            exit(0)
+        }, receiveValue: { rows in
+            do {
+                try write(rows: rows, filename: "ICOExport")
+            } catch {
+                print(error)
+            }
+        })
+        .store(in: &subscriptions)
 
         RunLoop.main.run()
     }
 
-    private func export(ico: ICO) -> AnyPublisher<[CoinTrackingRow], Error> {
-        return ico.contributionHashes
-            .map(gateway.fetchTransaction)
+    private static func icoTransactions(
+        ico: ICO,
+        transaction: (_ hash: String) -> AnyPublisher<EthereumTransaction, Error>,
+        tokenTranactions: @escaping (_ address: String) -> AnyPublisher<[EthereumTokenTransaction], Error>
+    ) -> AnyPublisher<[CoinTrackingRow], Error> {
+        ico.contributionHashes
+            .map(transaction)
             .reduce(Empty().eraseToAnyPublisher()) { $0.merge(with: $1).eraseToAnyPublisher() }
             .collect()
-            .flatMap(
-                maxPublishers: .max(1)
-            ) { [gateway] contributionTransactions -> AnyPublisher<([EthereumTransaction], [EthereumTokenTransaction]), Error> in
+            .flatMap(maxPublishers: .max(1)) {
+                contributionTransactions -> AnyPublisher<([EthereumTransaction], [EthereumTokenTransaction]), Error> in
                 let address = contributionTransactions.first?.from ?? ""
-                return gateway.fetchTokenTransactions(
-                    address: address,
-                    startDate: .distantPast
-                )
-                .map { tokenTransactions in
-                    let tokenPayoutTransactions = Self.filterICOTokenPayoutTransactions(
-                        ico: ico,
-                        payoutAddress: address,
-                        tokenTransactions: tokenTransactions
-                    )
-                    return (contributionTransactions, tokenPayoutTransactions)
-                }
-                .eraseToAnyPublisher()
+                return tokenTranactions(address)
+                    .map { tokenTransactions in
+                        let tokenPayoutTransactions = filterICOTokenPayoutTransactions(
+                            ico: ico,
+                            payoutAddress: address,
+                            tokenTransactions: tokenTransactions
+                        )
+                        return (contributionTransactions, tokenPayoutTransactions)
+                    }
+                    .eraseToAnyPublisher()
             }
             .map { contributionTransactions, tokenPayoutTransactions in
-                Self.makeICOCoinTrackingRows(
+                makeICOCoinTrackingRows(
                     ico: ico,
                     contibutionTransactions: contributionTransactions,
                     tokenPayoutTransactions: tokenPayoutTransactions
