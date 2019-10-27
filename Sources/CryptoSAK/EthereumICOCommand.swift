@@ -16,10 +16,10 @@ struct EthereumICOStatementCommand {
             exit(1)
         }
 
-        Self.icoTransactions(
+        Self.exportICOTransactions(
             ico: ico,
-            transaction: gateway.fetchTransaction,
-            tokenTranactions: { self.gateway.fetchTokenTransactions(address: $0, startDate: Date.distantPast) }
+            fetchTransaction: gateway.fetchTransaction,
+            fetchTokenTranactions: { self.gateway.fetchTokenTransactions(address: $0, startDate: Date.distantPast) }
         )
         .sink(receiveCompletion: { completion in
             if case let .failure(error) = completion {
@@ -38,34 +38,56 @@ struct EthereumICOStatementCommand {
         RunLoop.main.run()
     }
 
-    private static func icoTransactions(
+    static func exportICOTransactions(
         ico: ICO,
-        transaction: (_ hash: String) -> AnyPublisher<EthereumTransaction, Error>,
-        tokenTranactions: @escaping (_ address: String) -> AnyPublisher<[EthereumTokenTransaction], Error>
+        fetchTransaction: (_ hash: String) -> AnyPublisher<EthereumTransaction, Error>,
+        fetchTokenTranactions: @escaping (_ address: String) -> AnyPublisher<[EthereumTokenTransaction], Error>
     ) -> AnyPublisher<[CoinTrackingRow], Error> {
+        fetchContributionTransactions(
+            ico: ico,
+            fetchTransaction: fetchTransaction
+        )
+        .flatMap(maxPublishers: .max(1)) { contributionTransactions in
+            fetchICOTokenPayoutTransactions(
+                ico: ico,
+                payoutAddress: contributionTransactions.first?.from ?? "",
+                fetchTokenTranactions: fetchTokenTranactions
+            )
+            .map({ (contributionTransactions, $0) })
+            .eraseToAnyPublisher()
+        }
+        .map { contributionTransactions, tokenPayoutTransactions in
+            makeICOCoinTrackingRows(
+                ico: ico,
+                contibutionTransactions: contributionTransactions,
+                tokenPayoutTransactions: tokenPayoutTransactions
+            )
+        }
+        .eraseToAnyPublisher()
+    }
+
+    static func fetchContributionTransactions(
+        ico: ICO,
+        fetchTransaction: (_ hash: String) -> AnyPublisher<EthereumTransaction, Error>
+    ) -> AnyPublisher<[EthereumTransaction], Error> {
         ico.contributionHashes
-            .map(transaction)
+            .map(fetchTransaction)
             .reduce(Empty().eraseToAnyPublisher()) { $0.merge(with: $1).eraseToAnyPublisher() }
             .collect()
-            .flatMap(maxPublishers: .max(1)) {
-                contributionTransactions -> AnyPublisher<([EthereumTransaction], [EthereumTokenTransaction]), Error> in
-                let address = contributionTransactions.first?.from ?? ""
-                return tokenTranactions(address)
-                    .map { tokenTransactions in
-                        let tokenPayoutTransactions = filterICOTokenPayoutTransactions(
-                            ico: ico,
-                            payoutAddress: address,
-                            tokenTransactions: tokenTransactions
-                        )
-                        return (contributionTransactions, tokenPayoutTransactions)
-                    }
-                    .eraseToAnyPublisher()
-            }
-            .map { contributionTransactions, tokenPayoutTransactions in
-                makeICOCoinTrackingRows(
+            .eraseToAnyPublisher()
+    }
+
+    static func fetchICOTokenPayoutTransactions(
+        ico: ICO,
+        payoutAddress: String,
+        fetchTokenTranactions: @escaping (_ address: String) -> AnyPublisher<[EthereumTokenTransaction], Error>
+    ) -> AnyPublisher<[EthereumTokenTransaction], Error> {
+        fetchTokenTranactions(payoutAddress)
+            .map { tokenTransactions in
+                filterICOTokenPayoutTransactions(
                     ico: ico,
-                    contibutionTransactions: contributionTransactions,
-                    tokenPayoutTransactions: tokenPayoutTransactions
+                    payoutAddress: payoutAddress,
+                    tokenTransactions: tokenTransactions
                 )
             }
             .eraseToAnyPublisher()
@@ -98,18 +120,19 @@ struct EthereumICOStatementCommand {
 
         let contibutionRows = contibutionTransactions.map { CoinTrackingRow.makeDeposit(ico: ico, transaction: $0) }
         let tokenPayoutRows = tokenPayoutTransactions.map { CoinTrackingRow.makeWithdrawal(ico: ico, transaction: $0) }
-        let tradeRow = tokenPayoutTransactions.first.map { transaction in
-            [
-                CoinTrackingRow.makeTrade(
-                    ico: ico,
-                    transaction: transaction,
-                    totalContributionAmount: totalContributionAmount,
-                    totalTokenPayoutAmount: totalTokenPayoutAmount
-                ),
-            ]
-        } ?? []
 
-        return (contibutionRows + tradeRow + tokenPayoutRows).sorted(by: >)
+        let tradeRows = tokenPayoutTransactions.map { transaction -> CoinTrackingRow in
+            let payoutPercent = transaction.amount / totalTokenPayoutAmount
+            let proportionalContributionAmount = totalContributionAmount * payoutPercent
+            return CoinTrackingRow.makeTrade(
+                ico: ico,
+                transaction: transaction,
+                contributionAmount: proportionalContributionAmount,
+                tokenPayoutAmount: transaction.amount
+            )
+        }
+
+        return (contibutionRows + tradeRows + tokenPayoutRows).sorted(by: >)
     }
 }
 
@@ -166,14 +189,14 @@ private extension CoinTrackingRow {
     static func makeTrade(
         ico: ICO,
         transaction: EthereumTokenTransaction,
-        totalContributionAmount: Decimal,
-        totalTokenPayoutAmount: Decimal
+        contributionAmount: Decimal,
+        tokenPayoutAmount: Decimal
     ) -> CoinTrackingRow {
         CoinTrackingRow(
             type: .trade,
-            buyAmount: totalTokenPayoutAmount,
+            buyAmount: tokenPayoutAmount,
             buyCurrency: transaction.token.symbol,
-            sellAmount: totalContributionAmount,
+            sellAmount: contributionAmount,
             sellCurrency: "ETH",
             fee: 0,
             feeCurrency: "",
