@@ -13,7 +13,7 @@ struct CryptoSAK {
             group.addCommand("ethereum-tokens-statement", makeEthereumTokensStatement())
             group.addCommand("gate-billing-statement", makeGateBillingStatement())
             group.addCommand("tezos-statement", makeTezosStatement())
-            group.addCommand("tezos-bond-pool-statement", makeTezosBondPoolStatement())
+            group.addCommand("tezos-capital-statement", makeTezosCapitalStatement())
         }
         commandGroup.run()
     }
@@ -74,12 +74,12 @@ struct CryptoSAK {
         }
     }
 
-    private static func makeTezosBondPoolStatement() -> CommandType {
+    private static func makeTezosCapitalStatement() -> CommandType {
         let address = Argument<String>("account", description: "Bond pool address")
         let startDate = Option("start-date", default: Date.distantPast, description: "Oldest operation date in ISO format")
 
         return command(address, startDate) { address, startDate in
-            try TezosBondPoolStatementCommand().execute(
+            try TezosCapitalStatementCommand().execute(
                 address: address,
                 startDate: startDate
             )
