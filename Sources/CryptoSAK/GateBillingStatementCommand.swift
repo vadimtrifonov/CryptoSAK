@@ -4,7 +4,7 @@ import GateKit
 
 struct GateBillingStatementCommand {
 
-    func execute(csvPath: String) throws {
+    static func execute(csvPath: String) throws {
         let csvRows = try CSV.read(path: csvPath).dropFirst() // drop header row
         let gateRows = try csvRows.map(GateBillingRow.init)
         let statement = try GateStatement(rows: gateRows)

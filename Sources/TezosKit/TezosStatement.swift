@@ -24,7 +24,7 @@ public struct TezosStatement {
         let outgoing = transactions.filter { $0.isOutgoing(account: account) }
 
         let delegationRewards = incoming.filter { transaction in
-            delegateAccounts.map({ $0.lowercased() }).contains(transaction.source.account.lowercased())
+            delegateAccounts.map({ $0.lowercased() }).contains(transaction.sender.lowercased())
         }
         let otherIncoming = Set(incoming).subtracting(Set(delegationRewards))
 
@@ -41,12 +41,16 @@ public struct TezosStatement {
             successfulOutgoing: successfulOutgoing.sorted(by: >)
         )
         self.successfulDelegations = successfulDelegations.sorted(by: >)
-        self.feeIncuringOperations = feeIncuringOperations
+        self.feeIncuringOperations = feeIncuringOperations.sorted(by: { $0.timestamp > $1.timestamp })
     }
 
     public struct TransactionsStatement {
         public let delegationRewards: [TezosTransactionOperation]
         public let otherIncoming: [TezosTransactionOperation]
         public let successfulOutgoing: [TezosTransactionOperation]
+
+        public var all: [TezosTransactionOperation] {
+            return (delegationRewards + otherIncoming + successfulOutgoing).sorted(by: >)
+        }
     }
 }

@@ -24,7 +24,8 @@ let package = Package(
                 "HTTPClient",
                 "LambdaKit",
                 "TezosKit",
-                "TzScanKit",
+                "TezosCapitalKit",
+                "TzStatsKit"
             ]
         ),
         .target(
@@ -70,7 +71,14 @@ let package = Package(
             dependencies: []
         ),
         .target(
-            name: "TzScanKit",
+            name: "TezosCapitalKit",
+            dependencies: [
+                "FoundationExtensions",
+                "HTTPClient"
+            ]
+        ),
+        .target(
+            name: "TzStatsKit",
             dependencies: [
                 "TezosKit",
                 "FoundationExtensions",

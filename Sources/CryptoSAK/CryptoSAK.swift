@@ -56,7 +56,7 @@ struct CryptoSAK {
         let csvPath = Argument<String>("input", description: "Path to Gate billing CSV file")
 
         return command(csvPath) { csvPath in
-            try GateBillingStatementCommand().execute(csvPath: csvPath)
+            try GateBillingStatementCommand.execute(csvPath: csvPath)
         }
     }
 
@@ -66,7 +66,7 @@ struct CryptoSAK {
         let startDate = Option("start-date", default: Date.distantPast, description: "Oldest operation date in ISO format")
 
         return command(account, delegateListPath, startDate) { account, delegateListPath, startDate in
-            try TezosStatementCommand().execute(
+            try TezosStatementCommand.execute(
                 account: account,
                 delegateListPath: delegateListPath,
                 startDate: startDate
@@ -79,7 +79,7 @@ struct CryptoSAK {
         let startDate = Option("start-date", default: Date.distantPast, description: "Oldest operation date in ISO format")
 
         return command(address, startDate) { address, startDate in
-            try TezosCapitalStatementCommand().execute(
+            try TezosCapitalStatementCommand.execute(
                 address: address,
                 startDate: startDate
             )

@@ -2,48 +2,26 @@ import Foundation
 
 public struct TezosDelegationOperation: TezosOperation {
     public let hash: String
-    public let source: Source
-    public let delegate: Delegate
+    public let sender: String
+    public let delegate: String
     public let fee: Decimal
     public let timestamp: Date
     public let isSuccessful: Bool
 
-    public var sourceAccount: String {
-        source.account
-    }
-
     public init(
         hash: String,
-        source: Source,
-        delegate: Delegate,
+        sender: String,
+        delegate: String,
         fee: Decimal,
         timestamp: Date,
         isSuccessful: Bool
     ) {
         self.hash = hash
-        self.source = source
+        self.sender = sender
         self.delegate = delegate
         self.fee = fee
         self.timestamp = timestamp
         self.isSuccessful = isSuccessful
-    }
-
-    public struct Source {
-        public let account: String
-
-        public init(account: String) {
-            self.account = account
-        }
-    }
-
-    public struct Delegate {
-        public let account: String
-        public let alias: String?
-
-        public init(account: String, alias: String? = nil) {
-            self.account = account
-            self.alias = alias
-        }
     }
 }
 
