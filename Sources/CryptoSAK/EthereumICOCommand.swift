@@ -9,7 +9,7 @@ struct EthereumICOStatementCommand {
 
     func execute(inputPath: String) throws {
         var subscriptions = Set<AnyCancellable>()
-        let csvRows = try CSV.read(path: inputPath)
+        let csvRows = try File.read(path: inputPath)
 
         guard let ico = try csvRows.map(ICO.init).first else {
             print("Nothing to export")
@@ -28,7 +28,7 @@ struct EthereumICOStatementCommand {
             exit(0)
         }, receiveValue: { rows in
             do {
-                try write(rows: rows, filename: "ICOExport")
+                try File.write(rows: rows, filename: "ICOExport")
             } catch {
                 print(error)
             }

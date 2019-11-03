@@ -24,7 +24,7 @@ struct TezosCapitalStatementCommand {
             exit(0)
         }, receiveValue: { rows in
             do {
-                try write(rows: rows, filename: "TezosCapitalStatement")
+                try File.write(rows: rows, filename: "TezosCapitalStatement")
             } catch {
                 print(error)
             }

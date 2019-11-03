@@ -12,6 +12,8 @@ struct CryptoSAK {
             group.addCommand("ethereum-statement", makeEthereumStatement())
             group.addCommand("ethereum-tokens-statement", makeEthereumTokensStatement())
             group.addCommand("gate-billing-statement", makeGateBillingStatement())
+            group.addCommand("idex-balance-statement", makeIDEXBalanceStatement())
+            group.addCommand("idex-trade-statement", makeIDEXTradeStatement())
             group.addCommand("tezos-statement", makeTezosStatement())
             group.addCommand("tezos-capital-statement", makeTezosCapitalStatement())
         }
@@ -57,6 +59,22 @@ struct CryptoSAK {
 
         return command(csvPath) { csvPath in
             try GateBillingStatementCommand.execute(csvPath: csvPath)
+        }
+    }
+
+    private static func makeIDEXBalanceStatement() -> CommandType {
+        let tsvPath = Argument<String>("input", description: "Path to IDEX balance history TSV file")
+
+        return command(tsvPath) { tsvPath in
+            try IDEXBalanceStatementCommand.execute(tsvPath: tsvPath)
+        }
+    }
+
+    private static func makeIDEXTradeStatement() -> CommandType {
+        let csvPath = Argument<String>("input", description: "Path to IDEX trade history CSV file")
+
+        return command(csvPath) { csvPath in
+            try IDEXTradeStatementCommand.execute(csvPath: csvPath)
         }
     }
 

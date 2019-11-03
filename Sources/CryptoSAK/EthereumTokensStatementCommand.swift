@@ -10,7 +10,7 @@ struct EthereumTokensStatementCommand {
     func execute(address: String, tokenListPath: String, startDate: Date) throws {
         var subscriptions = Set<AnyCancellable>()
 
-        let rows = tokenListPath.isEmpty ? [] : try CSV.read(path: tokenListPath)
+        let rows = tokenListPath.isEmpty ? [] : try File.read(path: tokenListPath)
         let tokenContractAddresses = rows.compactMap { row in
             row.split(separator: ",").map(String.init).first
         }
@@ -34,8 +34,8 @@ struct EthereumTokensStatementCommand {
                         address: address
                     )
                     statement.balance.printRows()
-                    try CSV.write(rows: statement.balance.toCSVRows(), filename: "EthereumTokenBalance", encoding: .utf8)
-                    try write(rows: statement.toCoinTrackingRows(), filename: "EthereumTokenStatement")
+                    try File.write(rows: statement.balance.toCSVRows(), filename: "EthereumTokenBalance", encoding: .utf8)
+                    try File.write(rows: statement.toCoinTrackingRows(), filename: "EthereumTokenStatement")
                 } catch {
                     print(error)
                 }

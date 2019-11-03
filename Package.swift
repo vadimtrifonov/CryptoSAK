@@ -22,6 +22,7 @@ let package = Package(
                 "FoundationExtensions",
                 "GateKit",
                 "HTTPClient",
+                "IDEXKit",
                 "LambdaKit",
                 "TezosKit",
                 "TezosCapitalKit",
@@ -57,6 +58,12 @@ let package = Package(
         .target(
             name: "HTTPClient",
             dependencies: []
+        ),
+        .target(
+            name: "IDEXKit",
+            dependencies: [
+                "FoundationExtensions"
+            ]
         ),
         .testTarget(
             name: "KitTests",

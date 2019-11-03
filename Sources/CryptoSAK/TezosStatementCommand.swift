@@ -10,7 +10,7 @@ struct TezosStatementCommand {
         var subscriptions = Set<AnyCancellable>()
         let tezosGateway = TzStatsGateway(urlSession: URLSession.shared)
 
-        let rows = delegateListPath.isEmpty ? [] : try CSV.read(path: delegateListPath)
+        let rows = delegateListPath.isEmpty ? [] : try File.read(path: delegateListPath)
         let delegateAccounts = rows.compactMap { row in
             row.split(separator: ",").map(String.init).first
         }
@@ -29,7 +29,7 @@ struct TezosStatementCommand {
         }, receiveValue: { statement in
             do {
                 print(statement.balance)
-                try write(rows: statement.toCoinTrackingRows(), filename: "TesosStatement")
+                try File.write(rows: statement.toCoinTrackingRows(), filename: "TesosStatement")
             } catch {
                 print(error)
             }

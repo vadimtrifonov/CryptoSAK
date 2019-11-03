@@ -5,10 +5,10 @@ import GateKit
 struct GateBillingStatementCommand {
 
     static func execute(csvPath: String) throws {
-        let csvRows = try CSV.read(path: csvPath).dropFirst() // drop header row
+        let csvRows = try File.read(path: csvPath).dropFirst() // drop header row
         let gateRows = try csvRows.map(GateBillingRow.init)
         let statement = try GateStatement(rows: gateRows)
-        try write(rows: statement.toCoinTrackingRows(), filename: "GateBillingStatement")
+        try File.write(rows: statement.toCoinTrackingRows(), filename: "GateBillingStatement")
     }
 }
 

@@ -27,7 +27,7 @@ struct EthereumStatementCommand {
                     address: address
                 )
                 print(statement.balance)
-                try write(rows: statement.toCoinTrackingRows(), filename: "EthereumStatement")
+                try File.write(rows: statement.toCoinTrackingRows(), filename: "EthereumStatement")
             } catch {
                 print(error)
             }
