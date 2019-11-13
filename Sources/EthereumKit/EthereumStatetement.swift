@@ -44,11 +44,11 @@ public struct EthereumStatement {
         let successfulOutgoingNormal = outgoingNormal.filter { $0.isSuccessful }
         let successfulOutgoingInternal = outgoingInternal.filter { $0.isSuccessful }
 
-        incomingNormalTransactions = incomingNormal.sorted(by: >)
-        incomingInternalTransactions = incomingInternal.sorted(by: >)
+        incomingNormalTransactions = incomingNormal.filter({ !$0.amount.isZero }).sorted(by: >)
+        incomingInternalTransactions = incomingInternal.filter({ !$0.amount.isZero }).sorted(by: >)
         // Only successful transactions are debited
-        successfulOutgoingNormalTransactions = successfulOutgoingNormal.sorted(by: >)
-        successfulOutgoingInternalTransactions = successfulOutgoingInternal.sorted(by: >)
+        successfulOutgoingNormalTransactions = successfulOutgoingNormal.filter({ !$0.amount.isZero }).sorted(by: >)
+        successfulOutgoingInternalTransactions = successfulOutgoingInternal.filter({ !$0.amount.isZero }).sorted(by: >)
         // Any outgoing transaction incures fees even if it fails
         feeIncurringTransactions = outgoing.sorted(by: >)
     }

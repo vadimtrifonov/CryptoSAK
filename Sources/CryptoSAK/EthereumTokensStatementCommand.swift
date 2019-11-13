@@ -73,13 +73,6 @@ private extension EthereumTokensBalance {
     }
 }
 
-private func write(csv: String, to directory: URL) throws {
-    let url = directory.appendingPathComponent("Export.csv")
-    try csv.write(to: url, atomically: true, encoding: .utf8)
-
-    print("Done, wrote to \(url.path)")
-}
-
 private extension EthereumTokensStatement {
     func toCoinTrackingRows() -> [CoinTrackingRow] {
         let rows = incoming.map(CoinTrackingRow.makeDeposit)
