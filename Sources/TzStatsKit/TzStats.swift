@@ -22,6 +22,7 @@ public struct TzStats {
         let is_success: Bool
         let volume: Decimal
         let fee: Decimal
+        let burned: Decimal
         let sender: String
         let receiver: String?
         let delegate: String?

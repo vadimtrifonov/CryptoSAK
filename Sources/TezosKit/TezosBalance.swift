@@ -20,7 +20,7 @@ public struct TezosBalance {
         let incoming = allIncomingOperations.reduce(0) { $0 + $1.amount }
 
         let successfulOutgoing = successfulOutgoingTransactions.reduce(0) { $0 + $1.amount }
-        let fees = feeIncuringOperations.reduce(0) { $0 + $1.fee }
+        let fees = feeIncuringOperations.reduce(0) { $0 + $1.fee + $1.burn }
 
         balance = incoming - successfulOutgoing - fees
         self.delegationRewards = delegationRewards

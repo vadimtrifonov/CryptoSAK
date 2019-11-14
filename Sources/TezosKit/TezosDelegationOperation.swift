@@ -5,6 +5,7 @@ public struct TezosDelegationOperation: TezosOperation {
     public let sender: String
     public let delegate: String
     public let fee: Decimal
+    public let burn: Decimal
     public let timestamp: Date
     public let isSuccessful: Bool
 
@@ -13,6 +14,7 @@ public struct TezosDelegationOperation: TezosOperation {
         sender: String,
         delegate: String,
         fee: Decimal,
+        burn: Decimal,
         timestamp: Date,
         isSuccessful: Bool
     ) {
@@ -20,6 +22,7 @@ public struct TezosDelegationOperation: TezosOperation {
         self.sender = sender
         self.delegate = delegate
         self.fee = fee
+        self.burn = burn
         self.timestamp = timestamp
         self.isSuccessful = isSuccessful
     }

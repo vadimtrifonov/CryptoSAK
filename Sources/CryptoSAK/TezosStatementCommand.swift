@@ -130,13 +130,15 @@ private extension CoinTrackingRow {
     }
 
     static func makeFee(operation: TezosOperation) -> CoinTrackingRow {
-        self.init(
+        let totalFee = operation.fee + operation.burn
+        
+        return self.init(
             type: .outgoing(.lost),
             buyAmount: 0,
             buyCurrency: "",
-            sellAmount: operation.fee,
+            sellAmount: totalFee,
             sellCurrency: "XTZ",
-            fee: operation.fee,
+            fee: totalFee,
             feeCurrency: "XTZ",
             exchange: operation.senderNameForCoinTracking,
             group: "Fee",

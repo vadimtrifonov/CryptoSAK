@@ -13,6 +13,7 @@ extension TezosTransactionOperation {
             receiver: receiver,
             amount: operation.volume,
             fee: operation.fee,
+            burn: operation.burned,
             timestamp: try operation.timestamp(),
             isSuccessful: operation.is_success
         )

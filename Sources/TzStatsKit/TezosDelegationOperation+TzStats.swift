@@ -12,6 +12,7 @@ extension TezosDelegationOperation {
             sender: operation.sender,
             delegate: delegate,
             fee: operation.fee,
+            burn: operation.burned,
             timestamp: try operation.timestamp(),
             isSuccessful: operation.is_success
         )

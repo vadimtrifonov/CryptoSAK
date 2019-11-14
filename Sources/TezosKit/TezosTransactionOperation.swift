@@ -6,6 +6,7 @@ public struct TezosTransactionOperation: TezosOperation {
     public let receiver: String
     public let amount: Decimal
     public let fee: Decimal
+    public let burn: Decimal
     public let timestamp: Date
     public let isSuccessful: Bool
 
@@ -15,6 +16,7 @@ public struct TezosTransactionOperation: TezosOperation {
         receiver: String,
         amount: Decimal,
         fee: Decimal,
+        burn: Decimal,
         timestamp: Date,
         isSuccessful: Bool
     ) {
@@ -23,6 +25,7 @@ public struct TezosTransactionOperation: TezosOperation {
         self.receiver = receiver
         self.amount = amount
         self.fee = fee
+        self.burn = burn
         self.timestamp = timestamp
         self.isSuccessful = isSuccessful
     }
