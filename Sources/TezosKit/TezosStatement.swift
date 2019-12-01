@@ -37,8 +37,8 @@ public struct TezosStatement {
 
         self.transactions = .init(
             delegationRewards: delegationRewards.sorted(by: >),
-            otherIncoming: otherIncoming.sorted(by: >),
-            successfulOutgoing: successfulOutgoing.sorted(by: >)
+            otherIncoming: otherIncoming.filter({ !$0.amount.isZero }).sorted(by: >),
+            successfulOutgoing: successfulOutgoing.filter({ !$0.amount.isZero }).sorted(by: >)
         )
         self.successfulDelegations = successfulDelegations.sorted(by: >)
         self.feeIncuringOperations = feeIncuringOperations.sorted(by: { $0.timestamp > $1.timestamp })

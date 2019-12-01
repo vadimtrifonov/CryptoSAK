@@ -42,22 +42,15 @@ struct TezosCapitalStatementCommand {
     ) -> AnyPublisher<[CoinTrackingRow], Error> {
         fetchRewards(address)
             .flatMap(maxPublishers: .max(1)) { rewards in
-                fetchCycles(cycles: rewards.map({ $0.cycle }), fetchCycle: fetchCycle)
-                    .map { cycles in
-                        Self.filterRewardsWithCycles(
-                            rewards: rewards,
-                            cycles: cycles,
-                            startDate: startDate
-                        )
-                    }
+                recursivelyFetchRewardCycles(
+                    rewardsIterator: rewards.makeSortedIterator(),
+                    accumulatedRewardsWithCycles: [],
+                    startDate: startDate,
+                    fetchCycle: fetchCycle
+                )
             }
-            .map { rewards in
-                rewards.map { reward, cycle in
-                    CoinTrackingRow.makeBondPoolReward(
-                        amount: reward.reward,
-                        date: cycle.end
-                    )
-                }
+            .map { rewardsWithCycles in
+                rewardsWithCycles.map(CoinTrackingRow.makeBondPoolReward)
             }
             .eraseToAnyPublisher()
     }
@@ -74,7 +67,42 @@ struct TezosCapitalStatementCommand {
             }
         }
     }
-
+    
+    static func recursivelyFetchRewardCycles(
+        rewardsIterator: IndexingIterator<[TezosCapital.Reward]>,
+        accumulatedRewardsWithCycles: [(TezosCapital.Reward, TezosCycle)],
+        startDate: Date,
+        fetchCycle: @escaping (_ cycle: Int) -> AnyPublisher<TezosCycle, Error>
+    ) -> AnyPublisher<[(TezosCapital.Reward, TezosCycle)], Error> {
+        var rewardsIterator = rewardsIterator
+        guard let reward = rewardsIterator.next() else {
+            return Just(accumulatedRewardsWithCycles).mapError(toError).eraseToAnyPublisher()
+        }
+        
+        return fetchCycle(reward.cycle)
+            .map { cycle in
+                accumulateRewardsWithCycles(
+                    reward: reward,
+                    cycle: cycle,
+                    accumulatedRewardsWithCycles: accumulatedRewardsWithCycles,
+                    startDate: startDate
+                )
+            }
+            .flatMap(maxPublishers: .max(1)) { accumulatedRewardsWithCycles, startDateReached -> AnyPublisher<[(TezosCapital.Reward, TezosCycle)], Error> in
+                if startDateReached {
+                    return Just(accumulatedRewardsWithCycles).mapError(toError).eraseToAnyPublisher()
+                }
+                
+                return recursivelyFetchRewardCycles(
+                    rewardsIterator: rewardsIterator,
+                    accumulatedRewardsWithCycles: accumulatedRewardsWithCycles,
+                    startDate: startDate,
+                    fetchCycle: fetchCycle
+                )
+            }
+            .eraseToAnyPublisher()
+    }
+    
     static func fetchCycle(
         urlSession: URLSession
     ) -> (_ cycle: Int) -> AnyPublisher<TezosCycle, Error> {
@@ -90,35 +118,35 @@ struct TezosCapitalStatementCommand {
         }
     }
 
-    static func fetchCycles(
-        cycles: [Int],
-        fetchCycle: (_ cycle: Int) -> AnyPublisher<TezosCycle, Error>
-    ) -> AnyPublisher<[TezosCycle], Error> {
-        cycles.reduce(Empty<TezosCycle, Error>().eraseToAnyPublisher()) { publisher, cycle in
-            publisher.merge(with: fetchCycle(cycle)).eraseToAnyPublisher()
-        }
-        .collect()
-        .eraseToAnyPublisher()
-    }
-
-    static func filterRewardsWithCycles(
-        rewards: [TezosCapital.Reward],
-        cycles: [TezosCycle],
+    static func accumulateRewardsWithCycles(
+        reward: TezosCapital.Reward,
+        cycle: TezosCycle,
+        accumulatedRewardsWithCycles: [(TezosCapital.Reward, TezosCycle)],
         startDate: Date
-    ) -> [(TezosCapital.Reward, TezosCycle)] {
-        rewards.compactMap { reward in
-            cycles.first(where: { $0.cycle == reward.cycle }).map({ (reward, $0) })
+    ) -> ([(TezosCapital.Reward, TezosCycle)], startDateReached: Bool) {
+        var accumulatedRewardsWithCycles = accumulatedRewardsWithCycles
+        let startDateReached = cycle.end < startDate
+        
+        if reward.reward.isNormal, !startDateReached {
+            accumulatedRewardsWithCycles.append((reward, cycle))
         }
-        .filter({ $0.0.reward.isNormal && $0.1.end >= startDate })
+
+        return (accumulatedRewardsWithCycles, startDateReached: startDateReached)
+    }
+}
+
+extension Array where Element == TezosCapital.Reward {
+    func makeSortedIterator() -> IndexingIterator<[TezosCapital.Reward]> {
+        sorted(by: { $0.cycle > $1.cycle }).makeIterator()
     }
 }
 
 extension CoinTrackingRow {
 
-    static func makeBondPoolReward(amount: Decimal, date: Date) -> CoinTrackingRow {
+    static func makeBondPoolReward(reward: TezosCapital.Reward, cycle: TezosCycle) -> CoinTrackingRow {
         self.init(
             type: .incoming(.mining),
-            buyAmount: amount,
+            buyAmount: reward.reward,
             buyCurrency: "XTZ",
             sellAmount: 0,
             sellCurrency: "",
@@ -126,8 +154,8 @@ extension CoinTrackingRow {
             feeCurrency: "",
             exchange: "Tezos Capital",
             group: "Bond Pool",
-            comment: "Export",
-            date: date
+            comment: "Export. Cycle: \(cycle.cycle)",
+            date: cycle.end
         )
     }
 }
