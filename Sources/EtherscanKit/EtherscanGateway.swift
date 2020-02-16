@@ -6,9 +6,11 @@ import HTTPClient
 
 public class EtherscanGateway: EthereumGateway {
     let httpClient: HTTPClient
+    let apiKey: String
 
-    public init(httpClient: HTTPClient) {
+    public init(httpClient: HTTPClient, apiKey: String) {
         self.httpClient = httpClient
+        self.apiKey = apiKey
     }
 
     public func fetchNormalTransactions(
@@ -22,6 +24,7 @@ public class EtherscanGateway: EthereumGateway {
             "startblock": "0",
             "endblock": "99999999",
             "sort": "desc",
+            "apiKey": apiKey,
         ]
 
         return httpClient.get(path: "/api", parameters: parameters)
@@ -44,6 +47,7 @@ public class EtherscanGateway: EthereumGateway {
             "startblock": "0",
             "endblock": "99999999",
             "sort": "desc",
+            "apiKey": apiKey,
         ]
 
         return httpClient.get(path: "/api", parameters: parameters)
@@ -66,6 +70,7 @@ public class EtherscanGateway: EthereumGateway {
             "startblock": "0",
             "endblock": "99999999",
             "sort": "desc",
+            "apiKey": apiKey,
         ]
 
         return httpClient.get(
@@ -106,6 +111,7 @@ public class EtherscanGateway: EthereumGateway {
             "module": "proxy",
             "action": "eth_getTransactionByHash",
             "txhash": hash,
+            "apiKey": apiKey,
         ]
 
         return httpClient.get(path: "/api", parameters: parameters)
@@ -123,6 +129,7 @@ public class EtherscanGateway: EthereumGateway {
             "action": "eth_getBlockByNumber",
             "boolean": "false",
             "tag": number,
+            "apiKey": apiKey,
         ]
 
         return httpClient.get(path: "/api", parameters: parameters)
@@ -139,6 +146,7 @@ public class EtherscanGateway: EthereumGateway {
             "module": "proxy",
             "action": "eth_getTransactionReceipt",
             "txhash": hash,
+            "apiKey": apiKey,
         ]
 
         return httpClient.get(path: "/api", parameters: parameters)
