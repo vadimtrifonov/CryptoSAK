@@ -21,7 +21,7 @@ public struct EthereumToken {
 
 extension EthereumToken: Equatable {
     public static func == (lhs: EthereumToken, rhs: EthereumToken) -> Bool {
-        return lhs.contractAddress.lowercased() == rhs.contractAddress.lowercased()
+        lhs.contractAddress.lowercased() == rhs.contractAddress.lowercased()
     }
 }
 
@@ -33,6 +33,6 @@ extension EthereumToken: Hashable {
 
 extension EthereumToken: Comparable {
     public static func < (lhs: EthereumToken, rhs: EthereumToken) -> Bool {
-        return lhs.symbol.lowercased() < rhs.symbol.lowercased()
+        lhs.symbol.lowercased() < rhs.symbol.lowercased()
     }
 }

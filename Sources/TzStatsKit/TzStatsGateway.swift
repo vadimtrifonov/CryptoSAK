@@ -33,7 +33,7 @@ public final class TzStatsGateway: TezosGateway {
         account: String,
         startDate: Date
     ) -> AnyPublisher<[TezosDelegationOperation], Error> {
-        return recursivelyFetchOperations(
+        recursivelyFetchOperations(
             account: account,
             type: .delegation,
             accumulatedOperations: [],
@@ -55,7 +55,7 @@ public final class TzStatsGateway: TezosGateway {
         offset: Int,
         startDate: Date
     ) -> AnyPublisher<[TzStats.Operation], Error> {
-        return fetchTransactionOperations(
+        fetchTransactionOperations(
             account: account,
             limit: limit,
             offset: offset

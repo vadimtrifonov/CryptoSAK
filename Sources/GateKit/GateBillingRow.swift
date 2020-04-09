@@ -48,6 +48,6 @@ extension GateBillingRow {
     }
 
     private static func makeCurrency(string: String) -> String {
-        return string.trimmingCharacters(in: CharacterSet.uppercaseLetters.inverted)
+        string.trimmingCharacters(in: CharacterSet.uppercaseLetters.inverted)
     }
 }

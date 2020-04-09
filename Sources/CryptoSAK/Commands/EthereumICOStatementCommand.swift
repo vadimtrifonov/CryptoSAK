@@ -1,31 +1,39 @@
+import ArgumentParser
 import CoinTrackingKit
 import Combine
 import EthereumKit
 import EtherscanKit
 import Foundation
 
-struct EthereumICOStatementCommand {
-    let gateway: EthereumGateway
+struct EthereumICOStatementCommand: ParsableCommand {
 
-    func execute(inputPath: String) throws {
+    static var configuration = CommandConfiguration(commandName: "ethereum-ico-statement")
+
+    @Argument(help: "Path to CSV file with information about ICO")
+    var inputPath: String
+
+    func run() throws {
         var subscriptions = Set<AnyCancellable>()
         let csvRows = try File.read(path: inputPath)
 
         guard let ico = try csvRows.map(ICO.init).first else {
             print("Nothing to export")
-            exit(1)
+            Self.exit()
         }
+
+        let gateway: EthereumGateway = makeEthereumGateway()
 
         Self.exportICOTransactions(
             ico: ico,
             fetchTransaction: gateway.fetchTransaction,
-            fetchTokenTranactions: { self.gateway.fetchTokenTransactions(address: $0, startDate: Date.distantPast) }
+            fetchTokenTranactions: { gateway.fetchTokenTransactions(address: $0, startDate: Date.distantPast) }
         )
         .sink(receiveCompletion: { completion in
             if case let .failure(error) = completion {
                 print(error)
             }
-            exit(0)
+
+            Self.exit()
         }, receiveValue: { rows in
             do {
                 try File.write(rows: rows, filename: "ICOExport")

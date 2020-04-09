@@ -59,7 +59,7 @@ extension TzStats.Operation {
     private static let dateFormatter = ISO8601DateFormatter()
 
     func timestamp() throws -> Date {
-        return try Self.dateFormatter.date(from: time)
+        try Self.dateFormatter.date(from: time)
     }
 }
 

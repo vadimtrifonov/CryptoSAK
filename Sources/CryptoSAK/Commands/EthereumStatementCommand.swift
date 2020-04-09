@@ -1,14 +1,23 @@
+import ArgumentParser
 import CoinTrackingKit
 import Combine
 import EthereumKit
 import EtherscanKit
 import Foundation
 
-struct EthereumStatementCommand {
-    let gateway: EthereumGateway
+struct EthereumStatementCommand: ParsableCommand {
 
-    func execute(address: String, startDate: Date) throws {
+    static var configuration = CommandConfiguration(commandName: "ethereum-statement")
+
+    @Argument(help: "Etherium address")
+    var address: String
+
+    @Option(default: Date.distantPast, help: "Oldest date from which transactions will be exported")
+    var startDate: Date
+
+    func run() throws {
         var subscriptions = Set<AnyCancellable>()
+        let gateway = makeEthereumGateway()
 
         Publishers.Zip(
             gateway.fetchNormalTransactions(address: address, startDate: startDate),
@@ -18,8 +27,8 @@ struct EthereumStatementCommand {
             if case let .failure(error) = completion {
                 print(error)
             }
-            exit(0)
-        }, receiveValue: { normalTransactions, internalTransactions in
+            Self.exit()
+        }, receiveValue: { [address] normalTransactions, internalTransactions in
             do {
                 let statement = EthereumStatement(
                     normalTransactions: normalTransactions,
@@ -51,7 +60,7 @@ private extension EthereumStatement {
 
 private extension CoinTrackingRow {
     static func makeFee(transaction: EthereumTransaction) -> CoinTrackingRow {
-        return CoinTrackingRow(
+        CoinTrackingRow(
             type: .outgoing(.lost),
             buyAmount: 0,
             buyCurrency: "",
@@ -67,7 +76,7 @@ private extension CoinTrackingRow {
     }
 
     static func makeNormalDeposit(transaction: EthereumTransaction) -> CoinTrackingRow {
-        return CoinTrackingRow(
+        CoinTrackingRow(
             type: .incoming(.deposit),
             buyAmount: transaction.amount,
             buyCurrency: "ETH",
@@ -83,7 +92,7 @@ private extension CoinTrackingRow {
     }
 
     static func makeInternalDeposit(transaction: EthereumTransaction) -> CoinTrackingRow {
-        return CoinTrackingRow(
+        CoinTrackingRow(
             type: .incoming(.deposit),
             buyAmount: transaction.amount,
             buyCurrency: "ETH",
@@ -99,7 +108,7 @@ private extension CoinTrackingRow {
     }
 
     static func makeNormalWithdrawal(transaction: EthereumTransaction) -> CoinTrackingRow {
-        return CoinTrackingRow(
+        CoinTrackingRow(
             type: .outgoing(.withdrawal),
             buyAmount: 0,
             buyCurrency: "",
@@ -115,7 +124,7 @@ private extension CoinTrackingRow {
     }
 
     static func makeInternalWithdrawal(transaction: EthereumTransaction) -> CoinTrackingRow {
-        return CoinTrackingRow(
+        CoinTrackingRow(
             type: .outgoing(.withdrawal),
             buyAmount: 0,
             buyCurrency: "",
@@ -133,10 +142,10 @@ private extension CoinTrackingRow {
 
 private extension EthereumTransaction {
     var sourceNameForCoinTracking: String {
-        return "Ethereum \(from.prefix(8))."
+        "Ethereum \(from.prefix(8))."
     }
 
     var destinationNameForCoinTracking: String {
-        return "Ethereum \(to.prefix(8))."
+        "Ethereum \(to.prefix(8))."
     }
 }

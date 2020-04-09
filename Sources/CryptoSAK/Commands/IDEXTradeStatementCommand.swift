@@ -1,10 +1,16 @@
+import ArgumentParser
 import CoinTrackingKit
 import Foundation
 import IDEXKit
 
-struct IDEXTradeStatementCommand {
+struct IDEXTradeStatementCommand: ParsableCommand {
 
-    static func execute(csvPath: String) throws {
+    static var configuration = CommandConfiguration(commandName: "idex-trade-statement")
+
+    @Argument(help: "Path to CSV file with IDEX trade history")
+    var csvPath: String
+
+    func run() throws {
         let csvRows = try File.read(path: csvPath).dropFirst() // drop header row
         let tradeRows = try csvRows.map(IDEXTradeRow.init)
         let rows = tradeRows.map(CoinTrackingRow.init)

@@ -28,17 +28,17 @@ public struct EthereumTransaction {
     }
 
     public func isIncoming(address: String) -> Bool {
-        return to.lowercased() == address.lowercased()
+        to.lowercased() == address.lowercased()
     }
 
     public func isOutgoing(address: String) -> Bool {
-        return from.lowercased() == address.lowercased()
+        from.lowercased() == address.lowercased()
     }
 }
 
 extension EthereumTransaction: Equatable {
     public static func == (lhs: EthereumTransaction, rhs: EthereumTransaction) -> Bool {
-        return lhs.hash == rhs.hash
+        lhs.hash == rhs.hash
     }
 }
 
@@ -50,6 +50,6 @@ extension EthereumTransaction: Hashable {
 
 extension EthereumTransaction: Comparable {
     public static func < (lhs: EthereumTransaction, rhs: EthereumTransaction) -> Bool {
-        return lhs.date < rhs.date
+        lhs.date < rhs.date
     }
 }

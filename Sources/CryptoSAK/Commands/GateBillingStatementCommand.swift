@@ -1,10 +1,16 @@
+import ArgumentParser
 import CoinTrackingKit
 import Foundation
 import GateKit
 
-struct GateBillingStatementCommand {
+struct GateBillingStatementCommand: ParsableCommand {
 
-    static func execute(csvPath: String) throws {
+    static var configuration = CommandConfiguration(commandName: "gate-billing-statement")
+
+    @Argument(help: "Path to Gate.io billing CSV file")
+    var csvPath: String
+
+    func run() throws {
         let csvRows = try File.read(path: csvPath).dropFirst() // drop header row
         let gateRows = try csvRows.map(GateBillingRow.init)
         let statement = try GateStatement(rows: gateRows)

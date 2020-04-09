@@ -1,3 +1,4 @@
+import ArgumentParser
 import CoinTrackingKit
 import Combine
 import Foundation
@@ -7,8 +8,17 @@ import TezosCapitalKit
 import TezosKit
 import TzStatsKit
 
-struct TezosCapitalStatementCommand {
-    static func execute(address: String, startDate: Date) throws {
+struct TezosCapitalStatementCommand: ParsableCommand {
+
+    static var configuration = CommandConfiguration(commandName: "tezos-capital-statement")
+
+    @Argument(help: "Bond pool address")
+    var address: String
+
+    @Option(default: Date.distantPast, help: "Oldest operation date in ISO format")
+    var startDate: Date
+
+    func run() throws {
         var subscriptions = Set<AnyCancellable>()
 
         Self.exportRewards(
@@ -21,7 +31,7 @@ struct TezosCapitalStatementCommand {
             if case let .failure(error) = completion {
                 print(error)
             }
-            exit(0)
+            Self.exit()
         }, receiveValue: { rows in
             do {
                 try File.write(rows: rows, filename: "TezosCapitalStatement")
@@ -67,7 +77,7 @@ struct TezosCapitalStatementCommand {
             }
         }
     }
-    
+
     static func recursivelyFetchRewardCycles(
         rewardsIterator: IndexingIterator<[TezosCapital.Reward]>,
         accumulatedRewardsWithCycles: [(TezosCapital.Reward, TezosCycle)],
@@ -78,7 +88,7 @@ struct TezosCapitalStatementCommand {
         guard let reward = rewardsIterator.next() else {
             return Just(accumulatedRewardsWithCycles).mapError(toError).eraseToAnyPublisher()
         }
-        
+
         return fetchCycle(reward.cycle)
             .map { cycle in
                 accumulateRewardsWithCycles(
@@ -92,7 +102,7 @@ struct TezosCapitalStatementCommand {
                 if startDateReached {
                     return Just(accumulatedRewardsWithCycles).mapError(toError).eraseToAnyPublisher()
                 }
-                
+
                 return recursivelyFetchRewardCycles(
                     rewardsIterator: rewardsIterator,
                     accumulatedRewardsWithCycles: accumulatedRewardsWithCycles,
@@ -102,7 +112,7 @@ struct TezosCapitalStatementCommand {
             }
             .eraseToAnyPublisher()
     }
-    
+
     static func fetchCycle(
         urlSession: URLSession
     ) -> (_ cycle: Int) -> AnyPublisher<TezosCycle, Error> {
@@ -126,7 +136,7 @@ struct TezosCapitalStatementCommand {
     ) -> ([(TezosCapital.Reward, TezosCycle)], startDateReached: Bool) {
         var accumulatedRewardsWithCycles = accumulatedRewardsWithCycles
         let startDateReached = cycle.end < startDate
-        
+
         if reward.reward.isNormal, !startDateReached {
             accumulatedRewardsWithCycles.append((reward, cycle))
         }

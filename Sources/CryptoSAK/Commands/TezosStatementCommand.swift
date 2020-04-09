@@ -1,3 +1,4 @@
+import ArgumentParser
 import CoinTrackingKit
 import Combine
 import Foundation
@@ -5,12 +6,24 @@ import HTTPClient
 import TezosKit
 import TzStatsKit
 
-struct TezosStatementCommand {
-    static func execute(account: String, delegateListPath: String, startDate: Date) throws {
+struct TezosStatementCommand: ParsableCommand {
+
+    static var configuration = CommandConfiguration(commandName: "tezos-statement")
+
+    @Argument(help: "Tezos account")
+    var account: String
+
+    @Option(name: .customLong("delegate-path"), help: "Path to a CSV file with a list of delegate payout accounts (for detection of baking rewards)")
+    var delegateListPath: String?
+
+    @Option(default: Date.distantPast, help: "Oldest date from which operations will be exported")
+    var startDate: Date
+
+    func run() throws {
         var subscriptions = Set<AnyCancellable>()
         let tezosGateway = TzStatsGateway(urlSession: URLSession.shared)
 
-        let rows = delegateListPath.isEmpty ? [] : try File.read(path: delegateListPath)
+        let rows = try delegateListPath.map(File.read(path:)) ?? []
         let delegateAccounts = rows.compactMap { row in
             row.split(separator: ",").map(String.init).first
         }
@@ -25,7 +38,7 @@ struct TezosStatementCommand {
             if case let .failure(error) = completion {
                 print(error)
             }
-            exit(0)
+            Self.exit()
         }, receiveValue: { statement in
             do {
                 print(statement.balance)
@@ -131,7 +144,7 @@ private extension CoinTrackingRow {
 
     static func makeFee(operation: TezosOperation) -> CoinTrackingRow {
         let totalFee = operation.fee + operation.burn
-        
+
         return self.init(
             type: .outgoing(.lost),
             buyAmount: 0,
@@ -150,12 +163,12 @@ private extension CoinTrackingRow {
 
 extension TezosTransactionOperation {
     var receiverNameForCoinTracking: String {
-        return "Tezos \(receiver.prefix(8))."
+        "Tezos \(receiver.prefix(8))."
     }
 }
 
 extension TezosOperation {
     var senderNameForCoinTracking: String {
-        return "Tezos \(sender.prefix(8))."
+        "Tezos \(sender.prefix(8))."
     }
 }

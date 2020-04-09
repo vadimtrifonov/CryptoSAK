@@ -54,7 +54,7 @@ public final class DefaultHTTPClient: HTTPClient {
     }
 
     private func executeRequest<T: Decodable>(request: URLRequest) -> AnyPublisher<T, Error> {
-        return session.dataTaskPublisher(for: request).tryMap { data, _ in
+        session.dataTaskPublisher(for: request).tryMap { data, _ in
             #if DEBUG
                 os_log("%@", "\(request.hashValue) RESPONSE: \(data.description)")
             #endif
@@ -118,7 +118,7 @@ private extension Data {
 extension URLSession {
 
     func downloadTaskPublisher(with request: URLRequest) -> DownloadTaskPublisher {
-        return DownloadTaskPublisher(request: request, session: self)
+        DownloadTaskPublisher(request: request, session: self)
     }
 }
 
@@ -169,7 +169,7 @@ private final class DownloadTaskSubscription<S: Subscriber>: Subscription
         request: URLRequest,
         session: URLSession
     ) -> URLSessionDownloadTask {
-        return session.downloadTask(with: request) { url, response, error in
+        session.downloadTask(with: request) { url, response, error in
             if let url = url, let response = response {
                 _ = subscriber.receive((url, response))
                 subscriber.receive(completion: .finished)

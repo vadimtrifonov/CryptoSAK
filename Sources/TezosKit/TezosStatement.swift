@@ -36,7 +36,7 @@ public struct TezosStatement {
         let feeIncuringOperations = feeIncuringOutgoing + feeIncuringDelegations
 
         self.transactions = .init(
-            delegationRewards: delegationRewards.sorted(by: >),
+            delegationRewards: delegationRewards.filter({ !$0.amount.isZero }).sorted(by: >),
             otherIncoming: otherIncoming.filter({ !$0.amount.isZero }).sorted(by: >),
             successfulOutgoing: successfulOutgoing.filter({ !$0.amount.isZero }).sorted(by: >)
         )
@@ -50,7 +50,7 @@ public struct TezosStatement {
         public let successfulOutgoing: [TezosTransactionOperation]
 
         public var all: [TezosTransactionOperation] {
-            return (delegationRewards + otherIncoming + successfulOutgoing).sorted(by: >)
+            (delegationRewards + otherIncoming + successfulOutgoing).sorted(by: >)
         }
     }
 }

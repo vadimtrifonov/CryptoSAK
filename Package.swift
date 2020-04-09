@@ -9,13 +9,13 @@ let package = Package(
         .macOS(.v10_15),
     ],
     dependencies: [
-        .package(url: "https://github.com/kylef/Commander.git", from: "0.8.0"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "0.0.1"),
     ],
     targets: [
         .target(
             name: "CryptoSAK",
             dependencies: [
-                "Commander",
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 "CoinTrackingKit",
                 "EthereumKit",
                 "EtherscanKit",

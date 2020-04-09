@@ -1,12 +1,18 @@
+import ArgumentParser
 import CoinTrackingKit
 import Foundation
 import IDEXKit
 
-struct IDEXBalanceStatementCommand {
+struct IDEXBalanceStatementCommand: ParsableCommand {
 
-    static func execute(tsvPath: String) throws {
-        let tsvPath = try File.read(path: tsvPath).dropFirst() // drop header row
-        let tradeRows = try tsvPath.map(IDEXBalanceRow.init)
+    static var configuration = CommandConfiguration(commandName: "idex-balance-statement")
+
+    @Argument(help: "Path to TSV file with IDEX balance history")
+    var tsvPath: String
+
+    func run() throws {
+        let tsvRows = try File.read(path: tsvPath).dropFirst() // drop header row
+        let tradeRows = try tsvRows.map(IDEXBalanceRow.init)
         let rows = tradeRows.map(CoinTrackingRow.init)
         try File.write(rows: rows, filename: "IDEXBalanceStatement")
     }

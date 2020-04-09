@@ -1,20 +1,32 @@
+import ArgumentParser
 import CoinTrackingKit
 import Combine
 import EthereumKit
 import EtherscanKit
 import Foundation
 
-struct EthereumTokensStatementCommand {
-    let gateway: EthereumGateway
+struct EthereumTokensStatementCommand: ParsableCommand {
 
-    func execute(address: String, tokenListPath: String, startDate: Date) throws {
+    static var configuration = CommandConfiguration(commandName: "ethereum-tokens-statement")
+
+    @Argument(help: "Ethereum address")
+    var address: String
+
+    @Option(name: .customLong("token-list"), help: "Path to CSV file with the list of tokens to be exported (other tokens will be ignored)")
+    var tokenListPath: String?
+
+    @Option(default: Date.distantPast, help: " Oldest date from which transactions will be exported")
+    var startDate: Date
+
+    func run() throws {
         var subscriptions = Set<AnyCancellable>()
 
-        let rows = tokenListPath.isEmpty ? [] : try File.read(path: tokenListPath)
+        let rows = try tokenListPath.map(File.read(path:)) ?? []
         let tokenContractAddresses = rows.compactMap { row in
             row.split(separator: ",").map(String.init).first
         }
 
+        let gateway = makeEthereumGateway()
         gateway.fetchTokenTransactions(address: address, startDate: startDate)
             .map { transactions in
                 Self.filteredTokenTransactions(
@@ -26,8 +38,8 @@ struct EthereumTokensStatementCommand {
                 if case let .failure(error) = completion {
                     print(error)
                 }
-                exit(0)
-            }, receiveValue: { transactions in
+                Self.exit()
+            }, receiveValue: { [address] transactions in
                 do {
                     let statement = EthereumTokensStatement(
                         transactions: transactions,
@@ -83,7 +95,7 @@ private extension EthereumTokensStatement {
 
 private extension CoinTrackingRow {
     static func makeDeposit(transaction: EthereumTokenTransaction) -> CoinTrackingRow {
-        return CoinTrackingRow(
+        CoinTrackingRow(
             type: .incoming(.deposit),
             buyAmount: transaction.amount,
             buyCurrency: transaction.token.symbol,
@@ -99,7 +111,7 @@ private extension CoinTrackingRow {
     }
 
     static func makeWithdrawal(transaction: EthereumTokenTransaction) -> CoinTrackingRow {
-        return CoinTrackingRow(
+        CoinTrackingRow(
             type: .outgoing(.withdrawal),
             buyAmount: 0,
             buyCurrency: "",
@@ -117,10 +129,10 @@ private extension CoinTrackingRow {
 
 private extension EthereumTokenTransaction {
     var sourceNameForCoinTracking: String {
-        return "Ethereum \(from.prefix(8))."
+        "Ethereum \(from.prefix(8))."
     }
 
     var destinationNameForCoinTracking: String {
-        return "Ethereum \(to.prefix(8))."
+        "Ethereum \(to.prefix(8))."
     }
 }

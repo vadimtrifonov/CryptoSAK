@@ -2,7 +2,7 @@ import Foundation
 
 extension Dictionary where Key == String, Value == Any {
     public func toFormURLEncoded() -> String {
-        return flatMap { queryComponents(fromKey: $0, value: $1) }
+        flatMap { queryComponents(fromKey: $0, value: $1) }
             .map { "\($0)=\($1)" }
             .joined(separator: "&")
     }

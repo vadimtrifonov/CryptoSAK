@@ -85,6 +85,6 @@ public struct CoinTrackingRow: Equatable {
 
 extension CoinTrackingRow: Comparable {
     public static func < (lhs: CoinTrackingRow, rhs: CoinTrackingRow) -> Bool {
-        return lhs.date < rhs.date
+        lhs.date < rhs.date
     }
 }

@@ -31,17 +31,17 @@ public struct TezosTransactionOperation: TezosOperation {
     }
 
     public func isIncoming(account: String) -> Bool {
-        return receiver.lowercased() == account.lowercased()
+        receiver.lowercased() == account.lowercased()
     }
 
     public func isOutgoing(account: String) -> Bool {
-        return sender.lowercased() == account.lowercased()
+        sender.lowercased() == account.lowercased()
     }
 }
 
 extension TezosTransactionOperation: Equatable {
     public static func == (lhs: TezosTransactionOperation, rhs: TezosTransactionOperation) -> Bool {
-        return lhs.hash == rhs.hash
+        lhs.hash == rhs.hash
     }
 }
 
@@ -53,6 +53,6 @@ extension TezosTransactionOperation: Hashable {
 
 extension TezosTransactionOperation: Comparable {
     public static func < (lhs: TezosTransactionOperation, rhs: TezosTransactionOperation) -> Bool {
-        return lhs.timestamp < rhs.timestamp
+        lhs.timestamp < rhs.timestamp
     }
 }

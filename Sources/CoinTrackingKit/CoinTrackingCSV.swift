@@ -15,7 +15,7 @@ public enum CoinTrackingCSV {
     }
 
     public static func makeCSVRow(row: CoinTrackingRow) -> String {
-        return [
+        [
             row.type.rawValue,
             row.buyAmount.description,
             row.buyCurrency,

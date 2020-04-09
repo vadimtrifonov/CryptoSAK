@@ -30,7 +30,7 @@ public struct TezosDelegationOperation: TezosOperation {
 
 extension TezosDelegationOperation: Equatable {
     public static func == (lhs: TezosDelegationOperation, rhs: TezosDelegationOperation) -> Bool {
-        return lhs.hash == rhs.hash
+        lhs.hash == rhs.hash
     }
 }
 
@@ -42,6 +42,6 @@ extension TezosDelegationOperation: Hashable {
 
 extension TezosDelegationOperation: Comparable {
     public static func < (lhs: TezosDelegationOperation, rhs: TezosDelegationOperation) -> Bool {
-        return lhs.timestamp < rhs.timestamp
+        lhs.timestamp < rhs.timestamp
     }
 }
