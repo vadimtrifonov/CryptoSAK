@@ -30,35 +30,90 @@ enum EthereumProxy {
 
     struct TransactionReceipt: Decodable {
         let gasUsed: String
+        let status: String
+    }
+}
+
+extension EthereumProxy.Block {
+
+    func tryDate() throws -> Date {
+        let timeInterval = try Double(UInt64(hexadecimal: timestamp))
+        return Date(timeIntervalSince1970: timeInterval)
+    }
+}
+
+extension EthereumProxy.Transaction {
+
+    func tryAmountInEther() throws -> Decimal {
+        let amountInWei = try Decimal(UInt64(hexadecimal: value))
+        return amountInWei / Ethereum.weiInEther
+    }
+
+    func tryGasPriceInEther() throws -> Decimal {
+        let gasPriceInWei = try Decimal(UInt64(hexadecimal: gasPrice))
+        return gasPriceInWei / Ethereum.weiInEther
+    }
+}
+
+extension EthereumProxy.TransactionReceipt {
+
+    func tryGasUsed() throws -> Decimal {
+        try Decimal(UInt64(hexadecimal: gasUsed))
+    }
+
+    func tryIsSuccessful() throws -> Bool {
+        try UInt64(hexadecimal: status) != 0
     }
 }
 
 extension EthereumTransaction {
     init(
-        block: EthereumProxy.Block,
-        transaction: EthereumProxy.Transaction,
-        receipt: EthereumProxy.TransactionReceipt
+        proxyBlock: EthereumProxy.Block,
+        proxyTransaction: EthereumProxy.Transaction,
+        proxyReceipt: EthereumProxy.TransactionReceipt
     ) throws {
-        let timeIntreval = try Double(UInt64(hexadecimal: block.timestamp))
-        let date = Date(timeIntervalSince1970: timeIntreval)
+        let fee = try proxyTransaction.tryGasPriceInEther() * proxyReceipt.tryGasUsed()
 
-        let amountInWei = try Decimal(UInt64(hexadecimal: transaction.value))
-        let amountInEther = amountInWei / Ethereum.weiInEther
+        try self.init(
+            hash: proxyTransaction.hash,
+            date: proxyBlock.tryDate(),
+            from: proxyTransaction.from,
+            to: proxyTransaction.to,
+            amount: proxyTransaction.tryAmountInEther(),
+            fee: fee,
+            isSuccessful: proxyReceipt.tryIsSuccessful()
+        )
+    }
+}
 
-        let gasPriceInWei = try Decimal(UInt64(hexadecimal: transaction.gasPrice))
-        let gasPriceInEther = gasPriceInWei / Ethereum.weiInEther
+extension EthereumInternalTransaction {
+    init(
+        internalTransaction: Etherscan.InternalTransaction,
+        proxyTransaction: EthereumProxy.Transaction,
+        proxyReceipt: EthereumProxy.TransactionReceipt
+    ) throws {
+        let timeInterval = try Double(string: internalTransaction.timeStamp)
+        let date = Date(timeIntervalSince1970: timeInterval)
 
-        let gasUsed = try Decimal(UInt64(hexadecimal: receipt.gasUsed))
-        let fee = gasPriceInEther * gasUsed
+        let fee = try proxyTransaction.tryGasPriceInEther() * proxyReceipt.tryGasUsed()
+
+        let transaction = try EthereumTransaction(
+            hash: proxyTransaction.hash,
+            date: date,
+            from: proxyTransaction.from,
+            to: proxyTransaction.to,
+            amount: proxyTransaction.tryAmountInEther(),
+            fee: fee,
+            isSuccessful: proxyReceipt.tryIsSuccessful()
+        )
+
+        let internalAmountInEther = try Decimal(string: internalTransaction.value) / Ethereum.weiInEther
 
         self.init(
-            hash: transaction.hash,
-            date: date,
-            from: transaction.from,
-            to: transaction.to,
-            amount: amountInEther,
-            fee: fee,
-            isSuccessful: true // Ethrescan proxy doesn't return a transaction receipt status
+            transaction: transaction,
+            from: internalTransaction.from,
+            to: internalTransaction.to,
+            amount: internalAmountInEther
         )
     }
 }

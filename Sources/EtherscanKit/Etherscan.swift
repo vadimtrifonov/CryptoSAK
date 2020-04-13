@@ -41,6 +41,21 @@ enum Etherscan {
         let txreceipt_status: String?
         let isError: String?
     }
+
+    struct InternalTransactionByHashResponse: Decodable {
+        let status: String
+        let message: String
+        let result: [InternalTransaction]
+    }
+
+    struct InternalTransaction: Decodable {
+        let blockNumber: String
+        let timeStamp: String
+        let from: String
+        let to: String
+        let value: String
+        let isError: String?
+    }
 }
 
 extension EthereumTransaction {

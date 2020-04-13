@@ -67,6 +67,8 @@ Arguments:
 
 1. `balance_tsv` - Path to a TSV file with IDEX balance history
     - Balance history should be manually copied from the website. Open balance history page, select all, and copy to a tab delimited TSV file.
+    - Append the transaction hash to every row (Ethereum withdrawal fees will reported).
+    - Format (with header row): `<date>   <asset>	<type>	<name>	<amount> <status>	<transaction>`
 
 ## IDEX trade statement
 

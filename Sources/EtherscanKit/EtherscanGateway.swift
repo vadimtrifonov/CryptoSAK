@@ -89,17 +89,51 @@ public class EtherscanGateway: EthereumGateway {
         hash: String
     ) -> AnyPublisher<EthereumTransaction, Error> {
         fetchEthereumProxyTransaction(hash: hash)
-            .flatMap(maxPublishers: .max(1)) { transaction in
-                self.fetchEthereumProxyBlock(number: transaction.blockNumber)
-                    .map { ($0, transaction) }
+            .flatMap(maxPublishers: .max(1)) { proxyTransaction in
+                self.fetchEthereumProxyBlock(number: proxyTransaction.blockNumber)
+                    .map { ($0, proxyTransaction) }
             }
             .zip(fetchEthereumProxyTransactionReceipt(hash: hash))
-            .tryMap { blockAndTransaction, receipt in
+            .tryMap { proxyBlockAndTransaction, proxyReceipt in
                 try EthereumTransaction(
-                    block: blockAndTransaction.0,
-                    transaction: blockAndTransaction.1,
-                    receipt: receipt
+                    proxyBlock: proxyBlockAndTransaction.0,
+                    proxyTransaction: proxyBlockAndTransaction.1,
+                    proxyReceipt: proxyReceipt
                 )
+            }
+            .eraseToAnyPublisher()
+    }
+
+    public func fetchInternalTransaction(hash: String) -> AnyPublisher<EthereumInternalTransaction, Error> {
+        Publishers.Zip3(
+            fetchEtherscanInternalTransaction(hash: hash),
+            fetchEthereumProxyTransaction(hash: hash),
+            fetchEthereumProxyTransactionReceipt(hash: hash)
+        )
+        .tryMap { internalTransaction, proxyTransaction, proxyReceipt in
+            try EthereumInternalTransaction(
+                internalTransaction: internalTransaction,
+                proxyTransaction: proxyTransaction,
+                proxyReceipt: proxyReceipt
+            )
+        }
+        .eraseToAnyPublisher()
+    }
+
+    private func fetchEtherscanInternalTransaction(hash: String) -> AnyPublisher<Etherscan.InternalTransaction, Error> {
+        let parameters: [String: Any] = [
+            "module": "account",
+            "action": "txlistinternal",
+            "txhash": hash,
+            "apiKey": apiKey,
+        ]
+
+        return httpClient.get(path: "/api", parameters: parameters)
+            .tryMap { (response: Etherscan.InternalTransactionByHashResponse) in
+                guard let transaction = response.result.first else {
+                    throw "No internal transaction with hash: \(hash)"
+                }
+                return transaction
             }
             .eraseToAnyPublisher()
     }
