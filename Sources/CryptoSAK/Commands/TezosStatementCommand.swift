@@ -13,7 +13,7 @@ struct TezosStatementCommand: ParsableCommand {
     @Argument(help: "Tezos account")
     var account: String
 
-    @Option(name: .customLong("delegate-path"), help: "Path to a CSV file with a list of delegate payout accounts (for detection of baking rewards)")
+    @Option(name: .customLong("delegate-list"), help: "Path to a CSV file with a list of delegate payout accounts (for detection of baking rewards)")
     var delegateListPath: String?
 
     @Option(default: Date.distantPast, help: "Oldest date from which operations will be exported")
