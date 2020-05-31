@@ -233,7 +233,7 @@ private extension CoinTrackingRow {
             )
         case .fee:
             self.init(
-                type: .outgoing(.lost),
+                type: .outgoing(.otherFee),
                 buyAmount: 0,
                 buyCurrency: "",
                 sellAmount: idexBalanceOperation.amount,

@@ -96,7 +96,7 @@ extension TezosStatement {
 private extension CoinTrackingRow {
     static func makeDelegationReward(operation: TezosTransactionOperation) -> CoinTrackingRow {
         self.init(
-            type: .incoming(.mining),
+            type: .incoming(.staking),
             buyAmount: operation.amount,
             buyCurrency: "XTZ",
             sellAmount: 0,
@@ -146,7 +146,7 @@ private extension CoinTrackingRow {
         let totalFee = operation.fee + operation.burn
 
         return self.init(
-            type: .outgoing(.lost),
+            type: .outgoing(.otherFee),
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: totalFee,

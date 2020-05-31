@@ -47,7 +47,7 @@ private extension CoinTrackingRow {
         case .airdrop:
             buy = transaction.amount
             buyCurrency = transaction.currency
-            type = .incoming(.giftOrTip)
+            type = .incoming(.income)
         }
 
         self.init(

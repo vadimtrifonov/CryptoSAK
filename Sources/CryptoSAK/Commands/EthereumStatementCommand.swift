@@ -61,7 +61,7 @@ private extension EthereumStatement {
 private extension CoinTrackingRow {
     static func makeFee(transaction: EthereumTransaction) -> CoinTrackingRow {
         CoinTrackingRow(
-            type: .outgoing(.lost),
+            type: .outgoing(.otherFee),
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: transaction.fee,

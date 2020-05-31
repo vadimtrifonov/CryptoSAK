@@ -155,7 +155,7 @@ extension CoinTrackingRow {
 
     static func makeBondPoolReward(reward: TezosCapital.Reward, cycle: TezosCycle) -> CoinTrackingRow {
         self.init(
-            type: .incoming(.mining),
+            type: .incoming(.staking),
             buyAmount: reward.reward,
             buyCurrency: "XTZ",
             sellAmount: 0,

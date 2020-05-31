@@ -70,13 +70,12 @@ public struct CoinTrackingRow: Equatable {
         public enum Incoming: String {
             case deposit = "Deposit"
             case income = "Income"
-            case mining = "Mining"
-            case giftOrTip = "Gift/Tip"
+            case staking = "Staking"
         }
 
         public enum Outgoing: String {
             case withdrawal = "Withdrawal"
-            case lost = "Lost"
+            case otherFee = "Other Fee"
         }
 
         private static let tradeRawValue = "Trade"
