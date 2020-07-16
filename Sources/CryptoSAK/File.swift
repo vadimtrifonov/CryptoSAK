@@ -1,4 +1,4 @@
-import CoinTrackingKit
+import CoinTracking
 import Foundation
 
 enum File {

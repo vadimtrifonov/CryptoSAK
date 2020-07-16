@@ -8,9 +8,11 @@ struct CryptoSAK: ParsableCommand {
             EthereumICOStatementCommand.self,
             EthereumStatementCommand.self,
             EthereumTokensStatementCommand.self,
+            GateBillingStatementCommand.self,
+            HashgraphICOStatementCommand.self,
+            HashgraphStatementCommand.self,
             IDEXBalanceStatementCommand.self,
             IDEXTradeStatementCommand.self,
-            GateBillingStatementCommand.self,
             TezosCapitalStatementCommand.self,
             TezosStatementCommand.self,
         ]

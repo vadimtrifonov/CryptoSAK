@@ -1,8 +1,8 @@
 import ArgumentParser
-import CoinTrackingKit
+import CoinTracking
 import Combine
-import EthereumKit
-import EtherscanKit
+import Ethereum
+import Etherscan
 import Foundation
 
 struct EthereumICOStatementCommand: ParsableCommand {
@@ -16,7 +16,7 @@ struct EthereumICOStatementCommand: ParsableCommand {
         var subscriptions = Set<AnyCancellable>()
         let csvRows = try File.read(path: inputPath)
 
-        guard let ico = try csvRows.map(ICO.init).first else {
+        guard let ico = try csvRows.map(EthereumICO.init).first else {
             print("Nothing to export")
             Self.exit()
         }
@@ -47,7 +47,7 @@ struct EthereumICOStatementCommand: ParsableCommand {
     }
 
     static func exportICOTransactions(
-        ico: ICO,
+        ico: EthereumICO,
         fetchTransaction: (_ hash: String) -> AnyPublisher<EthereumTransaction, Error>,
         fetchTokenTranactions: @escaping (_ address: String) -> AnyPublisher<[EthereumTokenTransaction], Error>
     ) -> AnyPublisher<[CoinTrackingRow], Error> {
@@ -75,7 +75,7 @@ struct EthereumICOStatementCommand: ParsableCommand {
     }
 
     static func fetchContributionTransactions(
-        ico: ICO,
+        ico: EthereumICO,
         fetchTransaction: (_ hash: String) -> AnyPublisher<EthereumTransaction, Error>
     ) -> AnyPublisher<[EthereumTransaction], Error> {
         ico.contributionHashes
@@ -86,7 +86,7 @@ struct EthereumICOStatementCommand: ParsableCommand {
     }
 
     static func fetchICOTokenPayoutTransactions(
-        ico: ICO,
+        ico: EthereumICO,
         payoutAddress: String,
         fetchTokenTranactions: @escaping (_ address: String) -> AnyPublisher<[EthereumTokenTransaction], Error>
     ) -> AnyPublisher<[EthereumTokenTransaction], Error> {
@@ -102,7 +102,7 @@ struct EthereumICOStatementCommand: ParsableCommand {
     }
 
     static func filterICOTokenPayoutTransactions(
-        ico: ICO,
+        ico: EthereumICO,
         payoutAddress: String,
         tokenTransactions: [EthereumTokenTransaction]
     ) -> [EthereumTokenTransaction] {
@@ -119,7 +119,7 @@ struct EthereumICOStatementCommand: ParsableCommand {
     }
 
     static func makeICOCoinTrackingRows(
-        ico: ICO,
+        ico: EthereumICO,
         contibutionTransactions: [EthereumTransaction],
         tokenPayoutTransactions: [EthereumTokenTransaction]
     ) -> [CoinTrackingRow] {
@@ -144,7 +144,7 @@ struct EthereumICOStatementCommand: ParsableCommand {
     }
 }
 
-public struct ICO {
+public struct EthereumICO {
     public let name: String
     public let tokenSymbol: String
     public let contributionHashes: [String]
@@ -160,7 +160,7 @@ public struct ICO {
     }
 }
 
-private extension ICO {
+private extension EthereumICO {
     init(csvRow: String) throws {
         let columns = csvRow.split(separator: ",").map(String.init)
 
@@ -178,7 +178,7 @@ private extension ICO {
 }
 
 private extension CoinTrackingRow {
-    static func makeDeposit(ico: ICO, transaction: EthereumTransaction) -> CoinTrackingRow {
+    static func makeDeposit(ico: EthereumICO, transaction: EthereumTransaction) -> CoinTrackingRow {
         CoinTrackingRow(
             type: .incoming(.deposit),
             buyAmount: transaction.amount,
@@ -190,12 +190,13 @@ private extension CoinTrackingRow {
             exchange: ico.name,
             group: "",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date
+            date: transaction.date,
+            transactionID: transaction.hash
         )
     }
 
     static func makeTrade(
-        ico: ICO,
+        ico: EthereumICO,
         transaction: EthereumTokenTransaction,
         contributionAmount: Decimal,
         tokenPayoutAmount: Decimal
@@ -211,12 +212,13 @@ private extension CoinTrackingRow {
             exchange: ico.name,
             group: "",
             comment: "Export",
-            date: transaction.date
+            date: transaction.date,
+            transactionID: ""
         )
     }
 
     static func makeWithdrawal(
-        ico: ICO,
+        ico: EthereumICO,
         transaction: EthereumTokenTransaction
     ) -> CoinTrackingRow {
         CoinTrackingRow(
@@ -230,7 +232,8 @@ private extension CoinTrackingRow {
             exchange: ico.name,
             group: "",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date
+            date: transaction.date,
+            transactionID: "" // CoinTracking considers transaction with the same ID as duplicate, even when one is deposit and another is withdrawal
         )
     }
 }

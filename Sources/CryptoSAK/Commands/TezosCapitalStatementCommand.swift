@@ -1,12 +1,12 @@
 import ArgumentParser
-import CoinTrackingKit
+import CoinTracking
 import Combine
 import Foundation
 import HTTPClient
-import LambdaKit
-import TezosCapitalKit
-import TezosKit
-import TzStatsKit
+import Lambda
+import Tezos
+import TezosCapital
+import TzStats
 
 struct TezosCapitalStatementCommand: ParsableCommand {
 
@@ -165,7 +165,8 @@ extension CoinTrackingRow {
             exchange: "Tezos Capital",
             group: "Bond Pool",
             comment: "Export. Cycle: \(cycle.cycle)",
-            date: cycle.end
+            date: cycle.end,
+            transactionID: ""
         )
     }
 }

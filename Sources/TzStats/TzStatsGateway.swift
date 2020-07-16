@@ -1,8 +1,8 @@
 import Combine
 import Foundation
 import HTTPClient
-import LambdaKit
-import TezosKit
+import Lambda
+import Tezos
 
 public final class TzStatsGateway: TezosGateway {
     private let urlSession: URLSession

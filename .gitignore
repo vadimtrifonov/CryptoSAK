@@ -1,6 +1,8 @@
 .DS_Store
 /.build
 /*.csv
+/*.tsv
+/*.txt
 /*.xcodeproj
 /.swiftpm
 /Packages

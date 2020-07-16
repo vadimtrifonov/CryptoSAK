@@ -1,7 +1,7 @@
 import ArgumentParser
-import CoinTrackingKit
+import CoinTracking
 import Foundation
-import IDEXKit
+import IDEX
 
 struct IDEXTradeStatementCommand: ParsableCommand {
 
@@ -56,7 +56,8 @@ extension CoinTrackingRow {
             exchange: "IDEX",
             group: "",
             comment: "Export. Transaction: \(idexTradeRow.transactionHash)",
-            date: idexTradeRow.date
+            date: idexTradeRow.date,
+            transactionID: idexTradeRow.transactionHash
         )
     }
 }

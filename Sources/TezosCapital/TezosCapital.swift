@@ -14,7 +14,7 @@ public struct TezosCapital {
         try Endpoint(
             .get,
             url: "https://lukeknepper.com/delegate/getPoolCSV.php",
-            parameters: ["address": address],
+            queryItems: ["address": address],
             parseResponse: { data, _ in
                 let csv = String(data: data, encoding: .utf8) ?? ""
                 let rows = csv.components(separatedBy: .newlines).filter({ !$0.isEmpty }).dropFirst()

@@ -16,31 +16,41 @@ let package = Package(
             name: "CryptoSAK",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                "CoinTrackingKit",
-                "EthereumKit",
-                "EtherscanKit",
+                "CoinTracking",
+                "DragonGlass",
+                "Ethereum",
+                "Etherscan",
                 "FoundationExtensions",
-                "GateKit",
+                "Gate",
+                "Hashgraph",
                 "HTTPClient",
-                "IDEXKit",
-                "LambdaKit",
-                "TezosKit",
-                "TezosCapitalKit",
-                "TzStatsKit"
+                "IDEX",
+                "Lambda",
+                "Tezos",
+                "TezosCapital",
+                "TzStats"
             ]
         ),
         .target(
-            name: "CoinTrackingKit",
+            name: "CoinTracking",
             dependencies: []
         ),
         .target(
-            name: "EthereumKit",
+            name: "Ethereum",
             dependencies: []
         ),
         .target(
-            name: "EtherscanKit",
+            name: "Etherscan",
             dependencies: [
-                "EthereumKit",
+                "Ethereum",
+                "FoundationExtensions",
+                "HTTPClient",
+            ]
+        ),
+        .target(
+            name: "DragonGlass",
+            dependencies: [
+                "Hashgraph",
                 "FoundationExtensions",
                 "HTTPClient",
             ]
@@ -50,47 +60,47 @@ let package = Package(
             dependencies: []
         ),
         .target(
-            name: "GateKit",
+            name: "Gate",
             dependencies: [
                 "FoundationExtensions"
             ]
+        ),
+        .target(
+            name: "Hashgraph",
+            dependencies: []
         ),
         .target(
             name: "HTTPClient",
             dependencies: []
         ),
         .target(
-            name: "IDEXKit",
+            name: "IDEX",
             dependencies: [
                 "FoundationExtensions"
             ]
         ),
-        .testTarget(
-            name: "KitTests",
+        .target(
+            name: "Lambda",
             dependencies: []
         ),
         .target(
-            name: "LambdaKit",
+            name: "Tezos",
             dependencies: []
         ),
         .target(
-            name: "TezosKit",
-            dependencies: []
-        ),
-        .target(
-            name: "TezosCapitalKit",
+            name: "TezosCapital",
             dependencies: [
                 "FoundationExtensions",
                 "HTTPClient"
             ]
         ),
         .target(
-            name: "TzStatsKit",
+            name: "TzStats",
             dependencies: [
-                "TezosKit",
+                "Tezos",
                 "FoundationExtensions",
                 "HTTPClient",
-                "LambdaKit"
+                "Lambda"
             ]
         ),
     ]

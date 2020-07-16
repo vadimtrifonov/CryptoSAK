@@ -12,6 +12,7 @@ public struct CoinTrackingRow: Equatable {
     public let group: String
     public let comment: String
     public let date: Date
+    public let transactionID: String
 
     public init(
         type: Type,
@@ -24,7 +25,8 @@ public struct CoinTrackingRow: Equatable {
         exchange: String,
         group: String,
         comment: String,
-        date: Date
+        date: Date,
+        transactionID: String
     ) {
         self.type = type
         self.buyAmount = buyAmount
@@ -37,6 +39,7 @@ public struct CoinTrackingRow: Equatable {
         self.group = group
         self.comment = comment
         self.date = date
+        self.transactionID = transactionID
     }
 
     public enum `Type`: RawRepresentable, Equatable {
@@ -71,6 +74,7 @@ public struct CoinTrackingRow: Equatable {
             case deposit = "Deposit"
             case income = "Income"
             case staking = "Staking"
+            case interestIncome = "Interest Income"
         }
 
         public enum Outgoing: String {

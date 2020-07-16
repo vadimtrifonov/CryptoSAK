@@ -9,7 +9,7 @@ public enum CoinTrackingCSV {
     }()
 
     public static func makeCSV(rows: [CoinTrackingRow]) -> String {
-        let header = "\"Type\",\"Buy\",\"Cur.\",\"Sell\",\"Cur.\",\"Fee\",\"Cur.\",\"Exchange\",\"Group\",\"Comment\",\"Date\""
+        let header = "\"Type\",\"Buy\",\"Cur.\",\"Sell\",\"Cur.\",\"Fee\",\"Cur.\",\"Exchange\",\"Group\",\"Comment\",\"Date\",\"Tx-ID\""
         let csvRows = [header] + rows.map(makeCSVRow)
         return csvRows.joined(separator: "\n")
     }
@@ -27,6 +27,7 @@ public enum CoinTrackingCSV {
             row.group,
             row.comment,
             dateFormatter.string(from: row.date),
+            row.transactionID,
         ]
         .map { "\"\($0)\"" }
         .joined(separator: ",")

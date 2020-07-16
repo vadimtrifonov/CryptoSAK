@@ -1,8 +1,8 @@
 import ArgumentParser
-import CoinTrackingKit
+import CoinTracking
 import Combine
-import EthereumKit
-import EtherscanKit
+import Ethereum
+import Etherscan
 import Foundation
 
 struct EthereumStatementCommand: ParsableCommand {
@@ -71,7 +71,8 @@ private extension CoinTrackingRow {
             exchange: transaction.sourceNameForCoinTracking,
             group: "Fee",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date
+            date: transaction.date,
+            transactionID: ""
         )
     }
 
@@ -87,7 +88,8 @@ private extension CoinTrackingRow {
             exchange: transaction.destinationNameForCoinTracking,
             group: "",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date
+            date: transaction.date,
+            transactionID: transaction.hash
         )
     }
 
@@ -103,7 +105,8 @@ private extension CoinTrackingRow {
             exchange: transaction.destinationNameForCoinTracking,
             group: "Internal",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date
+            date: transaction.date,
+            transactionID: transaction.hash
         )
     }
 
@@ -119,7 +122,8 @@ private extension CoinTrackingRow {
             exchange: transaction.sourceNameForCoinTracking,
             group: "",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date
+            date: transaction.date,
+            transactionID: transaction.hash
         )
     }
 
@@ -135,7 +139,8 @@ private extension CoinTrackingRow {
             exchange: transaction.sourceNameForCoinTracking,
             group: "Internal",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date
+            date: transaction.date,
+            transactionID: transaction.hash
         )
     }
 }

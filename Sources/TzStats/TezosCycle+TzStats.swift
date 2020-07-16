@@ -1,6 +1,6 @@
 import Foundation
 import FoundationExtensions
-import TezosKit
+import Tezos
 
 extension TezosCycle {
     private static let dateFormatter = ISO8601DateFormatter()

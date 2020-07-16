@@ -1,4 +1,4 @@
-import EthereumKit
+import Ethereum
 import Foundation
 import FoundationExtensions
 

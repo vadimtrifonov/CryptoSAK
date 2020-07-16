@@ -1,10 +1,10 @@
 import ArgumentParser
-import CoinTrackingKit
+import CoinTracking
 import Combine
 import Foundation
 import HTTPClient
-import TezosKit
-import TzStatsKit
+import Tezos
+import TzStats
 
 struct TezosStatementCommand: ParsableCommand {
 
@@ -84,6 +84,7 @@ struct TezosStatementCommand: ParsableCommand {
 }
 
 extension TezosStatement {
+
     func toCoinTrackingRows() -> [CoinTrackingRow] {
         let rows = transactions.delegationRewards.map(CoinTrackingRow.makeDelegationReward)
             + transactions.otherIncoming.map(CoinTrackingRow.makeDeposit)
@@ -94,6 +95,7 @@ extension TezosStatement {
 }
 
 private extension CoinTrackingRow {
+
     static func makeDelegationReward(operation: TezosTransactionOperation) -> CoinTrackingRow {
         self.init(
             type: .incoming(.staking),
@@ -106,7 +108,8 @@ private extension CoinTrackingRow {
             exchange: operation.receiverNameForCoinTracking,
             group: "Delegation",
             comment: "Export. Operation: \(operation.hash)",
-            date: operation.timestamp
+            date: operation.timestamp,
+            transactionID: operation.hash
         )
     }
 
@@ -122,7 +125,8 @@ private extension CoinTrackingRow {
             exchange: operation.receiverNameForCoinTracking,
             group: "",
             comment: "Export. Operation: \(operation.hash)",
-            date: operation.timestamp
+            date: operation.timestamp,
+            transactionID: operation.hash
         )
     }
 
@@ -138,7 +142,8 @@ private extension CoinTrackingRow {
             exchange: operation.senderNameForCoinTracking,
             group: "",
             comment: "Export. Operation: \(operation.hash)",
-            date: operation.timestamp
+            date: operation.timestamp,
+            transactionID: operation.hash
         )
     }
 
@@ -156,18 +161,21 @@ private extension CoinTrackingRow {
             exchange: operation.senderNameForCoinTracking,
             group: "Fee",
             comment: "Export. Operation: \(operation.hash)",
-            date: operation.timestamp
+            date: operation.timestamp,
+            transactionID: ""
         )
     }
 }
 
 extension TezosTransactionOperation {
+
     var receiverNameForCoinTracking: String {
         "Tezos \(receiver.prefix(8))."
     }
 }
 
 extension TezosOperation {
+
     var senderNameForCoinTracking: String {
         "Tezos \(sender.prefix(8))."
     }

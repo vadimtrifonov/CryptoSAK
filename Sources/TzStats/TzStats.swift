@@ -1,7 +1,7 @@
 import Foundation
 import FoundationExtensions
 import HTTPClient
-import TezosKit
+import Tezos
 
 public struct TzStats {
 
@@ -50,7 +50,7 @@ public struct TzStats {
         try Endpoint(
             .get,
             url: URL(string: "https://api.tzstats.com/explorer/account/\(account)/op"),
-            parameters: ["limit": limit, "offset": offset]
+            queryItems: ["limit": limit, "offset": offset]
         )
     }
 }

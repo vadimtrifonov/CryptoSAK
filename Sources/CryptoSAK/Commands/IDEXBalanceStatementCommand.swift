@@ -1,10 +1,10 @@
 import ArgumentParser
-import CoinTrackingKit
+import CoinTracking
 import Combine
-import EthereumKit
+import Ethereum
 import Foundation
-import IDEXKit
-import LambdaKit
+import IDEX
+import Lambda
 
 struct IDEXBalanceStatementCommand: ParsableCommand {
 
@@ -215,7 +215,8 @@ private extension CoinTrackingRow {
                 exchange: "IDEX",
                 group: "",
                 comment: "Export. Transaction: \(idexBalanceOperation.transactionHash)",
-                date: idexBalanceOperation.date
+                date: idexBalanceOperation.date,
+                transactionID: idexBalanceOperation.transactionHash
             )
         case .deposit:
             self.init(
@@ -229,7 +230,8 @@ private extension CoinTrackingRow {
                 exchange: "IDEX",
                 group: "",
                 comment: "Export. Transaction: \(idexBalanceOperation.transactionHash)",
-                date: idexBalanceOperation.date
+                date: idexBalanceOperation.date,
+                transactionID: idexBalanceOperation.transactionHash
             )
         case .fee:
             self.init(
@@ -243,7 +245,8 @@ private extension CoinTrackingRow {
                 exchange: "IDEX",
                 group: "Fee",
                 comment: "Export",
-                date: idexBalanceOperation.date
+                date: idexBalanceOperation.date,
+                transactionID: ""
             )
         }
     }

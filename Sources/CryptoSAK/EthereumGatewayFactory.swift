@@ -1,5 +1,5 @@
-import EthereumKit
-import EtherscanKit
+import Ethereum
+import Etherscan
 import Foundation
 import FoundationExtensions
 import HTTPClient

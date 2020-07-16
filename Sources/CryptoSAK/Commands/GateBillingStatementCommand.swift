@@ -1,7 +1,7 @@
 import ArgumentParser
-import CoinTrackingKit
+import CoinTracking
 import Foundation
-import GateKit
+import Gate
 
 struct GateBillingStatementCommand: ParsableCommand {
 
@@ -47,7 +47,7 @@ private extension CoinTrackingRow {
         case .airdrop:
             buy = transaction.amount
             buyCurrency = transaction.currency
-            type = .incoming(.income)
+            type = .incoming(.interestIncome)
         }
 
         self.init(
@@ -61,7 +61,8 @@ private extension CoinTrackingRow {
             exchange: "Gate.io",
             group: "",
             comment: "Export",
-            date: transaction.date
+            date: transaction.date,
+            transactionID: ""
         )
     }
 }
@@ -80,7 +81,8 @@ extension CoinTrackingRow {
             exchange: "Gate.io",
             group: "",
             comment: "Export",
-            date: trade.date
+            date: trade.date,
+            transactionID: ""
         )
     }
 }

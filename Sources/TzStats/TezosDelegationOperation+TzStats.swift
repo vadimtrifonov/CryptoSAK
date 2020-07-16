@@ -1,17 +1,16 @@
 import Foundation
-import TezosKit
+import Tezos
 
-extension TezosTransactionOperation {
+extension TezosDelegationOperation {
     init(operation: TzStats.Operation) throws {
-        guard let receiver = operation.receiver else {
-            throw "Operation \(operation) has no receiver"
+        guard let delegate = operation.delegate else {
+            throw "Operation \(operation) has no delegate"
         }
 
         self.init(
             hash: operation.hash,
             sender: operation.sender,
-            receiver: receiver,
-            amount: operation.volume,
+            delegate: delegate,
             fee: operation.fee,
             burn: operation.burned,
             timestamp: try operation.timestamp(),
