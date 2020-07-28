@@ -2,7 +2,7 @@ import Combine
 import Foundation
 import FoundationExtensions
 import Hashgraph
-import HTTPClient
+import Networking
 
 public enum DragonGlass {
 

@@ -1,6 +1,6 @@
 import Foundation
 import FoundationExtensions
-import HTTPClient
+import Networking
 import Tezos
 
 public struct TzStats {
@@ -20,17 +20,12 @@ public struct TzStats {
         let type: String
         let time: String
         let is_success: Bool
-        let volume: Decimal
-        let fee: Decimal
-        let burned: Decimal
+        let volume: JSONNumber
+        let fee: JSONNumber
+        let burned: JSONNumber
         let sender: String
         let receiver: String?
         let delegate: String?
-    }
-
-    enum OperationType: String {
-        case transaction
-        case delegation
     }
 
     /// https://api.tzstats.com/explorer/cycle/head
@@ -64,12 +59,14 @@ extension TzStats.Operation {
 }
 
 extension TzStats.Operation: Hashable {
+
     public func hash(into hasher: inout Hasher) {
         hasher.combine(hash)
     }
 }
 
 extension TzStats.Operation: Comparable {
+
     public static func < (lhs: TzStats.Operation, rhs: TzStats.Operation) -> Bool {
         do {
             return try lhs.timestamp() < rhs.timestamp()

@@ -23,9 +23,9 @@ let package = Package(
                 "FoundationExtensions",
                 "Gate",
                 "Hashgraph",
-                "HTTPClient",
                 "IDEX",
                 "Lambda",
+                "Networking",
                 "Tezos",
                 "TezosCapital",
                 "TzStats"
@@ -44,7 +44,7 @@ let package = Package(
             dependencies: [
                 "Ethereum",
                 "FoundationExtensions",
-                "HTTPClient",
+                "Networking",
             ]
         ),
         .target(
@@ -52,7 +52,7 @@ let package = Package(
             dependencies: [
                 "Hashgraph",
                 "FoundationExtensions",
-                "HTTPClient",
+                "Networking",
             ]
         ),
         .target(
@@ -70,10 +70,6 @@ let package = Package(
             dependencies: []
         ),
         .target(
-            name: "HTTPClient",
-            dependencies: []
-        ),
-        .target(
             name: "IDEX",
             dependencies: [
                 "FoundationExtensions"
@@ -84,6 +80,10 @@ let package = Package(
             dependencies: []
         ),
         .target(
+            name: "Networking",
+            dependencies: []
+        ),
+        .target(
             name: "Tezos",
             dependencies: []
         ),
@@ -91,7 +91,7 @@ let package = Package(
             name: "TezosCapital",
             dependencies: [
                 "FoundationExtensions",
-                "HTTPClient"
+                "Networking"
             ]
         ),
         .target(
@@ -99,7 +99,7 @@ let package = Package(
             dependencies: [
                 "Tezos",
                 "FoundationExtensions",
-                "HTTPClient",
+                "Networking",
                 "Lambda"
             ]
         ),

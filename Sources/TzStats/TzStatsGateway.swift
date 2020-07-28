@@ -1,68 +1,47 @@
 import Combine
 import Foundation
-import HTTPClient
 import Lambda
+import Networking
 import Tezos
 
-public final class TzStatsGateway: TezosGateway {
+public struct TzStatsGateway: TezosGateway {
     private let urlSession: URLSession
 
     public init(urlSession: URLSession) {
         self.urlSession = urlSession
     }
 
-    public func fetchTransactionOperations(
+    public func fetchOperations(
         account: String,
         startDate: Date
-    ) -> AnyPublisher<[TezosTransactionOperation], Error> {
+    ) -> AnyPublisher<TezosOperationGroup, Error> {
         recursivelyFetchOperations(
             account: account,
-            type: .transaction,
             accumulatedOperations: [],
             limit: 100,
             offset: 0,
             startDate: startDate
         )
         .tryMap { (operations: [TzStats.Operation]) in
-            try operations.map(TezosTransactionOperation.init)
-        }
-        .eraseToAnyPublisher()
-    }
-
-    public func fetchDelegationOperations(
-        account: String,
-        startDate: Date
-    ) -> AnyPublisher<[TezosDelegationOperation], Error> {
-        recursivelyFetchOperations(
-            account: account,
-            type: .delegation,
-            accumulatedOperations: [],
-            limit: 100,
-            offset: 0,
-            startDate: startDate
-        )
-        .tryMap { (operations: [TzStats.Operation]) in
-            try operations.map(TezosDelegationOperation.init)
+            try TezosOperationGroup(operations: operations)
         }
         .eraseToAnyPublisher()
     }
 
     private func recursivelyFetchOperations(
         account: String,
-        type: TzStats.OperationType,
         accumulatedOperations: [TzStats.Operation],
         limit: Int,
         offset: Int,
         startDate: Date
     ) -> AnyPublisher<[TzStats.Operation], Error> {
-        fetchTransactionOperations(
+        fetchOperations(
             account: account,
             limit: limit,
             offset: offset
         )
         .tryMap { newOperations in
             try Self.accumulateOperations(
-                type: type,
                 accumulatedOperations: accumulatedOperations,
                 newOperations: newOperations,
                 operationsLimit: limit,
@@ -78,7 +57,6 @@ public final class TzStatsGateway: TezosGateway {
 
             return self.recursivelyFetchOperations(
                 account: account,
-                type: type,
                 accumulatedOperations: operations,
                 limit: limit,
                 offset: offset + limit / 2, /// Some offset overlap is needed to compensate for the TzStats strange operations return order
@@ -88,7 +66,7 @@ public final class TzStatsGateway: TezosGateway {
         .eraseToAnyPublisher()
     }
 
-    private func fetchTransactionOperations(
+    private func fetchOperations(
         account: String,
         limit: Int,
         offset: Int
@@ -106,14 +84,13 @@ public final class TzStatsGateway: TezosGateway {
     }
 
     private static func accumulateOperations(
-        type: TzStats.OperationType,
         accumulatedOperations: [TzStats.Operation],
         newOperations: [TzStats.Operation],
         operationsLimit: Int,
         startDate: Date
     ) throws -> (operations: [TzStats.Operation], hasMoreOperations: Bool) {
         let filteredNewOperations = try newOperations.filter { operation in
-            try operation.timestamp() >= startDate && operation.type == type.rawValue
+            try operation.timestamp() >= startDate
         }
 
         /// TzStats returns operations in a strange order: most operations are in date order,

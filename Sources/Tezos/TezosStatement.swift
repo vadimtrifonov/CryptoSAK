@@ -1,56 +1,106 @@
 import Foundation
 
 public struct TezosStatement {
+
+    public struct TransactionsStatement {
+        public let delegationRewards: [TezosTransactionOperation]
+        public let otherIncoming: [TezosTransactionOperation]
+        public let outgoing: [TezosTransactionOperation]
+
+        public var all: [TezosTransactionOperation] {
+            (delegationRewards + otherIncoming + outgoing).sorted(by: >)
+        }
+    }
+
     public let transactions: TransactionsStatement
     public let successfulDelegations: [TezosDelegationOperation]
     public let feeIncuringOperations: [TezosOperation]
+    public let accountActivation: TezosOperation?
 
     public var balance: TezosBalance {
         TezosBalance(
             delegationRewards: transactions.delegationRewards,
             otherIncomingTransactions: transactions.otherIncoming,
-            successfulOutgoingTransactions: transactions.successfulOutgoing,
-            feeIncuringOperations: feeIncuringOperations
+            outgoingTransactions: transactions.outgoing,
+            feeIncuringOperations: feeIncuringOperations,
+            accountActivation: accountActivation
         )
     }
 
     public init(
-        transactions: [TezosTransactionOperation],
-        delegations: [TezosDelegationOperation],
+        operations: TezosOperationGroup,
         account: String,
         delegateAccounts: [String]
     ) {
-        let incoming = transactions.filter { $0.isIncoming(account: account) }
-        let outgoing = transactions.filter { $0.isOutgoing(account: account) }
-
-        let delegationRewards = incoming.filter { transaction in
-            delegateAccounts.map({ $0.lowercased() }).contains(transaction.sender.lowercased())
-        }
-        let otherIncoming = Set(incoming).subtracting(Set(delegationRewards))
-
-        let successfulOutgoing = outgoing.filter { $0.isSuccessful }
-        let successfulDelegations = delegations.filter { $0.isSuccessful }
-
-        let feeIncuringOutgoing: [TezosOperation] = outgoing.filter({ !$0.fee.isZero })
-        let feeIncuringDelegations: [TezosOperation] = delegations.filter({ !$0.fee.isZero })
-        let feeIncuringOperations = feeIncuringOutgoing + feeIncuringDelegations
+        let incoming = Self.toIncoming(
+            operations: operations,
+            account: account,
+            delegateAccounts: delegateAccounts
+        )
 
         self.transactions = .init(
-            delegationRewards: delegationRewards.filter({ !$0.amount.isZero }).sorted(by: >),
-            otherIncoming: otherIncoming.filter({ !$0.amount.isZero }).sorted(by: >),
-            successfulOutgoing: successfulOutgoing.filter({ !$0.amount.isZero }).sorted(by: >)
+            delegationRewards: incoming.delegationRewards,
+            otherIncoming: incoming.otherIncoming,
+            outgoing: Self.toOutgoing(operations: operations, account: account)
         )
-        self.successfulDelegations = successfulDelegations.sorted(by: >)
-        self.feeIncuringOperations = feeIncuringOperations.sorted(by: { $0.timestamp > $1.timestamp })
+
+        self.successfulDelegations = operations.delegations.filter({ $0.isSuccessful }).sorted(by: >)
+        self.feeIncuringOperations = Self.toFeeIncurring(operations: operations, account: account)
+        self.accountActivation = operations.other.first(where: { $0.operationType == .accountActivation })
     }
 
-    public struct TransactionsStatement {
-        public let delegationRewards: [TezosTransactionOperation]
-        public let otherIncoming: [TezosTransactionOperation]
-        public let successfulOutgoing: [TezosTransactionOperation]
+    private static func toIncoming(
+        operations: TezosOperationGroup,
+        account: String,
+        delegateAccounts: [String]
+    ) -> (delegationRewards: [TezosTransactionOperation], otherIncoming: [TezosTransactionOperation]) {
+        let incoming = operations.transactions
+            .filter({ $0.isIncoming(account: account) })
+            .filter({ $0.isSuccessful })
+            .filter({ !$0.amount.isZero })
 
-        public var all: [TezosTransactionOperation] {
-            (delegationRewards + otherIncoming + successfulOutgoing).sorted(by: >)
-        }
+        let delegationRewards = incoming.filter({ delegateAccounts.containsCaseInsensetive($0.sender) })
+        let otherIncoming = Set(incoming).subtracting(Set(delegationRewards))
+
+        return (
+            delegationRewards: delegationRewards.sorted(by: >),
+            otherIncoming: otherIncoming.sorted(by: >)
+        )
+    }
+
+    private static func toOutgoing(
+        operations: TezosOperationGroup,
+        account: String
+    ) -> [TezosTransactionOperation] {
+        operations.transactions
+            .filter({ $0.isOutgoing(account: account) })
+            .filter({ $0.isSuccessful })
+            .filter({ !$0.amount.isZero })
+    }
+
+    private static func toFeeIncurring(
+        operations: TezosOperationGroup,
+        account: String
+    ) -> [TezosOperation] {
+        let outgoing = operations.transactions
+            .filter({ $0.isOutgoing(account: account) })
+            .filter({ !$0.fee.isZero || !$0.burn.isZero })
+
+        /// Other known operations are `reveal` and `origination`, they produce only fees
+        let other = operations.other
+            .filter({ $0.isOutgoing(account: account) })
+            .filter({ $0.operationType != .accountActivation })
+            .filter({ !$0.fee.isZero || !$0.burn.isZero })
+
+        let delegations = operations.delegations.filter({ !$0.fee.isZero || !$0.burn.isZero })
+
+        return (outgoing.map(\.operation) + delegations.map(\.operation) + other).sorted(by: >)
+    }
+}
+
+private extension Array where Element == String {
+
+    func containsCaseInsensetive(_ element: String) -> Bool {
+        contains(where: { $0.lowercased() == element.lowercased() })
     }
 }

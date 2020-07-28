@@ -2,7 +2,7 @@ import ArgumentParser
 import CoinTracking
 import Combine
 import Foundation
-import HTTPClient
+import Networking
 import Tezos
 import TzStats
 
@@ -29,8 +29,7 @@ struct TezosStatementCommand: ParsableCommand {
         }
 
         Self.exportTezosStatement(
-            transactionsPublisher: tezosGateway.fetchTransactionOperations(account: account, startDate: startDate),
-            delegationsPublisher: tezosGateway.fetchDelegationOperations(account: account, startDate: startDate),
+            operationsPublisher: tezosGateway.fetchOperations(account: account, startDate: startDate),
             account: account,
             delegateAccounts: delegateAccounts
         )
@@ -53,48 +52,65 @@ struct TezosStatementCommand: ParsableCommand {
     }
 
     static func exportTezosStatement(
-        transactionsPublisher: AnyPublisher<[TezosTransactionOperation], Error>,
-        delegationsPublisher: AnyPublisher<[TezosDelegationOperation], Error>,
+        operationsPublisher: AnyPublisher<TezosOperationGroup, Error>,
         account: String,
         delegateAccounts: [String]
     ) -> AnyPublisher<TezosStatement, Error> {
-        Publishers.Zip(
-            transactionsPublisher,
-            delegationsPublisher
-        )
-        .map { transactions, delegations in
-            let statement = TezosStatement(
-                transactions: transactions,
-                delegations: delegations,
-                account: account,
-                delegateAccounts: delegateAccounts
-            )
+        operationsPublisher
+            .map { operations in
+                let statement = TezosStatement(
+                    operations: operations,
+                    account: account,
+                    delegateAccounts: delegateAccounts
+                )
 
-            print("Transactions count: \(statement.transactions.all.count)")
-            print("Transactions start: \(String(describing: statement.transactions.all.last?.timestamp))")
-            print("Transactions end: \(String(describing: statement.transactions.all.first?.timestamp))")
-            print("Delegations count: \(statement.successfulDelegations.count)")
-            print("Delegations start: \(String(describing: statement.successfulDelegations.last?.timestamp))")
-            print("Delegations end: \(String(describing: statement.successfulDelegations.first?.timestamp))")
+                print("Transactions count: \(statement.transactions.all.count)")
+                print("Transactions start: \(String(describing: statement.transactions.all.last?.timestamp))")
+                print("Transactions end: \(String(describing: statement.transactions.all.first?.timestamp))")
+                print("Delegations count: \(statement.successfulDelegations.count)")
+                print("Delegations start: \(String(describing: statement.successfulDelegations.last?.timestamp))")
+                print("Delegations end: \(String(describing: statement.successfulDelegations.first?.timestamp))")
 
-            return statement
-        }
-        .eraseToAnyPublisher()
+                return statement
+            }
+            .eraseToAnyPublisher()
     }
 }
 
 extension TezosStatement {
 
     func toCoinTrackingRows() -> [CoinTrackingRow] {
-        let rows = transactions.delegationRewards.map(CoinTrackingRow.makeDelegationReward)
+        var rows = transactions.delegationRewards.map(CoinTrackingRow.makeDelegationReward)
             + transactions.otherIncoming.map(CoinTrackingRow.makeDeposit)
-            + transactions.successfulOutgoing.map(CoinTrackingRow.makeWithdrawal)
+            + transactions.outgoing.map(CoinTrackingRow.makeWithdrawal)
             + feeIncuringOperations.map(CoinTrackingRow.makeFee)
+
+        if let accountActivation = accountActivation {
+            rows.append(CoinTrackingRow.makeAccountActivation(operation: accountActivation))
+        }
+
         return rows.sorted(by: >)
     }
 }
 
 private extension CoinTrackingRow {
+
+    static func makeAccountActivation(operation: TezosOperation) -> CoinTrackingRow {
+        self.init(
+            type: .incoming(.deposit),
+            buyAmount: operation.amount,
+            buyCurrency: "XTZ",
+            sellAmount: 0,
+            sellCurrency: "",
+            fee: 0,
+            feeCurrency: "",
+            exchange: operation.senderNameForCoinTracking,
+            group: "",
+            comment: "Export. Account activation. Operation: \(operation.operationHash)",
+            date: operation.timestamp,
+            transactionID: operation.operationHash
+        )
+    }
 
     static func makeDelegationReward(operation: TezosTransactionOperation) -> CoinTrackingRow {
         self.init(
@@ -107,9 +123,9 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: operation.receiverNameForCoinTracking,
             group: "Delegation",
-            comment: "Export. Operation: \(operation.hash)",
+            comment: "Export. Operation: \(operation.operationHash)",
             date: operation.timestamp,
-            transactionID: operation.hash
+            transactionID: operation.operationHash
         )
     }
 
@@ -124,9 +140,9 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: operation.receiverNameForCoinTracking,
             group: "",
-            comment: "Export. Operation: \(operation.hash)",
+            comment: "Export. Operation: \(operation.operationHash)",
             date: operation.timestamp,
-            transactionID: operation.hash
+            transactionID: operation.operationHash
         )
     }
 
@@ -141,9 +157,9 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: operation.senderNameForCoinTracking,
             group: "",
-            comment: "Export. Operation: \(operation.hash)",
+            comment: "Export. Operation: \(operation.operationHash)",
             date: operation.timestamp,
-            transactionID: operation.hash
+            transactionID: operation.operationHash
         )
     }
 
@@ -160,7 +176,7 @@ private extension CoinTrackingRow {
             feeCurrency: "XTZ",
             exchange: operation.senderNameForCoinTracking,
             group: "Fee",
-            comment: "Export. Operation: \(operation.hash)",
+            comment: "Export. Operation: \(operation.operationHash)",
             date: operation.timestamp,
             transactionID: ""
         )

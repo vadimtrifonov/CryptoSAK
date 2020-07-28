@@ -1,6 +1,6 @@
 import Foundation
 import FoundationExtensions
-import HTTPClient
+import Networking
 
 public struct TezosCapital {
 

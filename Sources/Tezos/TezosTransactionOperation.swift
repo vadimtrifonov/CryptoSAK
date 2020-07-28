@@ -1,33 +1,20 @@
 import Foundation
 
-public struct TezosTransactionOperation: TezosOperation {
-    public let hash: String
-    public let sender: String
+@dynamicMemberLookup
+public struct TezosTransactionOperation {
+    public let operation: TezosOperation
     public let receiver: String
-    public let amount: Decimal
-    public let fee: Decimal
-    public let burn: Decimal
-    public let timestamp: Date
-    public let isSuccessful: Bool
+
+    public subscript<Value>(dynamicMember keyPath: KeyPath<TezosOperation, Value>) -> Value {
+        operation[keyPath: keyPath]
+    }
 
     public init(
-        hash: String,
-        sender: String,
-        receiver: String,
-        amount: Decimal,
-        fee: Decimal,
-        burn: Decimal,
-        timestamp: Date,
-        isSuccessful: Bool
+        operation: TezosOperation,
+        receiver: String
     ) {
-        self.hash = hash
-        self.sender = sender
+        self.operation = operation
         self.receiver = receiver
-        self.amount = amount
-        self.fee = fee
-        self.burn = burn
-        self.timestamp = timestamp
-        self.isSuccessful = isSuccessful
     }
 
     public func isIncoming(account: String) -> Bool {
@@ -35,24 +22,24 @@ public struct TezosTransactionOperation: TezosOperation {
     }
 
     public func isOutgoing(account: String) -> Bool {
-        sender.lowercased() == account.lowercased()
+        operation.isOutgoing(account: account)
     }
 }
 
 extension TezosTransactionOperation: Equatable {
     public static func == (lhs: TezosTransactionOperation, rhs: TezosTransactionOperation) -> Bool {
-        lhs.hash == rhs.hash
+        lhs.operation == rhs.operation
     }
 }
 
 extension TezosTransactionOperation: Hashable {
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(hash)
+        hasher.combine(operation)
     }
 }
 
 extension TezosTransactionOperation: Comparable {
     public static func < (lhs: TezosTransactionOperation, rhs: TezosTransactionOperation) -> Bool {
-        lhs.timestamp < rhs.timestamp
+        lhs.operation < rhs.operation
     }
 }

@@ -22,6 +22,7 @@ extension URLSession {
 }
 
 private extension Data {
+
     var debugStringUTF8: String {
         do {
             let json = try JSONSerialization.jsonObject(with: self)

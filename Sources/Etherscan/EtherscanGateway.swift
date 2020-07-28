@@ -2,7 +2,7 @@ import Combine
 import Ethereum
 import Foundation
 import FoundationExtensions
-import HTTPClient
+import Networking
 
 public class EtherscanGateway: EthereumGateway {
     let httpClient: HTTPClient

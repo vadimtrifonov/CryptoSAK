@@ -5,8 +5,8 @@ import DragonGlass
 import Foundation
 import FoundationExtensions
 import Hashgraph
-import HTTPClient
 import Lambda
+import Networking
 
 struct HashgraphStatementCommand: ParsableCommand {
 

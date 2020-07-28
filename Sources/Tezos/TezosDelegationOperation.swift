@@ -1,47 +1,37 @@
 import Foundation
 
-public struct TezosDelegationOperation: TezosOperation {
-    public let hash: String
-    public let sender: String
+@dynamicMemberLookup
+public struct TezosDelegationOperation {
+    public let operation: TezosOperation
     public let delegate: String
-    public let fee: Decimal
-    public let burn: Decimal
-    public let timestamp: Date
-    public let isSuccessful: Bool
+
+    public subscript<Value>(dynamicMember keyPath: KeyPath<TezosOperation, Value>) -> Value {
+        operation[keyPath: keyPath]
+    }
 
     public init(
-        hash: String,
-        sender: String,
-        delegate: String,
-        fee: Decimal,
-        burn: Decimal,
-        timestamp: Date,
-        isSuccessful: Bool
+        operation: TezosOperation,
+        delegate: String
     ) {
-        self.hash = hash
-        self.sender = sender
+        self.operation = operation
         self.delegate = delegate
-        self.fee = fee
-        self.burn = burn
-        self.timestamp = timestamp
-        self.isSuccessful = isSuccessful
     }
 }
 
 extension TezosDelegationOperation: Equatable {
     public static func == (lhs: TezosDelegationOperation, rhs: TezosDelegationOperation) -> Bool {
-        lhs.hash == rhs.hash
+        lhs.operation == rhs.operation
     }
 }
 
 extension TezosDelegationOperation: Hashable {
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(hash)
+        hasher.combine(operation)
     }
 }
 
 extension TezosDelegationOperation: Comparable {
     public static func < (lhs: TezosDelegationOperation, rhs: TezosDelegationOperation) -> Bool {
-        lhs.timestamp < rhs.timestamp
+        lhs.operation < rhs.operation
     }
 }

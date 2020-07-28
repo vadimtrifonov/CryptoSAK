@@ -2,7 +2,7 @@ import Ethereum
 import Etherscan
 import Foundation
 import FoundationExtensions
-import HTTPClient
+import Networking
 
 func makeEthereumGateway() -> EthereumGateway {
     let url: URL = "https://api.etherscan.io"
