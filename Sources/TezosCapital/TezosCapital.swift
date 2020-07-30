@@ -6,7 +6,6 @@ public struct TezosCapital {
 
     public struct Reward {
         public let cycle: Int
-        public let balance: Decimal
         public let reward: Decimal
     }
 
@@ -28,14 +27,13 @@ private extension TezosCapital.Reward {
     init(csvRow: String) throws {
         let columns = csvRow.split(separator: ",").map(String.init)
 
-        guard columns.count == 3 else {
-            throw "Expected 3 columns, got \(columns)"
+        guard columns.count == 5 else {
+            throw "Expected 5 columns, got \(columns)"
         }
 
         self.init(
             cycle: try Int(string: columns[0]),
-            balance: try Decimal(string: columns[1]),
-            reward: try Decimal(string: columns[2])
+            reward: try Decimal(string: columns[3])
         )
     }
 }

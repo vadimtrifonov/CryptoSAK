@@ -142,7 +142,7 @@ private extension CoinTrackingRow {
             group: "",
             comment: "Export. Operation: \(operation.operationHash)",
             date: operation.timestamp,
-            transactionID: operation.operationHash
+            transactionID: ""
         )
     }
 
@@ -159,7 +159,7 @@ private extension CoinTrackingRow {
             group: "",
             comment: "Export. Operation: \(operation.operationHash)",
             date: operation.timestamp,
-            transactionID: operation.operationHash
+            transactionID: ""
         )
     }
 
