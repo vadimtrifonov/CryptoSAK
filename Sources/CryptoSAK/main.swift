@@ -5,6 +5,7 @@ struct CryptoSAK: ParsableCommand {
     static var configuration = CommandConfiguration(
         commandName: "CryptoSAK",
         subcommands: [
+            AlgorandStatementCommand.self,
             EthereumICOStatementCommand.self,
             EthereumStatementCommand.self,
             EthereumTokensStatementCommand.self,

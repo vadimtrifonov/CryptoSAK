@@ -21,7 +21,6 @@ struct TezosStatementCommand: ParsableCommand {
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
-        let tezosGateway = TzStatsGateway(urlSession: URLSession.shared)
 
         let rows = try delegateListPath.map(File.read(path:)) ?? []
         let delegateAccounts = rows.compactMap { row in
@@ -29,7 +28,7 @@ struct TezosStatementCommand: ParsableCommand {
         }
 
         Self.exportTezosStatement(
-            operationsPublisher: tezosGateway.fetchOperations(account: account, startDate: startDate),
+            operationsPublisher: TzStatsGateway().fetchOperations(account: account, startDate: startDate),
             account: account,
             delegateAccounts: delegateAccounts
         )

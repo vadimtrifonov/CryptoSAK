@@ -4,6 +4,23 @@ Crypto SAK is a tool for exporting cryptocurrency transactions to [CoinTracking]
 
 ## Blockchains
 
+### Algorand statement
+
+Takes into account fees, staking rewards and close remainders.
+
+```shell
+swift run CryptoSAK algorand-statement <address> --known-transactions <known-transactions-csv>
+```
+
+Arguments:
+
+1. `address` - Algorand address
+
+Options:
+
+1. `known-transactions-csv` - Path to a CSV file with a list of known transactions (allows to overrride the transaction type and add a custom description).
+    - Format (no header row): `<transaction-id>,<transaction-type>,<description>`
+
 ### Ethereum ICO statement
 
 This command will try to match contributions with payouts from the ICO address. A trade and withdrawal  from the ICO address will be created for every payout.

@@ -1,7 +1,7 @@
 import Foundation
 
 public struct CoinTrackingRow: Equatable {
-    public let type: Type
+    public let type: TransactionType
     public let buyAmount: Decimal
     public let buyCurrency: String
     public let sellAmount: Decimal
@@ -15,7 +15,7 @@ public struct CoinTrackingRow: Equatable {
     public let transactionID: String
 
     public init(
-        type: Type,
+        type: TransactionType,
         buyAmount: Decimal,
         buyCurrency: String,
         sellAmount: Decimal,
@@ -42,7 +42,15 @@ public struct CoinTrackingRow: Equatable {
         self.transactionID = transactionID
     }
 
-    public enum `Type`: RawRepresentable, Equatable {
+    public enum TransactionType: RawRepresentable, CaseIterable, Equatable {
+        
+        public static var allCases: [Self] {
+            [trade] + [
+                Incoming.allCases.map(Self.incoming),
+                Outgoing.allCases.map(Self.outgoing)
+            ].flatMap({ $0 })
+        }
+        
         case trade
         case incoming(Incoming)
         case outgoing(Outgoing)
@@ -70,16 +78,19 @@ public struct CoinTrackingRow: Equatable {
             }
         }
 
-        public enum Incoming: String {
+        public enum Incoming: String, CaseIterable {
             case deposit = "Deposit"
             case income = "Income"
-            case staking = "Staking"
             case interestIncome = "Interest Income"
+            case otherIncome = "Other Income"
+            case rewardOrBonus = "Reward / Bonus"
+            case staking = "Staking"
         }
 
-        public enum Outgoing: String {
-            case withdrawal = "Withdrawal"
+        public enum Outgoing: String, CaseIterable {
             case otherFee = "Other Fee"
+            case spend = "Spend"
+            case withdrawal = "Withdrawal"
         }
 
         private static let tradeRawValue = "Trade"

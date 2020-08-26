@@ -7,7 +7,7 @@ import Tezos
 public struct TzStatsGateway: TezosGateway {
     private let urlSession: URLSession
 
-    public init(urlSession: URLSession) {
+    public init(urlSession: URLSession = .shared) {
         self.urlSession = urlSession
     }
 

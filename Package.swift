@@ -16,6 +16,8 @@ let package = Package(
             name: "CryptoSAK",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                "Algorand",
+                "AlgoExplorer",
                 "CoinTracking",
                 "DragonGlass",
                 "Ethereum",
@@ -29,6 +31,18 @@ let package = Package(
                 "Tezos",
                 "TezosCapital",
                 "TzStats"
+            ]
+        ),
+        .target(
+            name: "Algorand",
+            dependencies: []
+        ),
+        .target(
+            name: "AlgoExplorer",
+            dependencies: [
+                "Algorand",
+                "FoundationExtensions",
+                "Networking",
             ]
         ),
         .target(

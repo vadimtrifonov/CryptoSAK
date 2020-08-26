@@ -33,7 +33,7 @@ private extension CoinTrackingRow {
         var buyCurrency: String = ""
         var sell: Decimal = 0
         var sellCurrency: String = ""
-        let type: Type
+        let type: TransactionType
 
         switch transaction.type {
         case .withdrawal:
