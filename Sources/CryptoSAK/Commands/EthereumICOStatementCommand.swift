@@ -182,7 +182,7 @@ private extension CoinTrackingRow {
         CoinTrackingRow(
             type: .incoming(.deposit),
             buyAmount: transaction.amount,
-            buyCurrency: "ETH",
+            buyCurrency: Ethereum.ticker,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -206,7 +206,7 @@ private extension CoinTrackingRow {
             buyAmount: tokenPayoutAmount,
             buyCurrency: transaction.token.symbol,
             sellAmount: contributionAmount,
-            sellCurrency: "ETH",
+            sellCurrency: Ethereum.ticker,
             fee: 0,
             feeCurrency: "",
             exchange: ico.name,

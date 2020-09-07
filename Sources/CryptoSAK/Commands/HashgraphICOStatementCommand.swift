@@ -137,7 +137,7 @@ extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: transaction.amount,
-            sellCurrency: "HBAR",
+            sellCurrency: Hashgraph.ticker,
             fee: 0,
             feeCurrency: "",
             exchange: ico.name,
@@ -158,7 +158,7 @@ extension CoinTrackingRow {
         CoinTrackingRow(
             type: .trade,
             buyAmount: payoutAmount,
-            buyCurrency: "HBAR",
+            buyCurrency: Hashgraph.ticker,
             sellAmount: contributionAmount,
             sellCurrency: contributionCurrency,
             fee: 0,

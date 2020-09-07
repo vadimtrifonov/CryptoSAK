@@ -157,7 +157,7 @@ extension CoinTrackingRow {
         self.init(
             type: .incoming(.staking),
             buyAmount: reward.reward,
-            buyCurrency: "XTZ",
+            buyCurrency: Tezos.ticker,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,

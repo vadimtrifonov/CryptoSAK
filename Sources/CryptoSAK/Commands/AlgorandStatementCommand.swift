@@ -107,7 +107,7 @@ extension AlgorandStatement {
     }
 }
 
-extension CoinTrackingRow {
+private extension CoinTrackingRow {
 
     static func makeDeposit(
         transaction: AlgorandTransaction,
