@@ -45,6 +45,9 @@ struct EthereumICOStatementCommand: ParsableCommand {
 
         RunLoop.main.run()
     }
+}
+
+extension EthereumICOStatementCommand {
 
     static func exportICOTransactions(
         ico: EthereumICO,
@@ -135,8 +138,7 @@ struct EthereumICOStatementCommand: ParsableCommand {
             return CoinTrackingRow.makeTrade(
                 ico: ico,
                 transaction: transaction,
-                contributionAmount: proportionalContributionAmount,
-                tokenPayoutAmount: transaction.amount
+                proportionalContributionAmount: proportionalContributionAmount
             )
         }
 
@@ -198,14 +200,13 @@ private extension CoinTrackingRow {
     static func makeTrade(
         ico: EthereumICO,
         transaction: EthereumTokenTransaction,
-        contributionAmount: Decimal,
-        tokenPayoutAmount: Decimal
+        proportionalContributionAmount: Decimal
     ) -> CoinTrackingRow {
         CoinTrackingRow(
             type: .trade,
-            buyAmount: tokenPayoutAmount,
+            buyAmount: transaction.amount,
             buyCurrency: transaction.token.symbol,
-            sellAmount: contributionAmount,
+            sellAmount: proportionalContributionAmount,
             sellCurrency: Ethereum.ticker,
             fee: 0,
             feeCurrency: "",

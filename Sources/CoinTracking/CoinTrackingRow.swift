@@ -43,14 +43,14 @@ public struct CoinTrackingRow: Equatable {
     }
 
     public enum TransactionType: RawRepresentable, CaseIterable, Equatable {
-        
+
         public static var allCases: [Self] {
             [trade] + [
                 Incoming.allCases.map(Self.incoming),
-                Outgoing.allCases.map(Self.outgoing)
+                Outgoing.allCases.map(Self.outgoing),
             ].flatMap({ $0 })
         }
-        
+
         case trade
         case incoming(Incoming)
         case outgoing(Outgoing)

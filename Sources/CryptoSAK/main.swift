@@ -6,6 +6,7 @@ struct CryptoSAK: ParsableCommand {
         commandName: "CryptoSAK",
         subcommands: [
             AlgorandStatementCommand.self,
+            BlockstackICOStatementCommand.self,
             EthereumICOStatementCommand.self,
             EthereumStatementCommand.self,
             EthereumTokensStatementCommand.self,

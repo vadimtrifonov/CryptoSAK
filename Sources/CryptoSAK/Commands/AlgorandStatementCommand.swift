@@ -11,13 +11,13 @@ struct AlgorandStatementCommand: ParsableCommand {
 
     @Argument(help: "Algorand address")
     var address: String
-    
+
     @Option(name: .customLong("known-transactions"), help: "Path to a CSV file with a list of known transactions")
     var knownTransactionsPath: String?
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
-        
+
         let rows = try knownTransactionsPath.map(File.read(path:)) ?? []
         let knownTransactions = try rows.map(KnownAlgorandTransaction.init)
 
@@ -74,8 +74,8 @@ private extension KnownAlgorandTransaction {
         guard columns.count == numberOfColumns else {
             throw "Expected \(numberOfColumns) columns, got \(columns)"
         }
-        
-        guard let type = CoinTrackingRow.TransactionType(rawValue: columns[1]) else  {
+
+        guard let type = CoinTrackingRow.TransactionType(rawValue: columns[1]) else {
             throw "Unknown transaction type: \(columns[1]), known types: \(CoinTrackingRow.TransactionType.allCases.map(\.rawValue))"
         }
 
@@ -114,7 +114,7 @@ private extension CoinTrackingRow {
         knownTransactions: [KnownAlgorandTransaction]
     ) -> CoinTrackingRow {
         let knownTransaction = knownTransactions.first(where: { $0.transactionID == transaction.id })
-        
+
         return self.init(
             type: knownTransaction?.type ?? .incoming(.deposit),
             buyAmount: transaction.amount,
@@ -136,7 +136,7 @@ private extension CoinTrackingRow {
         knownTransactions: [KnownAlgorandTransaction]
     ) -> CoinTrackingRow {
         let knownTransaction = knownTransactions.first(where: { $0.transactionID == transaction.id })
-        
+
         return self.init(
             type: knownTransaction?.type ?? .outgoing(.withdrawal),
             buyAmount: 0,
@@ -259,10 +259,10 @@ extension AlgorandTransaction {
         }
         return close
     }
-    
+
     func makeCommentForCoinTracking(description: String? = nil) -> String {
         var explanation = ""
-        
+
         if let description = description?.trimmingCharacters(in: .whitespaces) {
             explanation = description.hasSuffix(".") ? description + " " : description + ". "
         }

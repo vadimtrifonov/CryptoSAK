@@ -119,9 +119,7 @@ extension HashgraphICOStatementCommand {
             return CoinTrackingRow.makeTrade(
                 ico: ico,
                 transaction: transaction,
-                contributionAmount: proportionalContributionAmount,
-                contributionCurrency: ico.contributionCurrency,
-                payoutAmount: transaction.amount
+                proportionalContributionAmount: proportionalContributionAmount
             )
         }
 
@@ -151,16 +149,14 @@ extension CoinTrackingRow {
     static func makeTrade(
         ico: HashgraphICO,
         transaction: HashgraphTransaction,
-        contributionAmount: Decimal,
-        contributionCurrency: String,
-        payoutAmount: Decimal
+        proportionalContributionAmount: Decimal
     ) -> CoinTrackingRow {
         CoinTrackingRow(
             type: .trade,
-            buyAmount: payoutAmount,
+            buyAmount: transaction.amount,
             buyCurrency: Hashgraph.ticker,
-            sellAmount: contributionAmount,
-            sellCurrency: contributionCurrency,
+            sellAmount: proportionalContributionAmount,
+            sellCurrency: ico.contributionCurrency,
             fee: 0,
             feeCurrency: "",
             exchange: ico.name,
