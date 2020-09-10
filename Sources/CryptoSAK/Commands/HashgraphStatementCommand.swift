@@ -15,6 +15,9 @@ struct HashgraphStatementCommand: ParsableCommand {
     @Argument(help: "Hashgraph account")
     var account: String
 
+    @Option(default: Date.distantPast, help: " Oldest date from which transactions will be exported")
+    var startDate: Date
+
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
 
@@ -22,7 +25,8 @@ struct HashgraphStatementCommand: ParsableCommand {
             account: account,
             hashgraphTransactions: DragonGlass.fetchHashgraphTransactions(
                 accessKey: Config.dragonGlassAccessKey,
-                account: account
+                account: account,
+                startDate: startDate
             )
         )
         .sink(receiveCompletion: { completion in

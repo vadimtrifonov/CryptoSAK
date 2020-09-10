@@ -30,7 +30,8 @@ struct HashgraphICOStatementCommand: ParsableCommand {
 
         DragonGlass.fetchHashgraphTransactions(
             accessKey: Config.dragonGlassAccessKey,
-            account: account
+            account: account,
+            startDate: .distantPast
         )
         .map { transactions in
             Self.exportICOTransactions(account: self.account, icos: icos, transactions: transactions)

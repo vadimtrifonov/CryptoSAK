@@ -15,6 +15,9 @@ struct AlgorandStatementCommand: ParsableCommand {
     @Option(name: .customLong("known-transactions"), help: "Path to a CSV file with a list of known transactions")
     var knownTransactionsPath: String?
 
+    @Option(default: Date.distantPast, help: " Oldest date from which transactions will be exported")
+    var startDate: Date
+
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
 
@@ -23,7 +26,7 @@ struct AlgorandStatementCommand: ParsableCommand {
 
         Self.exportAlgorandStatement(
             address: address,
-            transactionsPublisher: AlgoExplorerGateway().fetchTransactions(address: address)
+            transactionsPublisher: AlgoExplorerGateway().fetchTransactions(address: address, startDate: startDate)
         )
         .sink(receiveCompletion: { completion in
             if case let .failure(error) = completion {

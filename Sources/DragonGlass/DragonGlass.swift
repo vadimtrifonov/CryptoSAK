@@ -33,17 +33,23 @@ public enum DragonGlass {
     public static func fetchHashgraphTransactions(
         urlSession: URLSession = .shared,
         accessKey: String,
-        account: String
+        account: String,
+        startDate: Date
     ) -> AnyPublisher<[HashgraphTransaction], Error> {
         do {
             let endpoint = try Endpoint<DragonGlass.TransactionsResponse>(
                 .get,
                 url: URL(string: "https://api.dragonglass.me/hedera/api/accounts/\(account)/transactions"),
-                headers: ["X-API-KEY": accessKey]
+                headers: ["X-API-KEY": accessKey],
+                queryItems: ["consensusStartInEpoch": startDate.timeIntervalSince1970InMilliseconds] // not working, whatever the value all transactions are always returned
             )
             return urlSession
                 .dataTaskPublisher(for: endpoint)
-                .tryMap({ try $0.data.map(HashgraphTransaction.init) })
+                .tryMap { response in
+                    try response.data
+                        .map(HashgraphTransaction.init)
+                        .filter({ $0.consensusTime >= startDate })
+                }
                 .eraseToAnyPublisher()
         } catch {
             return Fail(error: error).eraseToAnyPublisher()
@@ -123,5 +129,12 @@ extension HashgraphTransaction.Memo {
         default:
             self = .other(rawValue)
         }
+    }
+}
+
+private extension Date {
+
+    var timeIntervalSince1970InMilliseconds: Int {
+        Int(timeIntervalSince1970) * 1000
     }
 }
