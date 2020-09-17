@@ -98,7 +98,7 @@ Arguments:
 Takes [Subscan](https://polkadot.subscan.io/) CSV rewards report and finds associated timestamps.
 
 ```shell
-swift run CryptoSAK polkdato-rewards-statement <address> <rewards-csv-path> --start-date <start-date>
+swift run CryptoSAK polkdaot-rewards-statement <address> <rewards-csv-path> --start-date <start-date>
 ```
 
 Arguments:
