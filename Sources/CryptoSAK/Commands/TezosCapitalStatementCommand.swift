@@ -6,7 +6,7 @@ import Lambda
 import Networking
 import Tezos
 import TezosCapital
-import TzStats
+import TezosTzStats
 
 struct TezosCapitalStatementCommand: ParsableCommand {
 

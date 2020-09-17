@@ -1,10 +1,10 @@
 import ArgumentParser
 import CoinTracking
 import Combine
-import DragonGlass
 import Foundation
 import FoundationExtensions
 import Hashgraph
+import HashgraphDragonGlass
 import Lambda
 import Networking
 

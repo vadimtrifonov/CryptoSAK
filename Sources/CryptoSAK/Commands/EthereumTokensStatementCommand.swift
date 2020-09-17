@@ -2,7 +2,7 @@ import ArgumentParser
 import CoinTracking
 import Combine
 import Ethereum
-import Etherscan
+import EthereumEtherscan
 import Foundation
 
 struct EthereumTokensStatementCommand: ParsableCommand {

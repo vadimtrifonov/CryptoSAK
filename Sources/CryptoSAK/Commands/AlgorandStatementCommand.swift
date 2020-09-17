@@ -1,5 +1,5 @@
-import AlgoExplorer
 import Algorand
+import AlgorandAlgoExplorer
 import ArgumentParser
 import CoinTracking
 import Combine

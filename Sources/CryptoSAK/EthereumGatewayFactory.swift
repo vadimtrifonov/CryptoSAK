@@ -1,5 +1,5 @@
 import Ethereum
-import Etherscan
+import EthereumEtherscan
 import Foundation
 import FoundationExtensions
 import Networking

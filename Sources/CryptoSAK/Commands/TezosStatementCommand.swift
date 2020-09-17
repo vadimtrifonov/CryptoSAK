@@ -4,7 +4,7 @@ import Combine
 import Foundation
 import Networking
 import Tezos
-import TzStats
+import TezosTzStats
 
 struct TezosStatementCommand: ParsableCommand {
 

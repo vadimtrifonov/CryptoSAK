@@ -17,14 +17,14 @@ let package = Package(
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 "Algorand",
-                "AlgoExplorer",
+                "AlgorandAlgoExplorer",
                 "CoinTracking",
-                "DragonGlass",
                 "Ethereum",
-                "Etherscan",
+                "EthereumEtherscan",
                 "FoundationExtensions",
                 "Gate",
                 "Hashgraph",
+                "HashgraphDragonGlass",
                 "IDEX",
                 "Lambda",
                 "Networking",
@@ -32,7 +32,7 @@ let package = Package(
                 "PolkadotSubscan",
                 "Tezos",
                 "TezosCapital",
-                "TzStats"
+                "TezosTzStats"
             ]
         ),
         .target(
@@ -40,7 +40,7 @@ let package = Package(
             dependencies: []
         ),
         .target(
-            name: "AlgoExplorer",
+            name: "AlgorandAlgoExplorer",
             dependencies: [
                 "Algorand",
                 "FoundationExtensions",
@@ -56,17 +56,9 @@ let package = Package(
             dependencies: []
         ),
         .target(
-            name: "Etherscan",
+            name: "EthereumEtherscan",
             dependencies: [
                 "Ethereum",
-                "FoundationExtensions",
-                "Networking",
-            ]
-        ),
-        .target(
-            name: "DragonGlass",
-            dependencies: [
-                "Hashgraph",
                 "FoundationExtensions",
                 "Networking",
             ]
@@ -84,6 +76,14 @@ let package = Package(
         .target(
             name: "Hashgraph",
             dependencies: []
+        ),
+        .target(
+            name: "HashgraphDragonGlass",
+            dependencies: [
+                "Hashgraph",
+                "FoundationExtensions",
+                "Networking",
+            ]
         ),
         .target(
             name: "IDEX",
@@ -123,7 +123,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "TzStats",
+            name: "TezosTzStats",
             dependencies: [
                 "Tezos",
                 "FoundationExtensions",
