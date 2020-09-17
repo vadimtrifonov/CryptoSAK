@@ -93,6 +93,24 @@ Arguments:
 
 1. `account` - Hashgraph account ID
 
+### Polkadot rewards statement
+
+Takes [Subscan](https://polkadot.subscan.io/) CSV rewards report and finds associated timestamps.
+
+```shell
+swift run CryptoSAK polkdato-rewards-statement <address> <rewards-csv-path> --start-date <start-date>
+```
+
+Arguments:
+
+1. `address` - Polkadot address
+2. `rewards-csv-path` - Path to a CSV file with rewards from [Subscan](https://polkadot.subscan.io/) 
+
+Options:
+
+1. `--start-date` - Oldest date from which rewards will be exported
+   - Format: `YYYY-MM-DD`
+
 ### Tezos statement
 
 ```shell

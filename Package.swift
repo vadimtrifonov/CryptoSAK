@@ -28,6 +28,8 @@ let package = Package(
                 "IDEX",
                 "Lambda",
                 "Networking",
+                "Polkadot",
+                "PolkadotSubscan",
                 "Tezos",
                 "TezosCapital",
                 "TzStats"
@@ -96,6 +98,18 @@ let package = Package(
         .target(
             name: "Networking",
             dependencies: []
+        ),
+        .target(
+            name: "Polkadot",
+            dependencies: []
+        ),
+        .target(
+            name: "PolkadotSubscan",
+            dependencies: [
+                "FoundationExtensions",
+                "Networking",
+                "Polkadot",
+            ]
         ),
         .target(
             name: "Tezos",

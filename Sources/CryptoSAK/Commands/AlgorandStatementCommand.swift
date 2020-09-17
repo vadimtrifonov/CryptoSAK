@@ -15,7 +15,7 @@ struct AlgorandStatementCommand: ParsableCommand {
     @Option(name: .customLong("known-transactions"), help: "Path to a CSV file with a list of known transactions")
     var knownTransactionsPath: String?
 
-    @Option(default: Date.distantPast, help: " Oldest date from which transactions will be exported")
+    @Option(default: Date.distantPast, help: "Oldest date from which transactions will be exported")
     var startDate: Date
 
     func run() throws {
