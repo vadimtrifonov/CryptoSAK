@@ -19,9 +19,9 @@ public struct SubscanPolkadotGateway: PolkadotGateway {
                 body: Subscan.BlockRequest(block_num: blockNumber)
             )
             return urlSession.dataTaskPublisher(for: endpoint)
-                .map(\.data.block_timestamp)
-                .map(TimeInterval.init)
-                .map(Date.init(timeIntervalSince1970:))
+                .map { response in
+                    Date(timeIntervalSince1970: TimeInterval(response.data.block_timestamp))
+                }
                 .eraseToAnyPublisher()
         } catch {
             return Fail(error: error).eraseToAnyPublisher()
