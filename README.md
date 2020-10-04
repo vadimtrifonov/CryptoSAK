@@ -93,22 +93,42 @@ Arguments:
 
 1. `account` - Hashgraph account ID
 
-### Polkadot rewards statement
+### Kusama rewards statement
 
-Takes [Subscan](https://polkadot.subscan.io/) CSV rewards report and finds associated timestamps.
+Accepts [Subscan](https://kusama.subscan.io/) CSV rewards files
 
 ```shell
-swift run CryptoSAK polkdaot-rewards-statement <address> <rewards-csv-path> --start-date <start-date>
+swift run CryptoSAK kusama-rewards-statement <address> <rewards-csv-path> --start-block <start-block> --start-date <start-date>
+```
+
+Arguments:
+
+1. `address` - Kusama address
+2. `rewards-csv-path` - Path to a CSV file with rewards from [Subscan](https://kusama.subscan.io/) **OR** a directory of such files 
+
+Options:
+
+1. `--start-block` - Oldest block from which rewards will be exported
+2. `--start-date` - Oldest date from which rewards will be exported
+   - Format: `YYYY-MM-DD`
+
+### Polkadot rewards statement
+
+Accepts [Subscan](https://polkadot.subscan.io/) CSV rewards files
+
+```shell
+swift run CryptoSAK polkdaot-rewards-statement <address> <rewards-csv-path> --start-block <start-block> --start-date <start-date>
 ```
 
 Arguments:
 
 1. `address` - Polkadot address
-2. `rewards-csv-path` - Path to a CSV file with rewards from [Subscan](https://polkadot.subscan.io/) 
+2. `rewards-csv-path` - Path to a CSV file with rewards from [Subscan](https://polkadot.subscan.io/) **OR** a directory of such files 
 
 Options:
 
-1. `--start-date` - Oldest date from which rewards will be exported
+1. `--start-block` - Oldest block from which rewards will be exported
+2. `--start-date` - Oldest date from which rewards will be exported
    - Format: `YYYY-MM-DD`
 
 ### Tezos statement

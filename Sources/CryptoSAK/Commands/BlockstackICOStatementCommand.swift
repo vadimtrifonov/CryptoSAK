@@ -16,7 +16,7 @@ struct BlockstackICOStatementCommand: ParsableCommand {
     var payoutsCSVPath: String
 
     func run() throws {
-        let icoCSVRows = try File.read(path: icoCSVPath)
+        let icoCSVRows = try FileManager.default.readLines(atPath: icoCSVPath)
         let icos = try icoCSVRows.map(BlockstackICO.init)
 
         guard let ico = icos.first, icos.count == 1 else {
@@ -26,7 +26,7 @@ struct BlockstackICOStatementCommand: ParsableCommand {
             """
         }
 
-        let payoutCSVRows = try File.read(path: payoutsCSVPath)
+        let payoutCSVRows = try FileManager.default.readLines(atPath: payoutsCSVPath)
         let payoutRows = try payoutCSVRows.map(BlockstackVestedPayoutRow.init)
 
         let payouts = Self.toNonCumulativePayouts(rows: payoutRows)
@@ -34,7 +34,7 @@ struct BlockstackICOStatementCommand: ParsableCommand {
         let depositRows = payouts.map({ CoinTrackingRow.makeDeposit(address: address, payout: $0) })
         let rows = (icoRows + depositRows).sorted(by: >)
 
-        try File.write(rows: rows, filename: "BlockstackICOStatementCommand")
+        try FileManager.default.writeCSV(rows: rows, filename: "BlockstackICOStatementCommand")
     }
 }
 

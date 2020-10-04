@@ -22,7 +22,7 @@ struct TezosStatementCommand: ParsableCommand {
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
 
-        let rows = try delegateListPath.map(File.read(path:)) ?? []
+        let rows = try delegateListPath.map(FileManager.default.readLines(atPath:)) ?? []
         let delegateAccounts = rows.compactMap { row in
             row.split(separator: ",").map(String.init).first
         }
@@ -40,7 +40,10 @@ struct TezosStatementCommand: ParsableCommand {
         }, receiveValue: { statement in
             do {
                 print(statement.balance)
-                try File.write(rows: statement.toCoinTrackingRows(), filename: "TesosStatement")
+                try FileManager.default.writeCSV(
+                    rows: statement.toCoinTrackingRows(),
+                    filename: "TesosStatement"
+                )
             } catch {
                 print(error)
             }

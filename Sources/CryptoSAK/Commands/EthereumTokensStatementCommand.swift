@@ -21,12 +21,12 @@ struct EthereumTokensStatementCommand: ParsableCommand {
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
 
-        let rows = try tokenListPath.map(File.read(path:)) ?? []
+        let rows = try tokenListPath.map(FileManager.default.readLines(atPath:)) ?? []
         let tokenContractAddresses = rows.compactMap { row in
             row.split(separator: ",").map(String.init).first
         }
 
-        let gateway = makeEthereumGateway()
+        let gateway = EtherscanGateway(apiKey: Config.etherscanAPIKey)
         gateway.fetchTokenTransactions(address: address, startDate: startDate)
             .map { transactions in
                 Self.filteredTokenTransactions(
@@ -46,8 +46,8 @@ struct EthereumTokensStatementCommand: ParsableCommand {
                         address: address
                     )
                     statement.balance.printRows()
-                    try File.write(rows: statement.balance.toCSVRows(), filename: "EthereumTokenBalance", encoding: .utf8)
-                    try File.write(rows: statement.toCoinTrackingRows(), filename: "EthereumTokenStatement")
+                    try FileManager.default.writeCSV(rows: statement.balance.toCSVRows(), filename: "EthereumTokenBalance", encoding: .utf8)
+                    try FileManager.default.writeCSV(rows: statement.toCoinTrackingRows(), filename: "EthereumTokenStatement")
                 } catch {
                     print(error)
                 }

@@ -44,7 +44,7 @@ struct HashgraphStatementCommand: ParsableCommand {
                 print("Account service: \(statement.balance.accountService)")
                 print("Fees: \(statement.balance.fees)")
 
-                try File.write(
+                try FileManager.default.writeCSV(
                     rows: statement.toCoinTrackingRows(),
                     filename: "HashgraphStatement"
                 )

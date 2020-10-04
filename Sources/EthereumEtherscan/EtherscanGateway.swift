@@ -8,7 +8,10 @@ public class EtherscanGateway: EthereumGateway {
     let httpClient: HTTPClient
     let apiKey: String
 
-    public init(httpClient: HTTPClient, apiKey: String) {
+    public init(
+        httpClient: HTTPClient = DefaultHTTPClient(baseURL: "https://api.etherscan.io", urlSession: .shared),
+        apiKey: String
+    ) {
         self.httpClient = httpClient
         self.apiKey = apiKey
     }

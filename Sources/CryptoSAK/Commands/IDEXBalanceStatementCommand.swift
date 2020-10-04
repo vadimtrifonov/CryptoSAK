@@ -2,6 +2,7 @@ import ArgumentParser
 import CoinTracking
 import Combine
 import Ethereum
+import EthereumEtherscan
 import Foundation
 import IDEX
 import Lambda
@@ -14,11 +15,11 @@ struct IDEXBalanceStatementCommand: ParsableCommand {
     var tsvPath: String
 
     func run() throws {
-        let tsvRows = try File.read(path: tsvPath).dropFirst() // drop header row
+        let tsvRows = try FileManager.default.readLines(atPath: tsvPath).dropFirst() // drop header row
         let balanceRows = try tsvRows.map(IDEXBalanceRow.init)
 
         var subscriptions = Set<AnyCancellable>()
-        let gateway = makeEthereumGateway()
+        let gateway = EtherscanGateway(apiKey: Config.etherscanAPIKey)
 
         Self.exportStatement(
             rows: balanceRows,
@@ -31,7 +32,7 @@ struct IDEXBalanceStatementCommand: ParsableCommand {
             Self.exit()
         }, receiveValue: { rows in
             do {
-                try File.write(rows: rows, filename: "IDEXBalanceStatement")
+                try FileManager.default.writeCSV(rows: rows, filename: "IDEXBalanceStatement")
             } catch {
                 print(error)
             }

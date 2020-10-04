@@ -11,10 +11,10 @@ struct GateBillingStatementCommand: ParsableCommand {
     var csvPath: String
 
     func run() throws {
-        let csvRows = try File.read(path: csvPath).dropFirst() // drop header row
+        let csvRows = try FileManager.default.readLines(atPath: csvPath).dropFirst() // drop header row
         let gateRows = try csvRows.map(GateBillingRow.init)
         let statement = try GateStatement(rows: gateRows)
-        try File.write(rows: statement.toCoinTrackingRows(), filename: "GateBillingStatement")
+        try FileManager.default.writeCSV(rows: statement.toCoinTrackingRows(), filename: "GateBillingStatement")
     }
 }
 

@@ -11,18 +11,20 @@ public struct SubscanPolkadotGateway: PolkadotGateway {
         self.urlSession = urlSession
     }
 
-    public func fetchBlockTimestamp(blockNumber: Int) -> AnyPublisher<Date, Error> {
+    public func fetchExtrinsics(
+        address: String,
+        startDate _: Date
+    ) -> AnyPublisher<[PolkadotExtrinsic], Error> {
         do {
-            let endpoint = try Endpoint<Subscan.BlockResponse>(
+            let endpoint = try Endpoint<Subscan.ExtrinsicsReponse>(
                 json: .post,
-                url: URL(string: "https://polkadot.subscan.io/api/open/block"),
-                body: Subscan.BlockRequest(block_num: blockNumber)
+                url: URL(string: "https://polkadot.subscan.io/api/open/account/extrinsics"),
+                body: Subscan.ExtrinsicsRequest(address: address)
             )
-            return urlSession.dataTaskPublisher(for: endpoint)
-                .map { response in
-                    Date(timeIntervalSince1970: TimeInterval(response.data.block_timestamp))
-                }
-                .eraseToAnyPublisher()
+            return urlSession.dataTaskPublisher(for: endpoint).map { response in
+                response.data.extrinsics.map(PolkadotExtrinsic.init)
+            }
+            .eraseToAnyPublisher()
         } catch {
             return Fail(error: error).eraseToAnyPublisher()
         }
@@ -31,15 +33,30 @@ public struct SubscanPolkadotGateway: PolkadotGateway {
 
 enum Subscan {
 
-    struct BlockRequest: Encodable {
-        let block_num: Int
+    struct ExtrinsicsRequest: Encodable {
+        let address: String
     }
 
-    struct BlockResponse: Decodable {
+    struct ExtrinsicsReponse: Decodable {
         let data: ResponseData
 
         struct ResponseData: Decodable {
-            let block_timestamp: Int
+            let extrinsics: [Extrinsic]
+
+            struct Extrinsic: Decodable {
+                let block_timestamp: UInt64
+                let call_module: String
+                let call_module_function: String
+                let from: String
+                let success: String
+            }
         }
+    }
+}
+
+extension PolkadotExtrinsic {
+    
+    init(respose: Subscan.ExtrinsicsReponse.ResponseData.Extrinsic) {
+        self.init()
     }
 }

@@ -34,7 +34,7 @@ struct TezosCapitalStatementCommand: ParsableCommand {
             Self.exit()
         }, receiveValue: { rows in
             do {
-                try File.write(rows: rows, filename: "TezosCapitalStatement")
+                try FileManager.default.writeCSV(rows: rows, filename: "TezosCapitalStatement")
             } catch {
                 print(error)
             }

@@ -14,14 +14,14 @@ struct EthereumICOStatementCommand: ParsableCommand {
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
-        let csvRows = try File.read(path: inputPath)
+        let csvRows = try FileManager.default.readLines(atPath: inputPath)
 
         guard let ico = try csvRows.map(EthereumICO.init).first else {
             print("Nothing to export")
             Self.exit()
         }
 
-        let gateway: EthereumGateway = makeEthereumGateway()
+        let gateway = EtherscanGateway(apiKey: Config.etherscanAPIKey)
 
         Self.exportICOTransactions(
             ico: ico,
@@ -36,7 +36,7 @@ struct EthereumICOStatementCommand: ParsableCommand {
             Self.exit()
         }, receiveValue: { rows in
             do {
-                try File.write(rows: rows, filename: "ICOExport")
+                try FileManager.default.writeCSV(rows: rows, filename: "ICOExport")
             } catch {
                 print(error)
             }

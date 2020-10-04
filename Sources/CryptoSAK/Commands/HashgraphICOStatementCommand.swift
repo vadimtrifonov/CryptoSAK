@@ -20,7 +20,7 @@ struct HashgraphICOStatementCommand: ParsableCommand {
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
-        let csvRows = try File.read(path: inputPath)
+        let csvRows = try FileManager.default.readLines(atPath: inputPath)
         let icos = try csvRows.map(HashgraphICO.init)
 
         guard !icos.isEmpty else {
@@ -43,10 +43,7 @@ struct HashgraphICOStatementCommand: ParsableCommand {
             Self.exit()
         }, receiveValue: { rows in
             do {
-                try File.write(
-                    rows: rows,
-                    filename: "HashgraphICOStatement"
-                )
+                try FileManager.default.writeCSV(rows: rows, filename: "HashgraphICOStatement")
             } catch {
                 print(error)
             }

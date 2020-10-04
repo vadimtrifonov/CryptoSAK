@@ -17,7 +17,7 @@ struct EthereumStatementCommand: ParsableCommand {
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
-        let gateway = makeEthereumGateway()
+        let gateway = EtherscanGateway(apiKey: Config.etherscanAPIKey)
 
         Publishers.Zip(
             gateway.fetchNormalTransactions(address: address, startDate: startDate),
@@ -36,7 +36,7 @@ struct EthereumStatementCommand: ParsableCommand {
                     address: address
                 )
                 print(statement.balance)
-                try File.write(rows: statement.toCoinTrackingRows(), filename: "EthereumStatement")
+                try FileManager.default.writeCSV(rows: statement.toCoinTrackingRows(), filename: "EthereumStatement")
             } catch {
                 print(error)
             }

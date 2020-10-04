@@ -11,10 +11,10 @@ struct IDEXTradeStatementCommand: ParsableCommand {
     var csvPath: String
 
     func run() throws {
-        let csvRows = try File.read(path: csvPath).dropFirst() // drop header row
+        let csvRows = try FileManager.default.readLines(atPath: csvPath).dropFirst() // drop header row
         let tradeRows = try csvRows.map(IDEXTradeRow.init)
         let rows = tradeRows.map(CoinTrackingRow.init)
-        try File.write(rows: rows, filename: "IDEXTradeStatement")
+        try FileManager.default.writeCSV(rows: rows, filename: "IDEXTradeStatement")
     }
 }
 
