@@ -29,8 +29,9 @@ enum EthereumProxy {
     }
 
     struct TransactionReceipt: Decodable {
+        let transactionHash: String
         let gasUsed: String
-        let status: String
+        let status: String?
     }
 }
 
@@ -61,8 +62,13 @@ extension EthereumProxy.TransactionReceipt {
         try Decimal(UInt64(hexadecimal: gasUsed))
     }
 
+    /// - Warning: Not all receipts are containing `status`; assuming successful, if missing
     func tryIsSuccessful() throws -> Bool {
-        try UInt64(hexadecimal: status) != 0
+        guard let status = status else {
+            assertionFailure("Receipt for transaction \(transactionHash) has no status")
+            return true
+        }
+        return try UInt64(hexadecimal: status) != 0
     }
 }
 

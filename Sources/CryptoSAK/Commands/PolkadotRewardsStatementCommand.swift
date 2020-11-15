@@ -116,8 +116,7 @@ private extension CoinTrackingRow {
             exchange: "Polkadot \(address.prefix(8)).",
             group: "Reward",
             comment: "Export. Extrinsic: \(rewardRow.extrinsicHash). Event ID: \(rewardRow.eventID)",
-            date: rewardRow.blockTimestamp,
-            transactionID: ""
+            date: rewardRow.blockTimestamp
         )
     }
 }

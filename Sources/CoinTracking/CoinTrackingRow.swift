@@ -12,6 +12,8 @@ public struct CoinTrackingRow: Equatable {
     public let group: String
     public let comment: String
     public let date: Date
+    /// - Warning: CoinTracking considers transaction with the same ID as duplicates,
+    /// even when one is a deposit and another one is a withdrawal.
     public let transactionID: String
 
     public init(
@@ -26,7 +28,7 @@ public struct CoinTrackingRow: Equatable {
         group: String,
         comment: String,
         date: Date,
-        transactionID: String
+        transactionID: String = ""
     ) {
         self.type = type
         self.buyAmount = buyAmount

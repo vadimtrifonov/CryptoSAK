@@ -56,8 +56,7 @@ extension CoinTrackingRow {
             exchange: "IDEX",
             group: "",
             comment: "Export. Transaction: \(idexTradeRow.transactionHash)",
-            date: idexTradeRow.date,
-            transactionID: idexTradeRow.transactionHash
+            date: idexTradeRow.date
         )
     }
 }

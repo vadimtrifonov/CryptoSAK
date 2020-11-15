@@ -126,8 +126,7 @@ private extension CoinTrackingRow {
             exchange: operation.receiverNameForCoinTracking,
             group: "Delegation",
             comment: "Export. Operation: \(operation.operationHash)",
-            date: operation.timestamp,
-            transactionID: operation.operationHash
+            date: operation.timestamp
         )
     }
 
@@ -143,8 +142,7 @@ private extension CoinTrackingRow {
             exchange: operation.receiverNameForCoinTracking,
             group: "",
             comment: "Export. Operation: \(operation.operationHash)",
-            date: operation.timestamp,
-            transactionID: ""
+            date: operation.timestamp
         )
     }
 
@@ -160,8 +158,7 @@ private extension CoinTrackingRow {
             exchange: operation.senderNameForCoinTracking,
             group: "",
             comment: "Export. Operation: \(operation.operationHash)",
-            date: operation.timestamp,
-            transactionID: ""
+            date: operation.timestamp
         )
     }
 
@@ -179,8 +176,7 @@ private extension CoinTrackingRow {
             exchange: operation.senderNameForCoinTracking,
             group: "Fee",
             comment: "Export. Operation: \(operation.operationHash)",
-            date: operation.timestamp,
-            transactionID: ""
+            date: operation.timestamp
         )
     }
 }

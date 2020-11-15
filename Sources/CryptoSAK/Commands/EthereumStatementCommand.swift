@@ -71,8 +71,7 @@ private extension CoinTrackingRow {
             exchange: transaction.sourceNameForCoinTracking,
             group: "Fee",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date,
-            transactionID: ""
+            date: transaction.date
         )
     }
 
@@ -88,8 +87,7 @@ private extension CoinTrackingRow {
             exchange: transaction.destinationNameForCoinTracking,
             group: "",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date,
-            transactionID: transaction.hash
+            date: transaction.date
         )
     }
 
@@ -105,8 +103,7 @@ private extension CoinTrackingRow {
             exchange: transaction.destinationNameForCoinTracking,
             group: "Internal",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date,
-            transactionID: transaction.hash
+            date: transaction.date
         )
     }
 
@@ -122,8 +119,7 @@ private extension CoinTrackingRow {
             exchange: transaction.sourceNameForCoinTracking,
             group: "",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date,
-            transactionID: transaction.hash
+            date: transaction.date
         )
     }
 
@@ -139,8 +135,7 @@ private extension CoinTrackingRow {
             exchange: transaction.sourceNameForCoinTracking,
             group: "Internal",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date,
-            transactionID: transaction.hash
+            date: transaction.date
         )
     }
 }

@@ -36,7 +36,7 @@ struct EthereumICOStatementCommand: ParsableCommand {
             Self.exit()
         }, receiveValue: { rows in
             do {
-                try FileManager.default.writeCSV(rows: rows, filename: "ICOExport")
+                try FileManager.default.writeCSV(rows: rows, filename: "EthereumICOExport")
             } catch {
                 print(error)
             }
@@ -51,7 +51,7 @@ extension EthereumICOStatementCommand {
 
     static func exportICOTransactions(
         ico: EthereumICO,
-        fetchTransaction: (_ hash: String) -> AnyPublisher<EthereumTransaction, Error>,
+        fetchTransaction: @escaping (_ hash: String) -> AnyPublisher<EthereumTransaction, Error>,
         fetchTokenTranactions: @escaping (_ address: String) -> AnyPublisher<[EthereumTokenTransaction], Error>
     ) -> AnyPublisher<[CoinTrackingRow], Error> {
         fetchContributionTransactions(
@@ -79,11 +79,17 @@ extension EthereumICOStatementCommand {
 
     static func fetchContributionTransactions(
         ico: EthereumICO,
-        fetchTransaction: (_ hash: String) -> AnyPublisher<EthereumTransaction, Error>
+        fetchTransaction: @escaping (_ hash: String) -> AnyPublisher<EthereumTransaction, Error>
     ) -> AnyPublisher<[EthereumTransaction], Error> {
         ico.contributionHashes
-            .map(fetchTransaction)
-            .reduce(Empty().eraseToAnyPublisher()) { $0.merge(with: $1).eraseToAnyPublisher() }
+            .reduce(Empty().eraseToAnyPublisher()) { publisher, hash in
+                publisher
+                    .append(fetchTransaction(hash))
+                    // delay is need to avoid exhausting the Etherscan quota,
+                    // this can be improved by implementing capping in Etherscan gateway
+                    .delay(for: 0.5, scheduler: DispatchQueue.main)
+                    .eraseToAnyPublisher()
+            }
             .collect()
             .eraseToAnyPublisher()
     }
@@ -110,7 +116,7 @@ extension EthereumICOStatementCommand {
         tokenTransactions: [EthereumTokenTransaction]
     ) -> [EthereumTokenTransaction] {
         let icoTokenTransactions = tokenTransactions
-            .filter { $0.token.symbol.uppercased() == ico.tokenSymbol.uppercased() }
+            .filter { $0.token.contractAddress.uppercased() == ico.tokenContractAddress.uppercased() }
             .filter { $0.to.lowercased() == payoutAddress.lowercased() }
             .sorted(by: <)
 
@@ -126,19 +132,24 @@ extension EthereumICOStatementCommand {
         contibutionTransactions: [EthereumTransaction],
         tokenPayoutTransactions: [EthereumTokenTransaction]
     ) -> [CoinTrackingRow] {
-        let totalContributionAmount = contibutionTransactions.reduce(0) { $0 + $1.amount }
-        let totalTokenPayoutAmount = tokenPayoutTransactions.reduce(0) { $0 + $1.amount }
+        guard let tokenSymbol = tokenPayoutTransactions.first?.token.symbol else {
+            return []
+        }
 
         let contibutionRows = contibutionTransactions.map { CoinTrackingRow.makeDeposit(ico: ico, transaction: $0) }
         let tokenPayoutRows = tokenPayoutTransactions.map { CoinTrackingRow.makeWithdrawal(ico: ico, transaction: $0) }
 
-        let tradeRows = tokenPayoutTransactions.map { transaction -> CoinTrackingRow in
-            let payoutPercent = transaction.amount / totalTokenPayoutAmount
-            let proportionalContributionAmount = totalContributionAmount * payoutPercent
+        let totalContributionAmount = contibutionTransactions.reduce(0) { $0 + $1.amount }
+        let totalTokenPayoutAmount = tokenPayoutTransactions.reduce(0) { $0 + $1.amount }
+
+        let tradeRows = contibutionTransactions.map { transaction -> CoinTrackingRow in
+            let contributionPercent = transaction.amount / totalContributionAmount
+            let proportionalPayoutAmount = totalTokenPayoutAmount * contributionPercent
             return CoinTrackingRow.makeTrade(
                 ico: ico,
-                transaction: transaction,
-                proportionalContributionAmount: proportionalContributionAmount
+                contributionTransaction: transaction,
+                proportionalPayoutAmount: proportionalPayoutAmount,
+                tokenSymbol: tokenSymbol
             )
         }
 
@@ -148,16 +159,16 @@ extension EthereumICOStatementCommand {
 
 public struct EthereumICO {
     public let name: String
-    public let tokenSymbol: String
+    public let tokenContractAddress: String
     public let contributionHashes: [String]
 
     public init(
         name: String,
-        tokenSymbol: String,
+        tokenContractAddress: String,
         contributionHashes: [String]
     ) {
         self.name = name
-        self.tokenSymbol = tokenSymbol
+        self.tokenContractAddress = tokenContractAddress
         self.contributionHashes = contributionHashes
     }
 }
@@ -173,7 +184,7 @@ private extension EthereumICO {
 
         self.init(
             name: columns[0],
-            tokenSymbol: columns[1],
+            tokenContractAddress: columns[1],
             contributionHashes: Array(columns.dropFirst(2))
         )
     }
@@ -192,29 +203,28 @@ private extension CoinTrackingRow {
             exchange: ico.name,
             group: "",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date,
-            transactionID: transaction.hash
+            date: transaction.date
         )
     }
 
     static func makeTrade(
         ico: EthereumICO,
-        transaction: EthereumTokenTransaction,
-        proportionalContributionAmount: Decimal
+        contributionTransaction: EthereumTransaction,
+        proportionalPayoutAmount: Decimal,
+        tokenSymbol: String
     ) -> CoinTrackingRow {
         CoinTrackingRow(
             type: .trade,
-            buyAmount: transaction.amount,
-            buyCurrency: transaction.token.symbol,
-            sellAmount: proportionalContributionAmount,
+            buyAmount: proportionalPayoutAmount,
+            buyCurrency: tokenSymbol,
+            sellAmount: contributionTransaction.amount,
             sellCurrency: Ethereum.ticker,
             fee: 0,
             feeCurrency: "",
             exchange: ico.name,
             group: "",
             comment: "Export",
-            date: transaction.date,
-            transactionID: ""
+            date: contributionTransaction.date
         )
     }
 
@@ -233,8 +243,7 @@ private extension CoinTrackingRow {
             exchange: ico.name,
             group: "",
             comment: "Export. Transaction: \(transaction.hash)",
-            date: transaction.date,
-            transactionID: "" // CoinTracking considers transaction with the same ID as duplicate, even when one is deposit and another is withdrawal
+            date: transaction.date
         )
     }
 }

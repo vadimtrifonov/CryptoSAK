@@ -165,8 +165,7 @@ extension CoinTrackingRow {
             exchange: "Tezos Capital",
             group: "Bond Pool",
             comment: "Export. Cycle: \(cycle.cycle)",
-            date: cycle.end,
-            transactionID: ""
+            date: cycle.end
         )
     }
 }

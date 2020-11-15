@@ -59,6 +59,7 @@ struct HashgraphICO {
     let contributionAmount: Decimal
     let contributionCurrency: String
     let senderAccountID: String
+    let timestamp: Date
 }
 
 private extension HashgraphICO {
@@ -66,7 +67,7 @@ private extension HashgraphICO {
     init(csvRow: String) throws {
         let columns = csvRow.split(separator: ",").map(String.init)
 
-        let numberOfColumns = 4
+        let numberOfColumns = 5
         guard columns.count == numberOfColumns else {
             throw "Expected \(numberOfColumns) columns, got \(columns)"
         }
@@ -75,7 +76,8 @@ private extension HashgraphICO {
             name: columns[0],
             contributionAmount: try Decimal(string: columns[1]),
             contributionCurrency: columns[2],
-            senderAccountID: columns[3]
+            senderAccountID: columns[3],
+            timestamp: try ISO8601DateFormatter().date(from: columns[4])
         )
     }
 }
@@ -105,30 +107,21 @@ extension HashgraphICOStatementCommand {
             transaction.senderID.lowercased() == ico.senderAccountID.lowercased()
         }
 
-        let totalPayoutAmount = payoutTransactions.reduce(0, { $0 + $1.amount })
-
         let payoutTransactionRows = payoutTransactions.map { transaction in
             CoinTrackingRow.makeWithdrawal(ico: ico, transaction: transaction)
         }
 
-        let tradeRows = payoutTransactions.map { transaction -> CoinTrackingRow in
-            let payoutPercent = transaction.amount / totalPayoutAmount
-            let proportionalContributionAmount = ico.contributionAmount * payoutPercent
-            return CoinTrackingRow.makeTrade(
-                ico: ico,
-                transaction: transaction,
-                proportionalContributionAmount: proportionalContributionAmount
-            )
-        }
+        let totalPayoutAmount = payoutTransactions.reduce(0, { $0 + $1.amount })
+        let tradeRow = CoinTrackingRow.makeTrade(ico: ico, totalPayoutAmount: totalPayoutAmount)
 
-        return (payoutTransactionRows + tradeRows).sorted(by: >)
+        return (payoutTransactionRows + [tradeRow]).sorted(by: >)
     }
 }
 
 extension CoinTrackingRow {
 
     static func makeWithdrawal(ico: HashgraphICO, transaction: HashgraphTransaction) -> CoinTrackingRow {
-        self.init(
+        .init(
             type: .outgoing(.withdrawal),
             buyAmount: 0,
             buyCurrency: "",
@@ -139,29 +132,26 @@ extension CoinTrackingRow {
             exchange: ico.name,
             group: "",
             comment: "Export. Transaction: \(transaction.readableTransactionID)",
-            date: transaction.consensusTime,
-            transactionID: "" // CoinTracking considers transaction with the same ID as duplicate, even when one is deposit and another is withdrawal
+            date: transaction.consensusTime
         )
     }
 
     static func makeTrade(
         ico: HashgraphICO,
-        transaction: HashgraphTransaction,
-        proportionalContributionAmount: Decimal
+        totalPayoutAmount: Decimal
     ) -> CoinTrackingRow {
-        CoinTrackingRow(
+        .init(
             type: .trade,
-            buyAmount: transaction.amount,
+            buyAmount: totalPayoutAmount,
             buyCurrency: Hashgraph.ticker,
-            sellAmount: proportionalContributionAmount,
+            sellAmount: ico.contributionAmount,
             sellCurrency: ico.contributionCurrency,
             fee: 0,
             feeCurrency: "",
             exchange: ico.name,
             group: "",
             comment: "Export",
-            date: transaction.consensusTime,
-            transactionID: ""
+            date: ico.timestamp
         )
     }
 }

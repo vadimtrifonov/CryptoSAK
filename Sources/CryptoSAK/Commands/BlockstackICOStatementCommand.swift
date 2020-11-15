@@ -53,23 +53,15 @@ extension BlockstackICOStatementCommand {
         ico: BlockstackICO,
         payouts: [BlockstackVestedPayout]
     ) -> [CoinTrackingRow] {
-        let totalPayoutAmount = payouts.reduce(0, { $0 + $1.amount })
 
         let payoutTransactionRows = payouts.map { payout in
             CoinTrackingRow.makeWithdrawal(ico: ico, payout: payout)
         }
 
-        let tradeRows = payouts.map { payout -> CoinTrackingRow in
-            let payoutPercent = payout.amount / totalPayoutAmount
-            let proportionalContributionAmount = ico.contributionAmount * payoutPercent
-            return CoinTrackingRow.makeTrade(
-                ico: ico,
-                payout: payout,
-                proportionalContributionAmount: proportionalContributionAmount
-            )
-        }
+        let totalPayoutAmount = payouts.reduce(0, { $0 + $1.amount })
+        let tradeRow = CoinTrackingRow.makeTrade(ico: ico, totalPayoutAmount: totalPayoutAmount)
 
-        return (payoutTransactionRows + tradeRows)
+        return payoutTransactionRows + [tradeRow]
     }
 }
 
@@ -87,6 +79,7 @@ struct BlockstackICO {
     let name: String
     let contributionAmount: Decimal
     let contributionCurrency: String
+    let timestamp: Date
 }
 
 extension BlockstackICO {
@@ -94,7 +87,7 @@ extension BlockstackICO {
     init(csvRow: String) throws {
         let columns = csvRow.split(separator: Character(",")).map(String.init)
 
-        let expectedColumns = 3
+        let expectedColumns = 4
         guard columns.count == expectedColumns else {
             throw "Expected \(expectedColumns) columns, got \(columns)"
         }
@@ -102,7 +95,8 @@ extension BlockstackICO {
         self.init(
             name: columns[0],
             contributionAmount: try Decimal(string: columns[1]),
-            contributionCurrency: columns[2]
+            contributionCurrency: columns[2],
+            timestamp: try ISO8601DateFormatter().date(from: columns[3])
         )
     }
 }
@@ -149,29 +143,26 @@ private extension CoinTrackingRow {
             exchange: ico.name,
             group: "",
             comment: "Export",
-            date: payout.timestamp,
-            transactionID: ""
+            date: payout.timestamp
         )
     }
 
     static func makeTrade(
         ico: BlockstackICO,
-        payout: BlockstackVestedPayout,
-        proportionalContributionAmount: Decimal
+        totalPayoutAmount: Decimal
     ) -> CoinTrackingRow {
         CoinTrackingRow(
             type: .trade,
-            buyAmount: payout.amount,
+            buyAmount: totalPayoutAmount,
             buyCurrency: Blockstack.ticker,
-            sellAmount: proportionalContributionAmount,
+            sellAmount: ico.contributionAmount,
             sellCurrency: ico.contributionCurrency,
             fee: 0,
             feeCurrency: "",
             exchange: ico.name,
             group: "",
             comment: "Export",
-            date: payout.timestamp,
-            transactionID: ""
+            date: ico.timestamp
         )
     }
 
@@ -190,8 +181,7 @@ private extension CoinTrackingRow {
             exchange: "Blockstack \(address.prefix(8)).",
             group: "",
             comment: "Export",
-            date: payout.timestamp,
-            transactionID: ""
+            date: payout.timestamp
         )
     }
 }

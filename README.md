@@ -80,7 +80,8 @@ Arguments:
 
 1. `account` - Hashgraph account ID
 2. `ico-csv` - Path to a CSV file with information about ICO
-    - Format (no header row): `<ico-name>,<contribution-amount>,<contribution-currency>,<sender-account-ID>`
+    - Format (no header row): `<ico-name>,<contribution-amount>,<contribution-currency>,<sender-account-ID>,<timestamp>`
+    - Timestamp format: `YYYY-MM-DDThh:mm:ssTZD`
     - Each row is a separate ICO
 
 ### Hashgraph statement

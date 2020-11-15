@@ -94,8 +94,7 @@ private extension CoinTrackingRow {
             exchange: "Hashgraph \(transaction.receiverID)",
             group: "",
             comment: "Export. Transaction: \(transaction.readableTransactionID)",
-            date: transaction.consensusTime,
-            transactionID: transaction.transactionID
+            date: transaction.consensusTime
         )
     }
 
@@ -111,8 +110,7 @@ private extension CoinTrackingRow {
             exchange: "Hashgraph \(transaction.senderID)",
             group: "",
             comment: "Export. Transaction: \(transaction.readableTransactionID)",
-            date: transaction.consensusTime,
-            transactionID: transaction.transactionID
+            date: transaction.consensusTime
         )
     }
 
@@ -130,8 +128,7 @@ private extension CoinTrackingRow {
             exchange: "Hashgraph \(transaction.senderID)",
             group: "Account",
             comment: "Export. \(transaction.memo.rawValue). Transaction: \(transaction.readableTransactionID)",
-            date: transaction.consensusTime,
-            transactionID: transaction.transactionID
+            date: transaction.consensusTime
         )
     }
 
@@ -147,8 +144,7 @@ private extension CoinTrackingRow {
             exchange: "Hashgraph \(transaction.senderID)",
             group: "Fee",
             comment: "Export. Transaction: \(transaction.readableTransactionID)",
-            date: transaction.consensusTime,
-            transactionID: ""
+            date: transaction.consensusTime
         )
     }
 }

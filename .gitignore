@@ -1,7 +1,7 @@
 .DS_Store
 /.build
-/*.csv
-/*.tsv
+**/*.csv
+**/*.tsv
 /*.txt
 /*.xcodeproj
 /.swiftpm

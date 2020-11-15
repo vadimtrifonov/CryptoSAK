@@ -58,7 +58,7 @@ extension PolkadotExtrinsicsStatementCommand {
 }
 
 extension PolkadotExtrinsicsStatement {
-    
+
     func toCoinTrackingRows() -> [CoinTrackingRow] {
         []
     }

@@ -129,8 +129,7 @@ private extension CoinTrackingRow {
             exchange: transaction.receiverNameForCoinTracking,
             group: "",
             comment: transaction.makeCommentForCoinTracking(description: knownTransaction?.description),
-            date: transaction.timestamp,
-            transactionID: ""
+            date: transaction.timestamp
         )
     }
 
@@ -151,8 +150,7 @@ private extension CoinTrackingRow {
             exchange: transaction.senderNameForCoinTracking,
             group: "",
             comment: transaction.makeCommentForCoinTracking(description: knownTransaction?.description),
-            date: transaction.timestamp,
-            transactionID: ""
+            date: transaction.timestamp
         )
     }
 
@@ -168,8 +166,7 @@ private extension CoinTrackingRow {
             exchange: transaction.senderNameForCoinTracking,
             group: "Fee",
             comment: transaction.makeCommentForCoinTracking(),
-            date: transaction.timestamp,
-            transactionID: ""
+            date: transaction.timestamp
         )
     }
 
@@ -185,8 +182,7 @@ private extension CoinTrackingRow {
             exchange: transaction.closeReceiverNameForCoinTracking(),
             group: "Close",
             comment: transaction.makeCommentForCoinTracking(),
-            date: transaction.timestamp,
-            transactionID: ""
+            date: transaction.timestamp
         )
     }
 
@@ -202,8 +198,7 @@ private extension CoinTrackingRow {
             exchange: transaction.receiverNameForCoinTracking,
             group: "Reward",
             comment: transaction.makeCommentForCoinTracking(),
-            date: transaction.timestamp,
-            transactionID: ""
+            date: transaction.timestamp
         )
     }
 
@@ -219,8 +214,7 @@ private extension CoinTrackingRow {
             exchange: transaction.senderNameForCoinTracking,
             group: "Reward",
             comment: transaction.makeCommentForCoinTracking(),
-            date: transaction.timestamp,
-            transactionID: ""
+            date: transaction.timestamp
         )
     }
 
@@ -236,8 +230,7 @@ private extension CoinTrackingRow {
             exchange: transaction.closeReceiverNameForCoinTracking(),
             group: "Reward",
             comment: transaction.makeCommentForCoinTracking(),
-            date: transaction.timestamp,
-            transactionID: ""
+            date: transaction.timestamp
         )
     }
 }

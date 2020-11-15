@@ -61,8 +61,7 @@ private extension CoinTrackingRow {
             exchange: "Gate.io",
             group: "",
             comment: "Export",
-            date: transaction.date,
-            transactionID: ""
+            date: transaction.date
         )
     }
 }
@@ -81,8 +80,7 @@ extension CoinTrackingRow {
             exchange: "Gate.io",
             group: "",
             comment: "Export",
-            date: trade.date,
-            transactionID: ""
+            date: trade.date
         )
     }
 }

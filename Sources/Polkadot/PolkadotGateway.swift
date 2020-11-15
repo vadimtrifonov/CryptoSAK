@@ -7,7 +7,7 @@ public protocol PolkadotGateway {
 }
 
 public struct PolkadotExtrinsic {
-    
+
     public init() {}
 }
 
