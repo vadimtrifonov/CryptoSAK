@@ -9,3 +9,13 @@ extension Int {
         self = integer
     }
 }
+
+extension UInt {
+
+    public init(string: String) throws {
+        guard let integer = UInt(string) else {
+            throw "Invalid unsigned integer \(string)"
+        }
+        self = integer
+    }
+}

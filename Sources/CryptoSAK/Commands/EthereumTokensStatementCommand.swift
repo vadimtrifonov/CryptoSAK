@@ -12,11 +12,14 @@ struct EthereumTokensStatementCommand: ParsableCommand {
     @Argument(help: "Ethereum address")
     var address: String
 
+    @Flag
+    var balance = false
+
     @Option(name: .customLong("token-list"), help: "Path to CSV file with the list of tokens to be exported (other tokens will be ignored)")
     var tokenListPath: String?
 
-    @Option(default: Date.distantPast, help: " Oldest date from which transactions will be exported")
-    var startDate: Date
+    @Option(help: "Oldest date from which transactions will be exported")
+    var startDate: Date = .distantPast
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
@@ -46,7 +49,9 @@ struct EthereumTokensStatementCommand: ParsableCommand {
                         address: address
                     )
                     statement.balance.printRows()
-                    try FileManager.default.writeCSV(rows: statement.balance.toCSVRows(), filename: "EthereumTokenBalance", encoding: .utf8)
+                    if balance {
+                        try FileManager.default.writeCSV(rows: statement.balance.toCSVRows(), filename: "EthereumTokenBalance", encoding: .utf8)
+                    }
                     try FileManager.default.writeCSV(rows: statement.toCoinTrackingRows(), filename: "EthereumTokenStatement")
                 } catch {
                     print(error)

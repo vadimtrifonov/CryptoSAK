@@ -15,8 +15,8 @@ struct HashgraphStatementCommand: ParsableCommand {
     @Argument(help: "Hashgraph account")
     var account: String
 
-    @Option(default: Date.distantPast, help: " Oldest date from which transactions will be exported")
-    var startDate: Date
+    @Option(help: " Oldest date from which transactions will be exported")
+    var startDate: Date = .distantPast
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
@@ -139,8 +139,8 @@ private extension CoinTrackingRow {
             buyCurrency: "",
             sellAmount: transaction.fee,
             sellCurrency: Hashgraph.ticker,
-            fee: transaction.fee,
-            feeCurrency: Hashgraph.ticker,
+            fee: 0,
+            feeCurrency: "",
             exchange: "Hashgraph \(transaction.senderID)",
             group: "Fee",
             comment: "Export. Transaction: \(transaction.readableTransactionID)",

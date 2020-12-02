@@ -14,11 +14,11 @@ struct KusamaRewardsStatementCommand: ParsableCommand {
     @Argument(help: "Path to CSV file with rewards or directory of such files")
     var rewardsCSVPath: String
 
-    @Option(default: 0, help: "Oldest block from which rewards will be exported")
-    var startBlock: Int
+    @Option(help: "Oldest block from which rewards will be exported")
+    var startBlock: Int = 0
 
-    @Option(default: Date.distantPast, help: "Oldest date from which rewards will be exported")
-    var startDate: Date
+    @Option(help: "Oldest date from which rewards will be exported")
+    var startDate: Date = .distantPast
 
     func run() throws {
         let csvRows: [String]

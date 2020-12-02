@@ -15,8 +15,8 @@ struct AlgorandStatementCommand: ParsableCommand {
     @Option(name: .customLong("known-transactions"), help: "Path to a CSV file with a list of known transactions")
     var knownTransactionsPath: String?
 
-    @Option(default: Date.distantPast, help: "Oldest date from which transactions will be exported")
-    var startDate: Date
+    @Option(help: "Oldest date from which transactions will be exported")
+    var startDate: Date = .distantPast
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
@@ -161,8 +161,8 @@ private extension CoinTrackingRow {
             buyCurrency: "",
             sellAmount: transaction.fee,
             sellCurrency: Algorand.ticker,
-            fee: transaction.fee,
-            feeCurrency: Algorand.ticker,
+            fee: 0,
+            feeCurrency: "",
             exchange: transaction.senderNameForCoinTracking,
             group: "Fee",
             comment: transaction.makeCommentForCoinTracking(),

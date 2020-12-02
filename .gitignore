@@ -2,7 +2,7 @@
 /.build
 **/*.csv
 **/*.tsv
-/*.txt
+**/*.txt
 /*.xcodeproj
 /.swiftpm
 /Packages

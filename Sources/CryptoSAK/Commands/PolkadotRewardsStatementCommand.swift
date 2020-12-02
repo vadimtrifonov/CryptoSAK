@@ -15,11 +15,11 @@ struct PolkadotRewardsStatementCommand: ParsableCommand {
     @Argument(help: "Path to CSV file with rewards or directory of such files")
     var rewardsCSVPath: String
 
-    @Option(default: 0, help: "Oldest block from which rewards will be exported")
-    var startBlock: Int
+    @Option(help: "Oldest block from which rewards will be exported")
+    var startBlock: UInt = 0
 
-    @Option(default: Date.distantPast, help: "Oldest date from which rewards will be exported")
-    var startDate: Date
+    @Option(help: "Oldest date from which rewards will be exported")
+    var startDate: Date = .distantPast
 
     func run() throws {
         let csvRows: [String]
@@ -54,7 +54,7 @@ struct PolkadotRewardsStatementCommand: ParsableCommand {
 
 struct PolkadotRewardRow: Comparable {
     let eventID: String
-    let block: Int
+    let block: UInt
     let blockTimestamp: Date
     let extrinsicHash: String
     let action: String
@@ -77,7 +77,7 @@ extension PolkadotRewardRow {
 
         self.init(
             eventID: columns[0],
-            block: try Int(string: columns[1]),
+            block: try UInt(string: columns[1]),
             blockTimestamp: try Date(timeIntervalSince1970: TimeInterval(string: columns[2])),
             extrinsicHash: columns[4],
             action: columns[5],
@@ -91,7 +91,7 @@ extension PolkadotRewardsStatementCommand {
     static func toCoinTrackingRows(
         address: String,
         rewards: [PolkadotRewardRow],
-        startBlock: Int,
+        startBlock: UInt,
         startDate: Date
     ) -> [CoinTrackingRow] {
         rewards
@@ -115,7 +115,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: "Polkadot \(address.prefix(8)).",
             group: "Reward",
-            comment: "Export. Extrinsic: \(rewardRow.extrinsicHash). Event ID: \(rewardRow.eventID)",
+            comment: "Export. ID: \(rewardRow.eventID). Extrinsic: \(rewardRow.extrinsicHash)",
             date: rewardRow.blockTimestamp
         )
     }

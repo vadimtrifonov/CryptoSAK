@@ -12,8 +12,11 @@ struct PolkadotExtrinsicsStatementCommand: ParsableCommand {
     @Argument(help: "Polkadot address")
     var address: String
 
-    @Option(default: Date.distantPast, help: "Oldest date from which extrinsics will be exported")
-    var startDate: Date
+    @Option(help: "Oldest block from which rewards will be exported")
+    var startBlock: UInt = 0
+
+    @Option(help: "Oldest date from which extrinsics will be exported")
+    var startDate: Date = .distantPast
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
@@ -21,6 +24,7 @@ struct PolkadotExtrinsicsStatementCommand: ParsableCommand {
         Self.exportExtrinsicsStatement(
             address: address,
             fetchExtrinsics: SubscanPolkadotGateway().fetchExtrinsics,
+            startBlock: startBlock,
             startDate: startDate
         )
         .sink(receiveCompletion: { completion in
@@ -48,10 +52,11 @@ extension PolkadotExtrinsicsStatementCommand {
 
     static func exportExtrinsicsStatement(
         address: String,
-        fetchExtrinsics: (String, Date) -> AnyPublisher<[PolkadotExtrinsic], Error>,
+        fetchExtrinsics: (String, UInt, Date) -> AnyPublisher<[PolkadotExtrinsic], Error>,
+        startBlock: UInt,
         startDate: Date
     ) -> AnyPublisher<PolkadotExtrinsicsStatement, Error> {
-        fetchExtrinsics(address, startDate)
+        fetchExtrinsics(address, startBlock, startDate)
             .map(PolkadotExtrinsicsStatement.init)
             .eraseToAnyPublisher()
     }
@@ -60,6 +65,32 @@ extension PolkadotExtrinsicsStatementCommand {
 extension PolkadotExtrinsicsStatement {
 
     func toCoinTrackingRows() -> [CoinTrackingRow] {
-        []
+        feeIncuringExtrinsics.map(CoinTrackingRow.makeFee)
+    }
+}
+
+private extension CoinTrackingRow {
+
+    static func makeFee(extrinsic: PolkadotExtrinsic) -> CoinTrackingRow {
+        CoinTrackingRow(
+            type: .outgoing(.otherFee),
+            buyAmount: 0,
+            buyCurrency: "",
+            sellAmount: extrinsic.fee,
+            sellCurrency: Polkadot.ticker,
+            fee: 0,
+            feeCurrency: "",
+            exchange: extrinsic.fromNameForCoinTracking,
+            group: "Fee",
+            comment: "Export. \(extrinsic.callFunction). ID: \(extrinsic.id). Extrinsic: \(extrinsic.extrinsicHash)",
+            date: extrinsic.timestamp
+        )
+    }
+}
+
+private extension PolkadotExtrinsic {
+
+    var fromNameForCoinTracking: String {
+        "Polkadot \(from.prefix(8))."
     }
 }

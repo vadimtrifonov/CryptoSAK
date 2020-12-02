@@ -12,8 +12,8 @@ struct EthereumStatementCommand: ParsableCommand {
     @Argument(help: "Etherium address")
     var address: String
 
-    @Option(default: Date.distantPast, help: "Oldest date from which transactions will be exported")
-    var startDate: Date
+    @Option(help: "Oldest date from which transactions will be exported")
+    var startDate: Date = .distantPast
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
@@ -66,8 +66,8 @@ private extension CoinTrackingRow {
             buyCurrency: "",
             sellAmount: transaction.fee,
             sellCurrency: Ethereum.ticker,
-            fee: transaction.fee,
-            feeCurrency: Ethereum.ticker,
+            fee: 0,
+            feeCurrency: "",
             exchange: transaction.sourceNameForCoinTracking,
             group: "Fee",
             comment: "Export. Transaction: \(transaction.hash)",

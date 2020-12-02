@@ -16,8 +16,8 @@ struct TezosStatementCommand: ParsableCommand {
     @Option(name: .customLong("delegate-list"), help: "Path to a CSV file with a list of delegate payout accounts (for detection of baking rewards)")
     var delegateListPath: String?
 
-    @Option(default: Date.distantPast, help: "Oldest date from which operations will be exported")
-    var startDate: Date
+    @Option(help: "Oldest date from which operations will be exported")
+    var startDate: Date = .distantPast
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
@@ -171,8 +171,8 @@ private extension CoinTrackingRow {
             buyCurrency: "",
             sellAmount: totalFee,
             sellCurrency: Tezos.ticker,
-            fee: totalFee,
-            feeCurrency: Tezos.ticker,
+            fee: 0,
+            feeCurrency: "",
             exchange: operation.senderNameForCoinTracking,
             group: "Fee",
             comment: "Export. Operation: \(operation.operationHash)",

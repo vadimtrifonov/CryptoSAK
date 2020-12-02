@@ -15,8 +15,8 @@ struct TezosCapitalStatementCommand: ParsableCommand {
     @Argument(help: "Bond pool address")
     var address: String
 
-    @Option(default: Date.distantPast, help: "Oldest operation date in ISO format")
-    var startDate: Date
+    @Option(help: "Oldest operation date in ISO format")
+    var startDate: Date = .distantPast
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()

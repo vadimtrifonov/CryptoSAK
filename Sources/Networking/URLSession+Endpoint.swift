@@ -5,7 +5,7 @@ import os.log
 extension URLSession {
 
     public func dataTaskPublisher<Response>(for endpoint: Endpoint<Response>) -> AnyPublisher<Response, Error> {
-        os_log("%@", "\(endpoint.request.hashValue) \(endpoint.request.httpMethod?.uppercased() ?? ""): \(endpoint.request.url?.absoluteString ?? "")")
+        os_log("%@", "\(endpoint.request.hashValue) \(endpoint.request.httpMethod?.uppercased() ?? ""): \(endpoint.request.url?.absoluteString ?? "") \(endpoint.request.httpBody?.debugStringUTF8 ?? "")")
 
         return dataTaskPublisher(for: endpoint.request).tryMap { data, response in
             os_log("%@", "\(endpoint.request.hashValue) RESPONSE: \(data.debugStringUTF8)")
