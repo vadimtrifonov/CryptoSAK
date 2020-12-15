@@ -9,17 +9,12 @@ Crypto SAK is a tool for exporting cryptocurrency transactions to [CoinTracking]
 Takes into account fees, staking rewards and close remainders.
 
 ```shell
-swift run CryptoSAK algorand-statement <address> --known-transactions <known-transactions-csv>
+swift run CryptoSAK algorand-statement <address>
 ```
 
 Arguments:
 
 1. `address` - Algorand address
-
-Options:
-
-1. `known-transactions-csv` - Path to a CSV file with a list of known transactions (allows to overrride the transaction type and add a custom description).
-    - Format (no header row): `<transaction-id>,<transaction-type>,<description>`
 
 ### Ethereum ICO statement
 
@@ -111,6 +106,22 @@ Options:
 
 1. `--start-block` - Oldest block from which rewards will be exported
 2. `--start-date` - Oldest date from which rewards will be exported
+   - Format: `YYYY-MM-DD`
+
+### Polkadot extrinsics statement
+
+```shell
+swift run CryptoSAK polkdaot-extrinsics-statement <address> --start-block <start-block> --start-date <start-date>
+```
+
+Arguments:
+
+1. `address` - Polkadot address
+
+Options:
+
+1. `--start-block` - Oldest block from which extrinsics will be exported
+2. `--start-date` - Oldest date from which extrinsics will be exported
    - Format: `YYYY-MM-DD`
 
 ### Polkadot rewards statement
