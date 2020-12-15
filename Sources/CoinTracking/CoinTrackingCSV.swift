@@ -1,5 +1,4 @@
 import Foundation
-import FoundationExtensions
 
 public enum CoinTrackingCSV {
     public static let header = """

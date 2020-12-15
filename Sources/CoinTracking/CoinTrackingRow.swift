@@ -1,4 +1,5 @@
 import Foundation
+import FoundationExtensions
 
 /// - Warning: CoinTracking considers transactions with the same ID as duplicates,
 /// even when one is a deposit and another one is a withdrawal; therefore `Tx-ID` is not utilised.
