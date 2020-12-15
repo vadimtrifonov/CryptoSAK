@@ -1,6 +1,18 @@
 import Foundation
+import FoundationExtensions
 
 public enum CoinTrackingCSV {
+    public static let header = """
+    "Type","Buy Amount","Buy Currency","Sell Amount","Sell Currency","Fee","Fee Currency","Exchange","Trade-Group","Comment","Date"
+    """
+
+    public static func makeCSV(rows: [CoinTrackingRow]) -> String {
+        let csvRows = [Self.header] + rows.map { $0.toCSVRow() }
+        return csvRows.joined(separator: "\n")
+    }
+}
+
+extension CoinTrackingRow {
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -8,26 +20,19 @@ public enum CoinTrackingCSV {
         return formatter
     }()
 
-    public static func makeCSV(rows: [CoinTrackingRow]) -> String {
-        let header = "\"Type\",\"Buy\",\"Cur.\",\"Sell\",\"Cur.\",\"Fee\",\"Cur.\",\"Exchange\",\"Group\",\"Comment\",\"Date\",\"Tx-ID\""
-        let csvRows = [header] + rows.map(makeCSVRow)
-        return csvRows.joined(separator: "\n")
-    }
-
-    public static func makeCSVRow(row: CoinTrackingRow) -> String {
+    public func toCSVRow() -> String {
         [
-            row.type.rawValue,
-            row.buyAmount.description,
-            row.buyCurrency,
-            row.sellAmount.description,
-            row.sellCurrency,
-            row.fee.description,
-            row.feeCurrency,
-            row.exchange,
-            row.group,
-            row.comment,
-            dateFormatter.string(from: row.date),
-            row.transactionID,
+            type.rawValue,
+            buyAmount.description,
+            buyCurrency,
+            sellAmount.description,
+            sellCurrency,
+            fee.description,
+            feeCurrency,
+            exchange,
+            group,
+            comment,
+            Self.dateFormatter.string(from: date),
         ]
         .map { "\"\($0)\"" }
         .joined(separator: ",")

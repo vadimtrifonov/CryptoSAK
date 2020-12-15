@@ -21,8 +21,9 @@ struct AlgorandStatementCommand: ParsableCommand {
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
 
-        let rows = try knownTransactionsPath.map(FileManager.default.readLines(atPath:)) ?? []
-        let knownTransactions = try rows.map(KnownAlgorandTransaction.init)
+        let knownTransactions = try knownTransactionsPath
+            .map(FileManager.default.readLines(atPath:))
+            .map(KnownTransactionsCSV.makeTransactions) ?? []
 
         Self.exportAlgorandStatement(
             address: address,
@@ -62,37 +63,9 @@ extension AlgorandStatementCommand {
     }
 }
 
-struct KnownAlgorandTransaction {
-    let transactionID: String
-    let type: CoinTrackingRow.TransactionType
-    let description: String
-}
-
-private extension KnownAlgorandTransaction {
-
-    init(csvRow: String) throws {
-        let columns = csvRow.split(separator: ",").map(String.init)
-
-        let numberOfColumns = 3
-        guard columns.count == numberOfColumns else {
-            throw "Expected \(numberOfColumns) columns, got \(columns)"
-        }
-
-        guard let type = CoinTrackingRow.TransactionType(rawValue: columns[1]) else {
-            throw "Unknown transaction type: \(columns[1]), known types: \(CoinTrackingRow.TransactionType.allCases.map(\.rawValue))"
-        }
-
-        self.init(
-            transactionID: columns[0],
-            type: type,
-            description: columns[2]
-        )
-    }
-}
-
 extension AlgorandStatement {
 
-    func toCoinTrackingRows(knownTransactions: [KnownAlgorandTransaction]) throws -> [CoinTrackingRow] {
+    func toCoinTrackingRows(knownTransactions: [KnownTransaction]) throws -> [CoinTrackingRow] {
         let incoming = incomingTransactions.map { transaction in
             CoinTrackingRow.makeDeposit(transaction: transaction, knownTransactions: knownTransactions)
         }
@@ -114,12 +87,10 @@ private extension CoinTrackingRow {
 
     static func makeDeposit(
         transaction: AlgorandTransaction,
-        knownTransactions: [KnownAlgorandTransaction]
+        knownTransactions: [KnownTransaction]
     ) -> CoinTrackingRow {
-        let knownTransaction = knownTransactions.first(where: { $0.transactionID == transaction.id })
-
-        return self.init(
-            type: knownTransaction?.type ?? .incoming(.deposit),
+        self.init(
+            type: .incoming(.deposit),
             buyAmount: transaction.amount,
             buyCurrency: Algorand.ticker,
             sellAmount: 0,
@@ -128,19 +99,21 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: transaction.receiverNameForCoinTracking,
             group: "",
-            comment: transaction.makeCommentForCoinTracking(description: knownTransaction?.description),
+            comment: transaction.makeCommentForCoinTracking(),
             date: transaction.timestamp
+        ).applyOverride(
+            from: knownTransactions,
+            withTransactionID: transaction.id,
+            makeCommentForCoinTracking: transaction.makeCommentForCoinTracking
         )
     }
 
     static func makeWithdrawal(
         transaction: AlgorandTransaction,
-        knownTransactions: [KnownAlgorandTransaction]
+        knownTransactions: [KnownTransaction]
     ) -> CoinTrackingRow {
-        let knownTransaction = knownTransactions.first(where: { $0.transactionID == transaction.id })
-
-        return self.init(
-            type: knownTransaction?.type ?? .outgoing(.withdrawal),
+        self.init(
+            type: .outgoing(.withdrawal),
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: transaction.amount,
@@ -149,8 +122,12 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: transaction.senderNameForCoinTracking,
             group: "",
-            comment: transaction.makeCommentForCoinTracking(description: knownTransaction?.description),
+            comment: transaction.makeCommentForCoinTracking(),
             date: transaction.timestamp
+        ).applyOverride(
+            from: knownTransactions,
+            withTransactionID: transaction.id,
+            makeCommentForCoinTracking: transaction.makeCommentForCoinTracking
         )
     }
 
@@ -256,13 +233,7 @@ extension AlgorandTransaction {
         return close
     }
 
-    func makeCommentForCoinTracking(description: String? = nil) -> String {
-        var explanation = ""
-
-        if let description = description?.trimmingCharacters(in: .whitespaces) {
-            explanation = description.hasSuffix(".") ? description + " " : description + ". "
-        }
-
-        return "Export. \(explanation)Transaction: \(id)"
+    func makeCommentForCoinTracking(comment: String = "") -> String {
+        "Export. \(comment.formattedForCoinTrackingComment)Transaction: \(id)"
     }
 }

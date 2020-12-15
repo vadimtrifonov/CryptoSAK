@@ -12,6 +12,9 @@ struct PolkadotExtrinsicsStatementCommand: ParsableCommand {
     @Argument(help: "Polkadot address")
     var address: String
 
+    @Option(name: .customLong("known-transactions"), help: "Path to a CSV file with a list of known transactions")
+    var knownTransactionsPath: String?
+
     @Option(help: "Oldest block from which rewards will be exported")
     var startBlock: UInt = 0
 
@@ -20,6 +23,10 @@ struct PolkadotExtrinsicsStatementCommand: ParsableCommand {
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
+
+        let knownTransactions = try knownTransactionsPath
+            .map(FileManager.default.readLines(atPath:))
+            .map(KnownTransactionsCSV.makeTransactions) ?? []
 
         Self.exportExtrinsicsStatement(
             address: address,
@@ -35,7 +42,7 @@ struct PolkadotExtrinsicsStatementCommand: ParsableCommand {
         }, receiveValue: { statement in
             do {
                 try FileManager.default.writeCSV(
-                    rows: statement.toCoinTrackingRows(),
+                    rows: statement.toCoinTrackingRows(knownTransactions: knownTransactions),
                     filename: "PolkadotRewardsStatement"
                 )
             } catch {
@@ -64,14 +71,19 @@ extension PolkadotExtrinsicsStatementCommand {
 
 extension PolkadotExtrinsicsStatement {
 
-    func toCoinTrackingRows() -> [CoinTrackingRow] {
-        feeIncuringExtrinsics.map(CoinTrackingRow.makeFee)
+    func toCoinTrackingRows(knownTransactions: [KnownTransaction]) -> [CoinTrackingRow] {
+        feeIncuringExtrinsics.map { extrinsic in
+            CoinTrackingRow.makeFee(extrinsic: extrinsic, knownTransactions: knownTransactions)
+        }
     }
 }
 
 private extension CoinTrackingRow {
 
-    static func makeFee(extrinsic: PolkadotExtrinsic) -> CoinTrackingRow {
+    static func makeFee(
+        extrinsic: PolkadotExtrinsic,
+        knownTransactions: [KnownTransaction]
+    ) -> CoinTrackingRow {
         CoinTrackingRow(
             type: .outgoing(.otherFee),
             buyAmount: 0,
@@ -82,8 +94,13 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: extrinsic.fromNameForCoinTracking,
             group: "Fee",
-            comment: "Export. \(extrinsic.callFunction). ID: \(extrinsic.id). Extrinsic: \(extrinsic.extrinsicHash)",
+            comment: extrinsic.makeCommentForCoinTracking(),
             date: extrinsic.timestamp
+        )
+        .applyOverride(
+            from: knownTransactions,
+            withTransactionID: extrinsic.extrinsicHash,
+            makeCommentForCoinTracking: extrinsic.makeCommentForCoinTracking
         )
     }
 }
@@ -92,5 +109,9 @@ private extension PolkadotExtrinsic {
 
     var fromNameForCoinTracking: String {
         "Polkadot \(from.prefix(8))."
+    }
+
+    func makeCommentForCoinTracking(comment: String = "") -> String {
+        "Export. \(comment.formattedForCoinTrackingComment)\(callFunction). ID: \(extrinsicID). Extrinsic: \(extrinsicHash)"
     }
 }

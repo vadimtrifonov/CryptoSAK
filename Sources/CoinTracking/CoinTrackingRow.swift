@@ -1,5 +1,7 @@
 import Foundation
 
+/// - Warning: CoinTracking considers transactions with the same ID as duplicates,
+/// even when one is a deposit and another one is a withdrawal; therefore `Tx-ID` is not utilised.
 public struct CoinTrackingRow: Equatable {
     public let type: TransactionType
     public let buyAmount: Decimal
@@ -12,9 +14,6 @@ public struct CoinTrackingRow: Equatable {
     public let group: String
     public let comment: String
     public let date: Date
-    /// - Warning: CoinTracking considers transaction with the same ID as duplicates,
-    /// even when one is a deposit and another one is a withdrawal.
-    public let transactionID: String
 
     public init(
         type: TransactionType,
@@ -27,8 +26,7 @@ public struct CoinTrackingRow: Equatable {
         exchange: String,
         group: String,
         comment: String,
-        date: Date,
-        transactionID: String = ""
+        date: Date
     ) {
         self.type = type
         self.buyAmount = buyAmount
@@ -41,10 +39,9 @@ public struct CoinTrackingRow: Equatable {
         self.group = group
         self.comment = comment
         self.date = date
-        self.transactionID = transactionID
     }
 
-    public enum TransactionType: RawRepresentable, CaseIterable, Equatable {
+    public enum TransactionType: CaseIterable, Equatable {
 
         public static var allCases: [Self] {
             [trade] + [
@@ -68,7 +65,7 @@ public struct CoinTrackingRow: Equatable {
             }
         }
 
-        public init?(rawValue: String) {
+        public init(rawValue: String) throws {
             if rawValue == Self.tradeRawValue {
                 self = .trade
             } else if let incoming = Incoming(rawValue: rawValue) {
@@ -76,7 +73,7 @@ public struct CoinTrackingRow: Equatable {
             } else if let outgoing = Outgoing(rawValue: rawValue) {
                 self = .outgoing(outgoing)
             } else {
-                return nil
+                throw "Unknown transaction type: \(rawValue), known types: \(Self.allCases.map(\.rawValue))"
             }
         }
 

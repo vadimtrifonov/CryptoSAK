@@ -109,8 +109,7 @@ private extension CoinTrackingRow {
             exchange: operation.senderNameForCoinTracking,
             group: "",
             comment: "Export. Account activation. Operation: \(operation.operationHash)",
-            date: operation.timestamp,
-            transactionID: operation.operationHash
+            date: operation.timestamp
         )
     }
 
