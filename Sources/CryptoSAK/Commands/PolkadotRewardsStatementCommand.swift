@@ -121,6 +121,6 @@ private extension CoinTrackingRow {
     }
 }
 
-private extension Polkadot {
+extension Polkadot {
     static let coinTrackingTicker = "DOT2"
 }

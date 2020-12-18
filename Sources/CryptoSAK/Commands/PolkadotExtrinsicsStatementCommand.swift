@@ -89,7 +89,7 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: extrinsic.fee,
-            sellCurrency: Polkadot.ticker,
+            sellCurrency: Polkadot.coinTrackingTicker,
             fee: 0,
             feeCurrency: "",
             exchange: extrinsic.fromNameForCoinTracking,
