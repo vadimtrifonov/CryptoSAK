@@ -27,6 +27,7 @@ let package = Package(
                 "HashgraphDragonGlass",
                 "IDEX",
                 "Kusama",
+                "KusamaSubscan",
                 "Lambda",
                 "Networking",
                 "Polkadot",
@@ -97,6 +98,14 @@ let package = Package(
         .target(
             name: "Kusama",
             dependencies: []
+        ),
+        .target(
+            name: "KusamaSubscan",
+            dependencies: [
+                "FoundationExtensions",
+                "Kusama",
+                "Networking",
+            ]
         ),
         .target(
             name: "Lambda",

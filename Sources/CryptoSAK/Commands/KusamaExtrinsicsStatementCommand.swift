@@ -2,14 +2,14 @@ import ArgumentParser
 import CoinTracking
 import Combine
 import Foundation
-import Polkadot
-import PolkadotSubscan
+import Kusama
+import KusamaSubscan
 
-struct PolkadotExtrinsicsStatementCommand: ParsableCommand {
+struct KusamaExtrinsicsStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "polkadot-extrinsics-statement")
+    static var configuration = CommandConfiguration(commandName: "kusama-extrinsics-statement")
 
-    @Argument(help: "Polkadot address")
+    @Argument(help: "Kusama address")
     var address: String
 
     @Option(name: .customLong("known-transactions"), help: "Path to a CSV file with a list of known transactions")
@@ -30,7 +30,7 @@ struct PolkadotExtrinsicsStatementCommand: ParsableCommand {
 
         Self.exportExtrinsicsStatement(
             address: address,
-            fetchExtrinsics: SubscanPolkadotGateway().fetchExtrinsics,
+            fetchExtrinsics: SubscanKusamaGateway().fetchExtrinsics,
             startBlock: startBlock,
             startDate: startDate
         )
@@ -43,7 +43,7 @@ struct PolkadotExtrinsicsStatementCommand: ParsableCommand {
             do {
                 try FileManager.default.writeCSV(
                     rows: statement.toCoinTrackingRows(knownTransactions: knownTransactions),
-                    filename: "PolkadotRewardsStatement"
+                    filename: "KusamaRewardsStatement"
                 )
             } catch {
                 print(error)
@@ -55,21 +55,21 @@ struct PolkadotExtrinsicsStatementCommand: ParsableCommand {
     }
 }
 
-extension PolkadotExtrinsicsStatementCommand {
+extension KusamaExtrinsicsStatementCommand {
 
     static func exportExtrinsicsStatement(
         address: String,
-        fetchExtrinsics: (String, UInt, Date) -> AnyPublisher<[PolkadotExtrinsic], Error>,
+        fetchExtrinsics: (String, UInt, Date) -> AnyPublisher<[KusamaExtrinsic], Error>,
         startBlock: UInt,
         startDate: Date
-    ) -> AnyPublisher<PolkadotExtrinsicsStatement, Error> {
+    ) -> AnyPublisher<KusamaExtrinsicsStatement, Error> {
         fetchExtrinsics(address, startBlock, startDate)
-            .map(PolkadotExtrinsicsStatement.init)
+            .map(KusamaExtrinsicsStatement.init)
             .eraseToAnyPublisher()
     }
 }
 
-extension PolkadotExtrinsicsStatement {
+extension KusamaExtrinsicsStatement {
 
     func toCoinTrackingRows(knownTransactions: [KnownTransaction]) -> [CoinTrackingRow] {
         var rows = feeIncuringExtrinsics.map { extrinsic in
@@ -90,15 +90,15 @@ extension PolkadotExtrinsicsStatement {
 }
 
 private extension CoinTrackingRow {
-
+    
     static func makeClaim(
-        extrinsic: PolkadotExtrinsic,
+        extrinsic: KusamaExtrinsic,
         knownTransactions: [KnownTransaction]
     ) -> CoinTrackingRow {
         CoinTrackingRow(
             type: .incoming(.deposit),
             buyAmount: 0,
-            buyCurrency: Polkadot.coinTrackingTicker,
+            buyCurrency: Kusama.coinTrackingTicker,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -114,9 +114,9 @@ private extension CoinTrackingRow {
             makeCommentForCoinTracking: extrinsic.makeCommentForCoinTracking
         )
     }
-    
+
     static func makeFee(
-        extrinsic: PolkadotExtrinsic,
+        extrinsic: KusamaExtrinsic,
         knownTransactions: [KnownTransaction]
     ) -> CoinTrackingRow {
         CoinTrackingRow(
@@ -124,7 +124,7 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: extrinsic.fee,
-            sellCurrency: Polkadot.coinTrackingTicker,
+            sellCurrency: Kusama.coinTrackingTicker,
             fee: 0,
             feeCurrency: "",
             exchange: extrinsic.fromNameForCoinTracking,
@@ -140,13 +140,17 @@ private extension CoinTrackingRow {
     }
 }
 
-private extension PolkadotExtrinsic {
+private extension KusamaExtrinsic {
 
     var fromNameForCoinTracking: String {
-        "Polkadot \(from.prefix(8))."
+        "Kusama \(from.prefix(8))."
     }
 
     func makeCommentForCoinTracking(comment: String = "") -> String {
         "Export. \(comment.formattedForCoinTrackingComment)\(callFunction). ID: \(extrinsicID). Extrinsic: \(extrinsicHash)"
     }
+}
+
+extension Kusama {
+    static let coinTrackingTicker = "KSM"
 }

@@ -15,6 +15,7 @@ struct CryptoSAK: ParsableCommand {
             HashgraphStatementCommand.self,
             IDEXBalanceStatementCommand.self,
             IDEXTradeStatementCommand.self,
+            KusamaExtrinsicsStatementCommand.self,
             KusamaRewardsStatementCommand.self,
             PolkadotExtrinsicsStatementCommand.self,
             PolkadotRewardsStatementCommand.self,

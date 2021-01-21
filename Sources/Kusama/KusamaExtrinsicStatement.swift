@@ -1,8 +1,8 @@
-public struct PolkadotExtrinsicsStatement {
-    public let feeIncuringExtrinsics: [PolkadotExtrinsic]
-    public let claimExtrinsic: PolkadotExtrinsic?
+public struct KusamaExtrinsicsStatement {
+    public let feeIncuringExtrinsics: [KusamaExtrinsic]
+    public let claimExtrinsic: KusamaExtrinsic?
 
-    public init(extrinsics: [PolkadotExtrinsic]) {
+    public init(extrinsics: [KusamaExtrinsic]) {
         self.feeIncuringExtrinsics = extrinsics.filter { $0.isSuccessful && !$0.fee.isZero }
         self.claimExtrinsic = extrinsics.first { extrinsic in
             extrinsic.callModule.lowercased() == "claims" &&

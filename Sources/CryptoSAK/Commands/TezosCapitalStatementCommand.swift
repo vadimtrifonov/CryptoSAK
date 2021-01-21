@@ -10,7 +10,10 @@ import TezosTzStats
 
 struct TezosCapitalStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "tezos-capital-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "tezos-capital-statement",
+        shouldDisplay: false
+    )
 
     @Argument(help: "Bond pool address")
     var address: String

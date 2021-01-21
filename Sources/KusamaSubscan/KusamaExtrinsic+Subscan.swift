@@ -1,7 +1,7 @@
 import Foundation
-import Polkadot
+import Kusama
 
-extension PolkadotExtrinsic {
+extension KusamaExtrinsic {
 
     init(response: Subscan.ExtrinsicsReponse.ResponseData.Extrinsic) throws {
         self.init(
@@ -13,7 +13,7 @@ extension PolkadotExtrinsic {
             callFunction: response.call_module_function.normalized(),
             from: response.account_id,
             isSuccessful: response.success,
-            fee: try Decimal(string: response.fee) / Polkadot.planckInDOT
+            fee: try Decimal(string: response.fee) / Kusama.planckInKSM
         )
     }
 }

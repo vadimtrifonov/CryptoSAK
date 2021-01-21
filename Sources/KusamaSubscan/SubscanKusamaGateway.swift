@@ -3,22 +3,22 @@ import Foundation
 import FoundationExtensions
 import Lambda
 import Networking
-import Polkadot
+import Kusama
 
-public struct SubscanPolkadotGateway: PolkadotGateway {
+public struct SubscanKusamaGateway: KusamaGateway {
     private let urlSession: URLSession
     private let rows: UInt = 10
 
     public init(urlSession: URLSession = .shared) {
         self.urlSession = urlSession
     }
-
+    
     /// https://docs.api.subscan.io/#extrinsics
     public func fetchExtrinsics(
         address: String,
         startBlock: UInt,
         startDate: Date
-    ) -> AnyPublisher<[PolkadotExtrinsic], Error> {
+    ) -> AnyPublisher<[KusamaExtrinsic], Error> {
         recusrsivelyFetchExtrinsics(
             address: address,
             accumulatedExtrinsics: [],
@@ -27,7 +27,7 @@ public struct SubscanPolkadotGateway: PolkadotGateway {
             startBlock: startBlock,
             startDate: startDate
         ).tryMap { extrinsics in
-            try extrinsics.map(PolkadotExtrinsic.init)
+            try extrinsics.map(KusamaExtrinsic.init)
         }
         .eraseToAnyPublisher()
     }
@@ -81,7 +81,7 @@ public struct SubscanPolkadotGateway: PolkadotGateway {
         do {
             let endpoint = try Endpoint<Subscan.ExtrinsicsReponse>(
                 json: .post,
-                url: URL(string: "https://polkadot.subscan.io/api/scan/extrinsics"),
+                url: URL(string: "https://kusama.subscan.io/api/scan/extrinsics"),
                 body: Subscan.ExtrinsicsRequest(address: address, row: rows, page: page)
             )
             return urlSession.dataTaskPublisher(for: endpoint)

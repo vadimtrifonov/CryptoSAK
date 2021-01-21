@@ -1,11 +1,11 @@
 import Combine
 import Foundation
 
-public protocol PolkadotGateway {
+public protocol KusamaGateway {
 
     func fetchExtrinsics(
         address: String,
         startBlock: UInt,
         startDate: Date
-    ) -> AnyPublisher<[PolkadotExtrinsic], Error>
+    ) -> AnyPublisher<[KusamaExtrinsic], Error>
 }
