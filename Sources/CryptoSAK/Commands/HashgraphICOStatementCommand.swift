@@ -10,12 +10,25 @@ import Networking
 
 struct HashgraphICOStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "hashgraph-ico-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "hashgraph-ico-statement",
+        abstract: "Export Hasgraph ICO trade and payout transactions",
+        shouldDisplay: false
+    )
 
-    @Argument(help: "Hashgraph account")
+    @Argument(help: "Hashgraph account ID")
     var account: String
 
-    @Argument(help: "Path to CSV file with information about ICO")
+    @Argument(
+        help: .init(
+            "Path to a CSV file with the information about ICO",
+            discussion: """
+            - Each row is a separate ICO (no header row)
+            - Format: <ico-name>,<contribution-amount>,<contribution-currency>,<sender-account-ID>,<timestamp>
+            - Timestamp format: `YYYY-MM-DDThh:mm:ssTZD`
+            """
+        )
+    )
     var inputPath: String
 
     func run() throws {

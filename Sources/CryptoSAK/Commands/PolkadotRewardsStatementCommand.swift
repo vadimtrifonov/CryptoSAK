@@ -7,18 +7,22 @@ import PolkadotSubscan
 
 struct PolkadotRewardsStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "polkadot-rewards-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "polkadot-rewards-statement",
+        abstract: "Export Polkadot rewards history",
+        discussion: "Accepts Subscan (https://polkadot.subscan.io/) CSV rewards files"
+    )
 
     @Argument(help: "Polkadot address")
     var address: String
 
-    @Argument(help: "Path to CSV file with rewards or directory of such files")
+    @Argument(help: "Path to a CSV file with rewards from Subscan (https://polkadot.subscan.io/) OR a directory of such files")
     var rewardsCSVPath: String
 
-    @Option(help: "Oldest block from which rewards will be exported")
+    @Option(help: .init("Oldest block from which rewards will be exported", discussion: "An alternative option to the start date"))
     var startBlock: UInt = 0
 
-    @Option(help: "Oldest date from which rewards will be exported")
+    @Option(help: .init("Oldest date from which rewards will be exported", discussion: "Format: YYYY-MM-DD"))
     var startDate: Date = .distantPast
 
     func run() throws {

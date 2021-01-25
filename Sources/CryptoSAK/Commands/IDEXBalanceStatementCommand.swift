@@ -9,9 +9,23 @@ import Lambda
 
 struct IDEXBalanceStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "idex-balance-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "idex-balance-statement",
+        abstract: "Convert IDEX balance history",
+        discussion: "Takes into account Ethereum withdrwal fees"
+    )
 
-    @Argument(help: "Path to TSV file with IDEX balance history")
+    @Argument(
+        help: .init(
+            "Path to a TSV file with the IDEX balance history",
+            discussion: """
+            - Balance history should be manually copied from the website: open the balance history page, select all, and copy to a tab delimited TSV file.
+            - Append the transaction hash to every row (Ethereum withdrawal fees will reported).
+            - Include the header row
+            - Format: <date> <asset> <type> <name> <amount> <status> <transaction>
+            """
+        )
+    )
     var tsvPath: String
 
     func run() throws {

@@ -8,15 +8,28 @@ import TezosTzStats
 
 struct TezosStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "tezos-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "tezos-statement",
+        abstract: "Export Tezos operations",
+        discussion: "Takes into account Tezos account activation, delegation rewards and fees"
+    )
 
     @Argument(help: "Tezos account")
     var account: String
 
-    @Option(name: .customLong("delegate-list"), help: "Path to a CSV file with a list of delegate payout accounts (for detection of baking rewards)")
+    @Option(
+        name: .customLong("delegate-list"),
+        help: .init(
+            "Path to a CSV file with a list of delegate payout accounts (for detection of baking rewards)",
+            discussion: """
+            - No header row
+            - Format: <delegate-payout-account>,<delegate-name>
+            """
+        )
+    )
     var delegateListPath: String?
 
-    @Option(help: "Oldest date from which operations will be exported")
+    @Option(help: .init("Oldest date from which operations will be exported", discussion: "Format: YYYY-MM-DD"))
     var startDate: Date = .distantPast
 
     func run() throws {

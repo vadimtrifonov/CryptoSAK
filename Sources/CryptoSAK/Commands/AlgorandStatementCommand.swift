@@ -7,15 +7,19 @@ import Foundation
 
 struct AlgorandStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "algorand-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "algorand-statement",
+        abstract: "Export Algorand transactions",
+        discussion: "Takes into account fees, staking rewards and close remainders"
+    )
 
     @Argument(help: "Algorand address")
     var address: String
 
-    @Option(name: .customLong("known-transactions"), help: "Path to a CSV file with a list of known transactions")
+    @Option(name: .customLong("known-transactions"), help: "Path to a CSV file with the list of known transactions")
     var knownTransactionsPath: String?
 
-    @Option(help: "Oldest date from which transactions will be exported")
+    @Option(help: .init("Oldest date from which transactions will be exported", discussion: "Format: YYYY-MM-DD"))
     var startDate: Date = .distantPast
 
     func run() throws {

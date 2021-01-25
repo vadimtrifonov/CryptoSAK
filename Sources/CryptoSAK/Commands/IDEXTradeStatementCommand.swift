@@ -5,9 +5,13 @@ import IDEX
 
 struct IDEXTradeStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "idex-trade-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "idex-trade-statement",
+        abstract: "Convert IDEX trade history",
+        discussion: "Accepts IDEX trade history CSV file. Takes into account trade and Ethereum gas fees."
+    )
 
-    @Argument(help: "Path to CSV file with IDEX trade history")
+    @Argument(help: "Path to a CSV file with the IDEX trade history")
     var csvPath: String
 
     func run() throws {

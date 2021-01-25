@@ -5,9 +5,13 @@ import Gate
 
 struct GateBillingStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "gate-billing-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "gate-billing-statement",
+        abstract: "Convert Gate.io billing history",
+        discussion: "Accepts Gate.io billing history CSV file. Takes into account all fees"
+    )
 
-    @Argument(help: "Path to Gate.io billing CSV file")
+    @Argument(help: "Path to a Gate.io billing CSV file")
     var csvPath: String
 
     func run() throws {

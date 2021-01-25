@@ -7,9 +7,24 @@ import Foundation
 
 struct EthereumICOStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "ethereum-ico-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "ethereum-ico-statement",
+        abstract: "Export Ethereum-based ICO contribution, trade and payout transactions",
+        discussion: """
+        Derives the ICO address from the provided contribution transactions and looks for the payout transactions from it. \
+        Creates a trade transaction for each contribution proportionally to the total amount of payouts.
+        """
+    )
 
-    @Argument(help: "Path to CSV file with information about ICO")
+    @Argument(
+        help: .init(
+            "Path to a CSV file with the information about the ICO",
+            discussion: """
+            - One row (no header row)
+            - Format: <ico-name>,<token-contract-address>,<contribution-transaction-hash-1>,<contribution-transaction-hash-2>,...
+            """
+        )
+    )
     var inputPath: String
 
     func run() throws {

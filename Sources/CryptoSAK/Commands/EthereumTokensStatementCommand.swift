@@ -7,7 +7,11 @@ import Foundation
 
 struct EthereumTokensStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "ethereum-tokens-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "ethereum-tokens-statement",
+        abstract: "Export Ethereum-based token transactions",
+        discussion: "Takes into account cancelled transactions (by excluding them, but including thier fees) and fees."
+    )
 
     @Argument(help: "Ethereum address")
     var address: String
@@ -15,10 +19,19 @@ struct EthereumTokensStatementCommand: ParsableCommand {
     @Flag
     var balance = false
 
-    @Option(name: .customLong("token-list"), help: "Path to CSV file with the list of tokens to be exported (other tokens will be ignored)")
+    @Option(
+        name: .customLong("token-list"),
+        help: .init(
+            "Path to a CSV file with a list of tokens to be exported (other tokens will be ignored)",
+            discussion: """
+            - No header row
+            - Format: <token-contract-address>,<token-symbol>
+            """
+        )
+    )
     var tokenListPath: String?
 
-    @Option(help: "Oldest date from which transactions will be exported")
+    @Option(help: .init("Oldest date from which transactions will be exported", discussion: "Format: YYYY-MM-DD"))
     var startDate: Date = .distantPast
 
     func run() throws {

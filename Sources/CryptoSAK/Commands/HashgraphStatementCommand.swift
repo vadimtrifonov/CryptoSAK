@@ -10,12 +10,16 @@ import Networking
 
 struct HashgraphStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "hashgraph-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "hashgraph-statement",
+        abstract: "Export Hashgraph transactions",
+        discussion: "Takes into account service transactions and fees"
+    )
 
     @Argument(help: "Hashgraph account")
     var account: String
 
-    @Option(help: " Oldest date from which transactions will be exported")
+    @Option(help: .init("Oldest date from which transactions will be exported", discussion: "Format: YYYY-MM-DD"))
     var startDate: Date = .distantPast
 
     func run() throws {

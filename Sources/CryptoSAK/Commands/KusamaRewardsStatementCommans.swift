@@ -6,18 +6,22 @@ import Kusama
 
 struct KusamaRewardsStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "kusama-rewards-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "kusama-rewards-statement",
+        abstract: "Export Kusama rewards history",
+        discussion: "Accepts Subscan (https://kusama.subscan.io/) CSV rewards files"
+    )
 
     @Argument(help: "Kusama address")
     var address: String
 
-    @Argument(help: "Path to CSV file with rewards or directory of such files")
+    @Argument(help: "Path to a CSV file with rewards from Subscan (https://kusama.subscan.io/) OR a directory of such files")
     var rewardsCSVPath: String
 
-    @Option(help: "Oldest block from which rewards will be exported")
+    @Option(help: .init("Oldest block from which rewards will be exported", discussion: "An alternative option to the start date"))
     var startBlock: Int = 0
 
-    @Option(help: "Oldest date from which rewards will be exported")
+    @Option(help: .init("Oldest date from which rewards will be exported", discussion: "Format: YYYY-MM-DD"))
     var startDate: Date = .distantPast
 
     func run() throws {

@@ -1,9 +1,9 @@
 import Combine
 import Foundation
 import FoundationExtensions
+import Kusama
 import Lambda
 import Networking
-import Kusama
 
 public struct SubscanKusamaGateway: KusamaGateway {
     private let urlSession: URLSession
@@ -12,7 +12,7 @@ public struct SubscanKusamaGateway: KusamaGateway {
     public init(urlSession: URLSession = .shared) {
         self.urlSession = urlSession
     }
-    
+
     /// https://docs.api.subscan.io/#extrinsics
     public func fetchExtrinsics(
         address: String,

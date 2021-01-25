@@ -4,6 +4,8 @@ struct CryptoSAK: ParsableCommand {
 
     static var configuration = CommandConfiguration(
         commandName: "CryptoSAK",
+        abstract: "Crypto SAK is a tool for exporting cryptocurrency transactions to CoinTracking (https://cointracking.info) format",
+        discussion: "DISCLAIMER: The tool is not tested beyond my own personal use. No correctness guarantees are given. Service APIs might change and the tool will no longer be able to export transactions.",
         subcommands: [
             AlgorandStatementCommand.self,
             BlockstackICOStatementCommand.self,

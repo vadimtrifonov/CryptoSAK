@@ -12,6 +12,7 @@ struct TezosCapitalStatementCommand: ParsableCommand {
 
     static var configuration = CommandConfiguration(
         commandName: "tezos-capital-statement",
+        abstract: "Export Tezos Capital staking rewards",
         shouldDisplay: false
     )
 

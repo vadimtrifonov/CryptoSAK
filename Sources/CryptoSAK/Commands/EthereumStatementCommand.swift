@@ -7,12 +7,18 @@ import Foundation
 
 struct EthereumStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "ethereum-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "ethereum-statement",
+        abstract: "Export Ethereum transactions",
+        discussion: """
+        Takes into account internal transactions, cancelled transactions (by excluding them, but including thier fees) and fees
+        """
+    )
 
     @Argument(help: "Etherium address")
     var address: String
 
-    @Option(help: "Oldest date from which transactions will be exported")
+    @Option(help: .init("Oldest date from which transactions will be exported", discussion: "Format: YYYY-MM-DD"))
     var startDate: Date = .distantPast
 
     func run() throws {

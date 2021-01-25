@@ -4,15 +4,26 @@ import Foundation
 
 struct BlockstackICOStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "blockstack-ico-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "blockstack-ico-statement",
+        abstract: "Convert Blockstack ICO token unlocking information",
+        shouldDisplay: false
+    )
 
     @Argument(help: "Blockstack address")
     var address: String
 
-    @Argument(help: "Path to CSV file with information about ICO")
+    @Argument(
+        help: .init(
+            "Path to a CSV file with the information about ICO",
+            discussion: """
+            - One row (no header row)
+            - Format: <ico-name>,<contribution-amount>,<contribution-currency>,<contribution-timestamp>
+            """
+        ))
     var icoCSVPath: String
 
-    @Argument(help: "Path to CSV file with Blockstack cumulative vested payouts")
+    @Argument(help: "Path to a CSV file with the Stacks cumulative vested payouts")
     var payoutsCSVPath: String
 
     func run() throws {
@@ -21,8 +32,8 @@ struct BlockstackICOStatementCommand: ParsableCommand {
 
         guard let ico = icos.first, icos.count == 1 else {
             throw """
-                There should be only 1 ICO entry in the CSV file,
-                as payouts from the other file are taken as corresponding to this ICO.
+            There should be only 1 ICO entry in the CSV file,
+            as payouts from the other file are taken as corresponding to this ICO.
             """
         }
 

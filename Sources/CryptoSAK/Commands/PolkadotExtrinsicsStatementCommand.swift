@@ -7,18 +7,21 @@ import PolkadotSubscan
 
 struct PolkadotExtrinsicsStatementCommand: ParsableCommand {
 
-    static var configuration = CommandConfiguration(commandName: "polkadot-extrinsics-statement")
+    static var configuration = CommandConfiguration(
+        commandName: "polkadot-extrinsics-statement",
+        abstract: "Export Polkadot extrinsics"
+    )
 
     @Argument(help: "Polkadot address")
     var address: String
 
-    @Option(name: .customLong("known-transactions"), help: "Path to a CSV file with a list of known transactions")
+    @Option(name: .customLong("known-transactions"), help: "Path to a CSV file with the list of known transactions")
     var knownTransactionsPath: String?
 
-    @Option(help: "Oldest block from which rewards will be exported")
+    @Option(help: .init("Oldest block from which extrinsics will be exported", discussion: "An alternative option to the start date"))
     var startBlock: UInt = 0
 
-    @Option(help: "Oldest date from which extrinsics will be exported")
+    @Option(help: .init("Oldest date from which extrinsics will be exported", discussion: "Format: YYYY-MM-DD"))
     var startDate: Date = .distantPast
 
     func run() throws {
@@ -75,7 +78,7 @@ extension PolkadotExtrinsicsStatement {
         var rows = feeIncuringExtrinsics.map { extrinsic in
             CoinTrackingRow.makeFee(extrinsic: extrinsic, knownTransactions: knownTransactions)
         }
-        
+
         if let claimExtrinsic = claimExtrinsic {
             rows.append(
                 CoinTrackingRow.makeClaim(
@@ -84,7 +87,7 @@ extension PolkadotExtrinsicsStatement {
                 )
             )
         }
-        
+
         return rows
     }
 }
@@ -114,7 +117,7 @@ private extension CoinTrackingRow {
             makeCommentForCoinTracking: extrinsic.makeCommentForCoinTracking
         )
     }
-    
+
     static func makeFee(
         extrinsic: PolkadotExtrinsic,
         knownTransactions: [KnownTransaction]
