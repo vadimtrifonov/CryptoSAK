@@ -4,7 +4,7 @@ import Lambda
 import Networking
 import Tezos
 
-public struct TzStatsGateway: TezosGateway {
+public struct TzStatsTezosGateway: TezosGateway {
     private let urlSession: URLSession
 
     public init(urlSession: URLSession = .shared) {

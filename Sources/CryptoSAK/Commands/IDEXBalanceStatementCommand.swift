@@ -33,7 +33,7 @@ struct IDEXBalanceStatementCommand: ParsableCommand {
         let balanceRows = try tsvRows.map(IDEXBalanceRow.init)
 
         var subscriptions = Set<AnyCancellable>()
-        let gateway = EtherscanGateway(apiKey: Config.etherscanAPIKey)
+        let gateway = EtherscanEthereumGateway(apiKey: Config.etherscanAPIKey)
 
         Self.exportStatement(
             rows: balanceRows,

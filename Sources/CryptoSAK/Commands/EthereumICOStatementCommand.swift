@@ -36,7 +36,7 @@ struct EthereumICOStatementCommand: ParsableCommand {
             Self.exit()
         }
 
-        let gateway = EtherscanGateway(apiKey: Config.etherscanAPIKey)
+        let gateway = EtherscanEthereumGateway(apiKey: Config.etherscanAPIKey)
 
         Self.exportICOTransactions(
             ico: ico,

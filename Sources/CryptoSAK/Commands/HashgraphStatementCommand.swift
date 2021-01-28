@@ -24,11 +24,11 @@ struct HashgraphStatementCommand: ParsableCommand {
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
+        let gateway = DragonGlassHashgraphGateway(accessKey: Config.dragonGlassAccessKey)
 
         Self.exportHashgraphStatement(
             account: account,
-            hashgraphTransactions: DragonGlass.fetchHashgraphTransactions(
-                accessKey: Config.dragonGlassAccessKey,
+            hashgraphTransactions: gateway.fetchHashgraphTransactions(
                 account: account,
                 startDate: startDate
             )

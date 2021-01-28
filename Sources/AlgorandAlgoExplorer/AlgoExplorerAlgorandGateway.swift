@@ -4,7 +4,7 @@ import Foundation
 import FoundationExtensions
 import Networking
 
-public struct AlgoExplorerGateway: AlgorandGateway {
+public struct AlgoExplorerAlgorandGateway: AlgorandGateway {
     private let urlSession: URLSession
 
     public init(urlSession: URLSession = .shared) {

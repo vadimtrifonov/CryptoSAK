@@ -42,7 +42,7 @@ struct EthereumTokensStatementCommand: ParsableCommand {
             row.split(separator: ",").map(String.init).first
         }
 
-        let gateway = EtherscanGateway(apiKey: Config.etherscanAPIKey)
+        let gateway = EtherscanEthereumGateway(apiKey: Config.etherscanAPIKey)
         gateway.fetchTokenTransactions(address: address, startDate: startDate)
             .map { transactions in
                 Self.filteredTokenTransactions(

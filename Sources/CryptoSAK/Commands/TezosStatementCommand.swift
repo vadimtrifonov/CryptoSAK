@@ -41,7 +41,7 @@ struct TezosStatementCommand: ParsableCommand {
         }
 
         Self.exportTezosStatement(
-            operationsPublisher: TzStatsGateway().fetchOperations(account: account, startDate: startDate),
+            operationsPublisher: TzStatsTezosGateway().fetchOperations(account: account, startDate: startDate),
             account: account,
             delegateAccounts: delegateAccounts
         )

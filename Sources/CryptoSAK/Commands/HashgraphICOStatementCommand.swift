@@ -41,8 +41,7 @@ struct HashgraphICOStatementCommand: ParsableCommand {
             Self.exit()
         }
 
-        DragonGlass.fetchHashgraphTransactions(
-            accessKey: Config.dragonGlassAccessKey,
+        DragonGlassHashgraphGateway(accessKey: Config.dragonGlassAccessKey).fetchHashgraphTransactions(
             account: account,
             startDate: .distantPast
         )

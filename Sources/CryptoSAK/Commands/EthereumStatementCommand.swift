@@ -23,7 +23,7 @@ struct EthereumStatementCommand: ParsableCommand {
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
-        let gateway = EtherscanGateway(apiKey: Config.etherscanAPIKey)
+        let gateway = EtherscanEthereumGateway(apiKey: Config.etherscanAPIKey)
 
         Publishers.Zip(
             gateway.fetchNormalTransactions(address: address, startDate: startDate),

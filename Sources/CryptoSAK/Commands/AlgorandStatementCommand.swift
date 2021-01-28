@@ -31,7 +31,7 @@ struct AlgorandStatementCommand: ParsableCommand {
 
         Self.exportAlgorandStatement(
             address: address,
-            transactionsPublisher: AlgoExplorerGateway().fetchTransactions(address: address, startDate: startDate)
+            transactionsPublisher: AlgoExplorerAlgorandGateway().fetchTransactions(address: address, startDate: startDate)
         )
         .sink(receiveCompletion: { completion in
             if case let .failure(error) = completion {
