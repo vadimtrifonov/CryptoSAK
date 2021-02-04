@@ -114,7 +114,7 @@ private extension CoinTrackingRow {
             fee: 0,
             feeCurrency: "",
             exchange: extrinsic.fromNameForCoinTracking,
-            group: "Fee",
+            group: "",
             comment: extrinsic.commentForCoinTracking,
             date: extrinsic.timestamp,
             transactionID: extrinsic.extrinsicHash

@@ -75,7 +75,7 @@ private extension CoinTrackingRow {
             fee: 0,
             feeCurrency: "",
             exchange: transaction.sourceNameForCoinTracking,
-            group: "Fee",
+            group: "",
             comment: Self.makeComment(eventID: transaction.hash),
             date: transaction.date
         )

@@ -256,7 +256,7 @@ private extension CoinTrackingRow {
                 fee: 0,
                 feeCurrency: "",
                 exchange: "IDEX",
-                group: "Fee",
+                group: "",
                 comment: Self.makeComment(),
                 date: idexBalanceOperation.date
             )

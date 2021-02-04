@@ -149,7 +149,7 @@ private extension CoinTrackingRow {
             fee: 0,
             feeCurrency: "",
             exchange: "Hashgraph \(transaction.senderID)",
-            group: "Fee",
+            group: "",
             comment: Self.makeComment(eventID: transaction.readableTransactionID),
             date: transaction.consensusTime
         )
