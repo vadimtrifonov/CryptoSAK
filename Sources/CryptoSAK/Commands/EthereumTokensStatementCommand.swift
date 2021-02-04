@@ -16,7 +16,7 @@ struct EthereumTokensStatementCommand: ParsableCommand {
     @Argument(help: "Ethereum address")
     var address: String
 
-    @Flag
+    @Flag(help: "Export token balances in a separate file")
     var balance = false
 
     @Option(
@@ -31,7 +31,7 @@ struct EthereumTokensStatementCommand: ParsableCommand {
     )
     var tokenListPath: String?
 
-    @Option(help: .init("Oldest date from which transactions will be exported", discussion: "Format: YYYY-MM-DD"))
+    @Option(help: .startDate())
     var startDate: Date = .distantPast
 
     func run() throws {
@@ -123,7 +123,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: transaction.destinationNameForCoinTracking,
             group: "",
-            comment: "Export. Transaction: \(transaction.hash)",
+            comment: Self.makeComment(eventID: transaction.hash),
             date: transaction.date
         )
     }
@@ -139,7 +139,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: transaction.sourceNameForCoinTracking,
             group: "",
-            comment: "Export. Transaction: \(transaction.hash)",
+            comment: Self.makeComment(eventID: transaction.hash),
             date: transaction.date
         )
     }

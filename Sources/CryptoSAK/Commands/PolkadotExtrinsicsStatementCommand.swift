@@ -15,13 +15,13 @@ struct PolkadotExtrinsicsStatementCommand: ParsableCommand {
     @Argument(help: "Polkadot address")
     var address: String
 
-    @Option(name: .customLong("known-transactions"), help: "Path to a CSV file with the list of known transactions")
+    @Option(name: .customLong("known-transactions"), help: .knownTransactions)
     var knownTransactionsPath: String?
 
-    @Option(help: .init("Oldest block from which extrinsics will be exported", discussion: "An alternative option to the start date"))
+    @Option(help: .startBlock(eventsName: "extrinsics"))
     var startBlock: UInt = 0
 
-    @Option(help: .init("Oldest date from which extrinsics will be exported", discussion: "Format: YYYY-MM-DD"))
+    @Option(help: .startDate(eventsName: "extrinsics"))
     var startDate: Date = .distantPast
 
     func run() throws {
@@ -76,28 +76,20 @@ extension PolkadotExtrinsicsStatement {
 
     func toCoinTrackingRows(knownTransactions: [KnownTransaction]) -> [CoinTrackingRow] {
         var rows = feeIncuringExtrinsics.map { extrinsic in
-            CoinTrackingRow.makeFee(extrinsic: extrinsic, knownTransactions: knownTransactions)
+            CoinTrackingRow.makeFee(extrinsic: extrinsic)
         }
 
         if let claimExtrinsic = claimExtrinsic {
-            rows.append(
-                CoinTrackingRow.makeClaim(
-                    extrinsic: claimExtrinsic,
-                    knownTransactions: knownTransactions
-                )
-            )
+            rows.append(CoinTrackingRow.makeClaim(extrinsic: claimExtrinsic))
         }
 
-        return rows
+        return rows.overriden(with: knownTransactions).sorted(by: >)
     }
 }
 
 private extension CoinTrackingRow {
 
-    static func makeClaim(
-        extrinsic: PolkadotExtrinsic,
-        knownTransactions: [KnownTransaction]
-    ) -> CoinTrackingRow {
+    static func makeClaim(extrinsic: PolkadotExtrinsic) -> CoinTrackingRow {
         CoinTrackingRow(
             type: .incoming(.deposit),
             buyAmount: 0,
@@ -108,20 +100,13 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: extrinsic.fromNameForCoinTracking,
             group: "Fee",
-            comment: extrinsic.makeCommentForCoinTracking(),
-            date: extrinsic.timestamp
-        )
-        .applyOverride(
-            from: knownTransactions,
-            withTransactionID: extrinsic.extrinsicHash,
-            makeCommentForCoinTracking: extrinsic.makeCommentForCoinTracking
+            comment: extrinsic.commentForCoinTracking,
+            date: extrinsic.timestamp,
+            transactionID: extrinsic.extrinsicHash
         )
     }
 
-    static func makeFee(
-        extrinsic: PolkadotExtrinsic,
-        knownTransactions: [KnownTransaction]
-    ) -> CoinTrackingRow {
+    static func makeFee(extrinsic: PolkadotExtrinsic) -> CoinTrackingRow {
         CoinTrackingRow(
             type: .outgoing(.otherFee),
             buyAmount: 0,
@@ -132,13 +117,9 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: extrinsic.fromNameForCoinTracking,
             group: "Fee",
-            comment: extrinsic.makeCommentForCoinTracking(),
-            date: extrinsic.timestamp
-        )
-        .applyOverride(
-            from: knownTransactions,
-            withTransactionID: extrinsic.extrinsicHash,
-            makeCommentForCoinTracking: extrinsic.makeCommentForCoinTracking
+            comment: extrinsic.commentForCoinTracking,
+            date: extrinsic.timestamp,
+            transactionID: extrinsic.extrinsicHash
         )
     }
 }
@@ -149,7 +130,12 @@ private extension PolkadotExtrinsic {
         "Polkadot \(from.prefix(8))."
     }
 
-    func makeCommentForCoinTracking(comment: String = "") -> String {
-        "Export. \(comment.formattedForCoinTrackingComment)\(callFunction). ID: \(extrinsicID). Extrinsic: \(extrinsicHash)"
+    var commentForCoinTracking: String {
+        CoinTrackingRow.makeComment(
+            callFunction,
+            "ID: \(extrinsicID)",
+            eventName: "Extrinsic",
+            eventID: extrinsicHash
+        )
     }
 }

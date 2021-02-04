@@ -229,7 +229,7 @@ private extension CoinTrackingRow {
                 feeCurrency: "",
                 exchange: "IDEX",
                 group: "",
-                comment: "Export. Transaction: \(idexBalanceOperation.transactionHash)",
+                comment: Self.makeComment(eventID: idexBalanceOperation.transactionHash),
                 date: idexBalanceOperation.date
             )
         case .deposit:
@@ -243,7 +243,7 @@ private extension CoinTrackingRow {
                 feeCurrency: "",
                 exchange: "IDEX",
                 group: "",
-                comment: "Export. Transaction: \(idexBalanceOperation.transactionHash)",
+                comment: Self.makeComment(eventID: idexBalanceOperation.transactionHash),
                 date: idexBalanceOperation.date
             )
         case .fee:
@@ -257,7 +257,7 @@ private extension CoinTrackingRow {
                 feeCurrency: "",
                 exchange: "IDEX",
                 group: "Fee",
-                comment: "Export",
+                comment: Self.makeComment(),
                 date: idexBalanceOperation.date
             )
         }

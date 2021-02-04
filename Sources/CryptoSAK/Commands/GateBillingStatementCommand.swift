@@ -64,7 +64,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: "Gate.io",
             group: "",
-            comment: "Export",
+            comment: Self.makeComment(),
             date: transaction.date
         )
     }
@@ -83,7 +83,7 @@ extension CoinTrackingRow {
             feeCurrency: trade.feeCurrency,
             exchange: "Gate.io",
             group: "",
-            comment: "Export",
+            comment: Self.makeComment(),
             date: trade.date
         )
     }

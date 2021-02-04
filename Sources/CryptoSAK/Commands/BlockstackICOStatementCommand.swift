@@ -153,7 +153,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: ico.name,
             group: "",
-            comment: "Export",
+            comment: Self.makeComment(),
             date: payout.timestamp
         )
     }
@@ -172,7 +172,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: ico.name,
             group: "",
-            comment: "Export",
+            comment: Self.makeComment(),
             date: ico.timestamp
         )
     }
@@ -191,7 +191,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: "Blockstack \(address.prefix(8)).",
             group: "",
-            comment: "Export",
+            comment: Self.makeComment(),
             date: payout.timestamp
         )
     }

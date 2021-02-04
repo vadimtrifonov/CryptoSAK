@@ -19,7 +19,7 @@ struct TezosCapitalStatementCommand: ParsableCommand {
     @Argument(help: "Bond pool address")
     var address: String
 
-    @Option(help: "Oldest operation date in ISO format")
+    @Option(help: .startDate(eventsName: "operations"))
     var startDate: Date = .distantPast
 
     func run() throws {
@@ -168,7 +168,7 @@ extension CoinTrackingRow {
             feeCurrency: "",
             exchange: "Tezos Capital",
             group: "Bond Pool",
-            comment: "Export. Cycle: \(cycle.cycle)",
+            comment: Self.makeComment("Cycle: \(cycle.cycle)"),
             date: cycle.end
         )
     }

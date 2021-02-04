@@ -143,7 +143,7 @@ extension CoinTrackingRow {
             feeCurrency: "",
             exchange: ico.name,
             group: "",
-            comment: "Export. Transaction: \(transaction.readableTransactionID)",
+            comment: Self.makeComment(eventID: transaction.readableTransactionID),
             date: transaction.consensusTime
         )
     }
@@ -162,7 +162,7 @@ extension CoinTrackingRow {
             feeCurrency: "",
             exchange: ico.name,
             group: "",
-            comment: "Export",
+            comment: Self.makeComment(),
             date: ico.timestamp
         )
     }

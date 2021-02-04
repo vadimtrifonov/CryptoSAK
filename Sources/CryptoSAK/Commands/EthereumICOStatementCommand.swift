@@ -217,7 +217,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: ico.name,
             group: "",
-            comment: "Export. Transaction: \(transaction.hash)",
+            comment: Self.makeComment(eventID: transaction.hash),
             date: transaction.date
         )
     }
@@ -238,7 +238,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: ico.name,
             group: "",
-            comment: "Export",
+            comment: Self.makeComment(),
             date: contributionTransaction.date
         )
     }
@@ -257,7 +257,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: ico.name,
             group: "",
-            comment: "Export. Transaction: \(transaction.hash)",
+            comment: Self.makeComment(eventID: transaction.hash),
             date: transaction.date
         )
     }

@@ -19,7 +19,7 @@ struct HashgraphStatementCommand: ParsableCommand {
     @Argument(help: "Hashgraph account")
     var account: String
 
-    @Option(help: .init("Oldest date from which transactions will be exported", discussion: "Format: YYYY-MM-DD"))
+    @Option(help: .startDate())
     var startDate: Date = .distantPast
 
     func run() throws {
@@ -97,7 +97,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: "Hashgraph \(transaction.receiverID)",
             group: "",
-            comment: "Export. Transaction: \(transaction.readableTransactionID)",
+            comment: Self.makeComment(eventID: transaction.readableTransactionID),
             date: transaction.consensusTime
         )
     }
@@ -113,7 +113,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: "Hashgraph \(transaction.senderID)",
             group: "",
-            comment: "Export. Transaction: \(transaction.readableTransactionID)",
+            comment: Self.makeComment(eventID: transaction.readableTransactionID),
             date: transaction.consensusTime
         )
     }
@@ -131,7 +131,10 @@ private extension CoinTrackingRow {
             feeCurrency: Hashgraph.ticker,
             exchange: "Hashgraph \(transaction.senderID)",
             group: "Account",
-            comment: "Export. \(transaction.memo.rawValue). Transaction: \(transaction.readableTransactionID)",
+            comment: Self.makeComment(
+                transaction.memo.rawValue,
+                eventID: transaction.readableTransactionID
+            ),
             date: transaction.consensusTime
         )
     }
@@ -147,7 +150,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: "Hashgraph \(transaction.senderID)",
             group: "Fee",
-            comment: "Export. Transaction: \(transaction.readableTransactionID)",
+            comment: Self.makeComment(eventID: transaction.readableTransactionID),
             date: transaction.consensusTime
         )
     }

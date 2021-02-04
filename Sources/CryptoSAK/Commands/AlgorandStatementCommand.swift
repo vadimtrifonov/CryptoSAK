@@ -16,10 +16,10 @@ struct AlgorandStatementCommand: ParsableCommand {
     @Argument(help: "Algorand address")
     var address: String
 
-    @Option(name: .customLong("known-transactions"), help: "Path to a CSV file with the list of known transactions")
+    @Option(name: .customLong("known-transactions"), help: .knownTransactions)
     var knownTransactionsPath: String?
 
-    @Option(help: .init("Oldest date from which transactions will be exported", discussion: "Format: YYYY-MM-DD"))
+    @Option(help: .startDate())
     var startDate: Date = .distantPast
 
     func run() throws {
@@ -70,29 +70,22 @@ extension AlgorandStatementCommand {
 extension AlgorandStatement {
 
     func toCoinTrackingRows(knownTransactions: [KnownTransaction]) throws -> [CoinTrackingRow] {
-        let incoming = incomingTransactions.map { transaction in
-            CoinTrackingRow.makeDeposit(transaction: transaction, knownTransactions: knownTransactions)
-        }
-        let outgoing = outgoingTransactions.map { transaction in
-            CoinTrackingRow.makeWithdrawal(transaction: transaction, knownTransactions: knownTransactions)
-        }
+        var rows = incomingTransactions.map(CoinTrackingRow.makeDeposit)
+            + outgoingTransactions.map(CoinTrackingRow.makeWithdrawal)
 
-        let rows = try incoming + outgoing
-            + closeTransactions.map(CoinTrackingRow.makeClose)
+        rows += try closeTransactions.map(CoinTrackingRow.makeClose)
             + feeIncuringTransactions.map(CoinTrackingRow.makeFee)
             + incomingRewards.map(CoinTrackingRow.makeDepositReward)
             + outgoingRewards.map(CoinTrackingRow.makeWithdrawalReward)
             + closeRewards.map(CoinTrackingRow.makeCloseReward)
-        return rows.sorted(by: >)
+
+        return rows.overriden(with: knownTransactions).sorted(by: >)
     }
 }
 
 private extension CoinTrackingRow {
 
-    static func makeDeposit(
-        transaction: AlgorandTransaction,
-        knownTransactions: [KnownTransaction]
-    ) -> CoinTrackingRow {
+    static func makeDeposit(transaction: AlgorandTransaction) -> CoinTrackingRow {
         self.init(
             type: .incoming(.deposit),
             buyAmount: transaction.amount,
@@ -103,19 +96,13 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: transaction.receiverNameForCoinTracking,
             group: "",
-            comment: transaction.makeCommentForCoinTracking(),
-            date: transaction.timestamp
-        ).applyOverride(
-            from: knownTransactions,
-            withTransactionID: transaction.id,
-            makeCommentForCoinTracking: transaction.makeCommentForCoinTracking
+            comment: Self.makeComment(eventID: transaction.id),
+            date: transaction.timestamp,
+            transactionID: transaction.id
         )
     }
 
-    static func makeWithdrawal(
-        transaction: AlgorandTransaction,
-        knownTransactions: [KnownTransaction]
-    ) -> CoinTrackingRow {
+    static func makeWithdrawal(transaction: AlgorandTransaction) -> CoinTrackingRow {
         self.init(
             type: .outgoing(.withdrawal),
             buyAmount: 0,
@@ -126,12 +113,9 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: transaction.senderNameForCoinTracking,
             group: "",
-            comment: transaction.makeCommentForCoinTracking(),
-            date: transaction.timestamp
-        ).applyOverride(
-            from: knownTransactions,
-            withTransactionID: transaction.id,
-            makeCommentForCoinTracking: transaction.makeCommentForCoinTracking
+            comment: Self.makeComment(eventID: transaction.id),
+            date: transaction.timestamp,
+            transactionID: transaction.id
         )
     }
 
@@ -146,7 +130,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: transaction.senderNameForCoinTracking,
             group: "Fee",
-            comment: transaction.makeCommentForCoinTracking(),
+            comment: Self.makeComment(eventID: transaction.id),
             date: transaction.timestamp
         )
     }
@@ -162,7 +146,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: transaction.closeReceiverNameForCoinTracking(),
             group: "Close",
-            comment: transaction.makeCommentForCoinTracking(),
+            comment: Self.makeComment(eventID: transaction.id),
             date: transaction.timestamp
         )
     }
@@ -178,7 +162,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: transaction.receiverNameForCoinTracking,
             group: "Reward",
-            comment: transaction.makeCommentForCoinTracking(),
+            comment: Self.makeComment(eventID: transaction.id),
             date: transaction.timestamp
         )
     }
@@ -194,7 +178,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: transaction.senderNameForCoinTracking,
             group: "Reward",
-            comment: transaction.makeCommentForCoinTracking(),
+            comment: Self.makeComment(eventID: transaction.id),
             date: transaction.timestamp
         )
     }
@@ -210,7 +194,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: transaction.closeReceiverNameForCoinTracking(),
             group: "Reward",
-            comment: transaction.makeCommentForCoinTracking(),
+            comment: Self.makeComment(eventID: transaction.id),
             date: transaction.timestamp
         )
     }
@@ -235,9 +219,5 @@ extension AlgorandTransaction {
             throw "Expected to find Close details in transaction with ID: \(id)"
         }
         return close
-    }
-
-    func makeCommentForCoinTracking(comment: String = "") -> String {
-        "Export. \(comment.formattedForCoinTrackingComment)Transaction: \(id)"
     }
 }

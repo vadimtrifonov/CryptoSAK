@@ -29,16 +29,24 @@ struct TezosStatementCommand: ParsableCommand {
     )
     var delegateListPath: String?
 
-    @Option(help: .init("Oldest date from which operations will be exported", discussion: "Format: YYYY-MM-DD"))
+    @Option(name: .customLong("known-transactions"), help: .knownTransactions)
+    var knownTransactionsPath: String?
+
+    @Option(help: .startDate(eventsName: "operations"))
     var startDate: Date = .distantPast
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
 
-        let rows = try delegateListPath.map(FileManager.default.readLines(atPath:)) ?? []
-        let delegateAccounts = rows.compactMap { row in
-            row.split(separator: ",").map(String.init).first
-        }
+        let delegateAccounts = try delegateListPath
+            .map(FileManager.default.readLines(atPath:))?
+            .compactMap { row in
+                row.split(separator: ",").map(String.init).first
+            } ?? []
+
+        let knownTransactions = try knownTransactionsPath
+            .map(FileManager.default.readLines(atPath:))
+            .map(KnownTransactionsCSV.makeTransactions) ?? []
 
         Self.exportTezosStatement(
             operationsPublisher: TzStatsTezosGateway().fetchOperations(account: account, startDate: startDate),
@@ -54,7 +62,7 @@ struct TezosStatementCommand: ParsableCommand {
             do {
                 print(statement.balance)
                 try FileManager.default.writeCSV(
-                    rows: statement.toCoinTrackingRows(),
+                    rows: statement.toCoinTrackingRows(knownTransactions: knownTransactions),
                     filename: "TesosStatement"
                 )
             } catch {
@@ -94,7 +102,7 @@ struct TezosStatementCommand: ParsableCommand {
 
 extension TezosStatement {
 
-    func toCoinTrackingRows() -> [CoinTrackingRow] {
+    func toCoinTrackingRows(knownTransactions: [KnownTransaction]) -> [CoinTrackingRow] {
         var rows = transactions.delegationRewards.map(CoinTrackingRow.makeDelegationReward)
             + transactions.otherIncoming.map(CoinTrackingRow.makeDeposit)
             + transactions.outgoing.map(CoinTrackingRow.makeWithdrawal)
@@ -104,7 +112,7 @@ extension TezosStatement {
             rows.append(CoinTrackingRow.makeAccountActivation(operation: accountActivation))
         }
 
-        return rows.sorted(by: >)
+        return rows.overriden(with: knownTransactions).sorted(by: >)
     }
 }
 
@@ -121,8 +129,13 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: operation.senderNameForCoinTracking,
             group: "",
-            comment: "Export. Account activation. Operation: \(operation.operationHash)",
-            date: operation.timestamp
+            comment: Self.makeComment(
+                "Account activation",
+                eventName: "Operation",
+                eventID: operation.operationHash
+            ),
+            date: operation.timestamp,
+            transactionID: operation.operationHash
         )
     }
 
@@ -137,8 +150,9 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: operation.receiverNameForCoinTracking,
             group: "Delegation",
-            comment: "Export. Operation: \(operation.operationHash)",
-            date: operation.timestamp
+            comment: Self.makeComment(eventName: "Operation", eventID: operation.operationHash),
+            date: operation.timestamp,
+            transactionID: operation.operationHash
         )
     }
 
@@ -153,8 +167,9 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: operation.receiverNameForCoinTracking,
             group: "",
-            comment: "Export. Operation: \(operation.operationHash)",
-            date: operation.timestamp
+            comment: Self.makeComment(eventName: "Operation", eventID: operation.operationHash),
+            date: operation.timestamp,
+            transactionID: operation.operationHash
         )
     }
 
@@ -169,8 +184,9 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: operation.senderNameForCoinTracking,
             group: "",
-            comment: "Export. Operation: \(operation.operationHash)",
-            date: operation.timestamp
+            comment: Self.makeComment(eventName: "Operation", eventID: operation.operationHash),
+            date: operation.timestamp,
+            transactionID: operation.operationHash
         )
     }
 
@@ -187,7 +203,7 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: operation.senderNameForCoinTracking,
             group: "Fee",
-            comment: "Export. Operation: \(operation.operationHash)",
+            comment: Self.makeComment(eventName: "Operation", eventID: operation.operationHash),
             date: operation.timestamp
         )
     }

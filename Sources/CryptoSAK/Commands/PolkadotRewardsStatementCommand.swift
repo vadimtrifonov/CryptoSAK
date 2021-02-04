@@ -19,10 +19,10 @@ struct PolkadotRewardsStatementCommand: ParsableCommand {
     @Argument(help: "Path to a CSV file with rewards from Subscan (https://polkadot.subscan.io/) OR a directory of such files")
     var rewardsCSVPath: String
 
-    @Option(help: .init("Oldest block from which rewards will be exported", discussion: "An alternative option to the start date"))
+    @Option(help: .startBlock(eventsName: "rewards"))
     var startBlock: UInt = 0
 
-    @Option(help: .init("Oldest date from which rewards will be exported", discussion: "Format: YYYY-MM-DD"))
+    @Option(help: .startDate(eventsName: "rewards"))
     var startDate: Date = .distantPast
 
     func run() throws {
@@ -119,7 +119,11 @@ private extension CoinTrackingRow {
             feeCurrency: "",
             exchange: "Polkadot \(address.prefix(8)).",
             group: "Reward",
-            comment: "Export. ID: \(rewardRow.eventID). Extrinsic: \(rewardRow.extrinsicHash)",
+            comment: Self.makeComment(
+                "ID: \(rewardRow.eventID)",
+                eventName: "Extrinsic",
+                eventID: rewardRow.extrinsicHash
+            ),
             date: rewardRow.blockTimestamp
         )
     }

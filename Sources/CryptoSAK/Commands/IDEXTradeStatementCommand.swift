@@ -59,7 +59,7 @@ extension CoinTrackingRow {
             feeCurrency: feeCurrency,
             exchange: "IDEX",
             group: "",
-            comment: "Export. Transaction: \(idexTradeRow.transactionHash)",
+            comment: Self.makeComment(eventID: idexTradeRow.transactionHash),
             date: idexTradeRow.date
         )
     }
