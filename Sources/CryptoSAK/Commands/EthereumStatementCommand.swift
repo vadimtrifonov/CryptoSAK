@@ -17,6 +17,9 @@ struct EthereumStatementCommand: ParsableCommand {
 
     @Argument(help: "Etherium address")
     var address: String
+    
+    @Option(name: .customLong("known-transactions"), help: .knownTransactions)
+    var knownTransactionsPath: String?
 
     @Option(help: .startDate())
     var startDate: Date = .distantPast
@@ -24,6 +27,10 @@ struct EthereumStatementCommand: ParsableCommand {
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
         let gateway = EtherscanEthereumGateway(apiKey: Config.etherscanAPIKey)
+        
+        let knownTransactions = try knownTransactionsPath
+            .map(FileManager.default.readLines(atPath:))
+            .map(KnownTransactionsCSV.makeTransactions) ?? []
 
         Publishers.Zip(
             gateway.fetchNormalTransactions(address: address, startDate: startDate),
@@ -42,7 +49,10 @@ struct EthereumStatementCommand: ParsableCommand {
                     address: address
                 )
                 print(statement.balance)
-                try FileManager.default.writeCSV(rows: statement.toCoinTrackingRows(), filename: "EthereumStatement")
+                try FileManager.default.writeCSV(
+                    rows: statement.toCoinTrackingRows(knownTransactions: knownTransactions),
+                    filename: "EthereumStatement"
+                )
             } catch {
                 print(error)
             }
@@ -54,13 +64,13 @@ struct EthereumStatementCommand: ParsableCommand {
 }
 
 private extension EthereumStatement {
-    func toCoinTrackingRows() -> [CoinTrackingRow] {
+    func toCoinTrackingRows(knownTransactions: [KnownTransaction]) -> [CoinTrackingRow] {
         let rows = incomingNormalTransactions.map(CoinTrackingRow.makeNormalDeposit)
             + incomingInternalTransactions.map(CoinTrackingRow.makeInternalDeposit)
             + successfulOutgoingNormalTransactions.map(CoinTrackingRow.makeNormalWithdrawal)
             + successfulOutgoingInternalTransactions.map(CoinTrackingRow.makeInternalWithdrawal)
             + feeIncurringTransactions.map(CoinTrackingRow.makeFee)
-        return rows.sorted(by: >)
+        return rows.overriden(with: knownTransactions).sorted(by: >)
     }
 }
 
@@ -93,7 +103,8 @@ private extension CoinTrackingRow {
             exchange: transaction.destinationNameForCoinTracking,
             group: "",
             comment: Self.makeComment(eventID: transaction.hash),
-            date: transaction.date
+            date: transaction.date,
+            transactionID: transaction.hash
         )
     }
 
@@ -109,7 +120,8 @@ private extension CoinTrackingRow {
             exchange: transaction.destinationNameForCoinTracking,
             group: "Internal",
             comment: Self.makeComment(eventID: transaction.hash),
-            date: transaction.date
+            date: transaction.date,
+            transactionID: transaction.hash
         )
     }
 
@@ -125,7 +137,8 @@ private extension CoinTrackingRow {
             exchange: transaction.sourceNameForCoinTracking,
             group: "",
             comment: Self.makeComment(eventID: transaction.hash),
-            date: transaction.date
+            date: transaction.date,
+            transactionID: transaction.hash
         )
     }
 
@@ -141,7 +154,8 @@ private extension CoinTrackingRow {
             exchange: transaction.sourceNameForCoinTracking,
             group: "Internal",
             comment: Self.makeComment(eventID: transaction.hash),
-            date: transaction.date
+            date: transaction.date,
+            transactionID: transaction.hash
         )
     }
 }

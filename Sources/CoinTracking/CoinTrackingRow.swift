@@ -88,6 +88,7 @@ extension CoinTrackingRow {
             case airdrop = "Airdrop"
             case deposit = "Deposit"
             case income = "Income"
+            case incomeNonTaxable = "Income (non taxable)"
             case interestIncome = "Interest Income"
             case otherIncome = "Other Income"
             case rewardOrBonus = "Reward / Bonus"
@@ -98,6 +99,7 @@ extension CoinTrackingRow {
             case otherFee = "Other Fee"
             case spend = "Spend"
             case withdrawal = "Withdrawal"
+            case lost = "Lost"
         }
 
         private static let tradeRawValue = "Trade"
