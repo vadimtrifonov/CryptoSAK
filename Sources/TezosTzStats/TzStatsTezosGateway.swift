@@ -1,6 +1,5 @@
 import Combine
 import Foundation
-import Lambda
 import Networking
 import Tezos
 
@@ -52,7 +51,7 @@ public struct TzStatsTezosGateway: TezosGateway {
             maxPublishers: .max(1)
         ) { operations, hasMoreOperations -> AnyPublisher<[TzStats.Operation], Error> in
             guard hasMoreOperations else {
-                return Just(operations).mapError(toError).eraseToAnyPublisher()
+                return Just(operations).setFailureType(to: Error.self).eraseToAnyPublisher()
             }
 
             return self.recursivelyFetchOperations(

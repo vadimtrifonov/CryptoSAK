@@ -13,6 +13,28 @@ struct KnownTransaction: Equatable {
     let exchange: String?
     let group: String?
     let comment: String?
-    let date: Date?
-    let transactionID: String?
+    @CustomCoded<RFC3339LocalTime> let date: Date?
+    let transactionID: String
+}
+
+extension KnownTransaction: Decodable {
+
+    enum CodingKeys: String, CaseIterable, CodingKey {
+        case type = "Type"
+        case buyAmount = "Buy Amount"
+        case buyCurrency = "Buy Currency"
+        case sellAmount = "Sell Amount"
+        case sellCurrency = "Sell Currency"
+        case fee = "Fee"
+        case feeCurrency = "Fee Currency"
+        case exchange = "Exchange"
+        case group = "Trade-Group"
+        case comment = "Comment"
+        case date = "Date"
+        case transactionID = "Tx-ID"
+    }
+
+    static var csvHeaders: [String] {
+        CodingKeys.allCases.map(\.rawValue)
+    }
 }

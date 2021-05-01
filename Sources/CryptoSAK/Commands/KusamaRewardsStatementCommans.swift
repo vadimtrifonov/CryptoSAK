@@ -1,7 +1,9 @@
 import ArgumentParser
+import CodableCSV
 import CoinTracking
 import Combine
 import Foundation
+import FoundationExtensions
 import Kusama
 
 struct KusamaRewardsStatementCommand: ParsableCommand {
@@ -18,34 +20,30 @@ struct KusamaRewardsStatementCommand: ParsableCommand {
     @Argument(help: "Path to a CSV file with rewards from Subscan (https://kusama.subscan.io/) OR a directory of such files")
     var rewardsCSVPath: String
 
-    @Option(help: .startBlock(eventsName: "rewards"))
+    @Option(help: .startBlock(recordsName: "rewards"))
     var startBlock: Int = 0
 
-    @Option(help: .startDate(eventsName: "rewards"))
+    @Option(help: .startDate(recordsName: "rewards"))
     var startDate: Date = .distantPast
 
     func run() throws {
-        let csvRows: [String]
+        let rewards: [KusamaReward]
         if FileManager.default.directoryExists(atPath: rewardsCSVPath) {
-            csvRows = try FileManager.default.files(atPath: rewardsCSVPath, extension: "csv")
-                .flatMap { url in
-                    try FileManager.default.readLines(at: url).dropFirst(withPrefix: "Event ID")
-                }
+            let files = try FileManager.default.files(atPath: rewardsCSVPath, extension: "csv")
+            rewards = try files.map(\.path).flatMap(Self.decodeKusamaRewardsCSV)
         } else {
-            csvRows = try FileManager.default.readLines(atPath: rewardsCSVPath).dropFirst(withPrefix: "Event ID")
+            rewards = try Self.decodeKusamaRewardsCSV(path: rewardsCSVPath)
         }
-
-        let rewardRows = try csvRows.map(KusamaRewardRow.init)
 
         let coinTrackingRows = Self.toCoinTrackingRows(
             address: address,
-            rewards: rewardRows,
+            rewards: rewards,
             startBlock: startBlock,
             startDate: startDate
         )
 
         do {
-            try FileManager.default.writeCSV(
+            try CoinTrackingCSVEncoder().encode(
                 rows: coinTrackingRows,
                 filename: "KusamaRewardsStatement"
             )
@@ -53,39 +51,42 @@ struct KusamaRewardsStatementCommand: ParsableCommand {
             print(error)
         }
     }
-}
 
-struct KusamaRewardRow: Comparable {
-    let eventID: String
-    let block: Int
-    let blockTimestamp: Date
-    let extrinsicHash: String
-    let action: String
-    let value: Decimal
-
-    static func < (lhs: KusamaRewardRow, rhs: KusamaRewardRow) -> Bool {
-        lhs.blockTimestamp < rhs.blockTimestamp
+    static func decodeKusamaRewardsCSV(path: String) throws -> [KusamaReward] {
+        try CSVDecoder(configuration: { $0.headerStrategy = .firstLine })
+            .decode([KusamaReward].self, from: URL(fileURLWithPath: path))
     }
 }
 
-extension KusamaRewardRow {
+struct ConvertPlanckToKSM: CustomDecoding {
 
-    init(csvRow: String) throws {
-        let columns = csvRow.split(separator: Character(",")).map(String.init)
+    static func decode(from decoder: Decoder) throws -> Decimal {
+        let planckAmount = try UInt(from: decoder)
+        return Decimal(planckAmount) / Kusama.planckInKSM
+    }
+}
 
-        let expectedColumns = 7
-        guard columns.count == expectedColumns else {
-            throw "Expected \(expectedColumns) columns, got \(columns.count)"
-        }
+struct KusamaReward: Decodable, Comparable {
+    let eventID: String
+    let block: UInt
+    @CustomCoded<SecondsSince1970> var blockTimestamp: Date
+    private let time: String
+    let extrinsicHash: String
+    let action: String
+    @CustomCoded<ConvertPlanckToKSM> var amount: Decimal
 
-        self.init(
-            eventID: columns[0],
-            block: try Int(string: columns[1]),
-            blockTimestamp: try Date(timeIntervalSince1970: TimeInterval(string: columns[2])),
-            extrinsicHash: columns[4],
-            action: columns[5],
-            value: try Decimal(string: columns[6]) / Kusama.planckInKSM
-        )
+    enum CodingKeys: Int, CodingKey {
+        case eventID
+        case block
+        case blockTimestamp
+        case time
+        case extrinsicHash
+        case action
+        case amount
+    }
+
+    static func < (lhs: KusamaReward, rhs: KusamaReward) -> Bool {
+        lhs.blockTimestamp < rhs.blockTimestamp
     }
 }
 
@@ -93,7 +94,7 @@ extension KusamaRewardsStatementCommand {
 
     static func toCoinTrackingRows(
         address: String,
-        rewards: [KusamaRewardRow],
+        rewards: [KusamaReward],
         startBlock: Int,
         startDate: Date
     ) -> [CoinTrackingRow] {
@@ -102,17 +103,17 @@ extension KusamaRewardsStatementCommand {
             .filter({ $0.eventID != "4077354-61" }) // Known invalid event ID
             .filter({ $0.block >= startBlock })
             .filter({ $0.blockTimestamp >= startDate })
-            .map({ CoinTrackingRow.makeReward(address: address, rewardRow: $0) })
+            .map({ CoinTrackingRow.makeReward(address: address, reward: $0) })
     }
 }
 
 private extension CoinTrackingRow {
 
-    static func makeReward(address: String, rewardRow: KusamaRewardRow) -> CoinTrackingRow {
+    static func makeReward(address: String, reward: KusamaReward) -> CoinTrackingRow {
         self.init(
             type: .incoming(.staking),
-            buyAmount: rewardRow.value,
-            buyCurrency: Kusama.ticker,
+            buyAmount: reward.amount,
+            buyCurrency: Kusama.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -120,11 +121,11 @@ private extension CoinTrackingRow {
             exchange: "Kusama \(address.prefix(8)).",
             group: "Reward",
             comment: Self.makeComment(
-                "ID: \(rewardRow.eventID)",
+                "ID: \(reward.eventID)",
                 eventName: "Extrinsic",
-                eventID: rewardRow.extrinsicHash
+                eventID: reward.extrinsicHash
             ),
-            date: rewardRow.blockTimestamp
+            date: reward.blockTimestamp
         )
     }
 }

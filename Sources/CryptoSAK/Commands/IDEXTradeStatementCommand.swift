@@ -1,4 +1,5 @@
 import ArgumentParser
+import CodableCSV
 import CoinTracking
 import Foundation
 import IDEX
@@ -15,16 +16,20 @@ struct IDEXTradeStatementCommand: ParsableCommand {
     var csvPath: String
 
     func run() throws {
-        let csvRows = try FileManager.default.readLines(atPath: csvPath).dropFirst() // drop header row
-        let tradeRows = try csvRows.map(IDEXTradeRow.init)
-        let rows = tradeRows.map(CoinTrackingRow.init)
-        try FileManager.default.writeCSV(rows: rows, filename: "IDEXTradeStatement")
+        let idexTrades = try Self.decodeIDEXTradesCSV(path: csvPath)
+        let rows = idexTrades.map(CoinTrackingRow.init)
+        try CoinTrackingCSVEncoder().encode(rows: rows, filename: "IDEXTradeStatement")
+    }
+
+    static func decodeIDEXTradesCSV(path: String) throws -> [IDEXTrade] {
+        try CSVDecoder(configuration: { $0.headerStrategy = .firstLine })
+            .decode([IDEXTrade].self, from: URL(fileURLWithPath: path))
     }
 }
 
 extension CoinTrackingRow {
 
-    init(idexTradeRow: IDEXTradeRow) {
+    init(idexTradeRow: IDEXTrade) {
         let fee: Decimal
         let feeCurrency: String
         var buy: Decimal

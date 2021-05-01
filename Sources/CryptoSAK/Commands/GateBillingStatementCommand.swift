@@ -1,4 +1,5 @@
 import ArgumentParser
+import CodableCSV
 import CoinTracking
 import Foundation
 import Gate
@@ -15,10 +16,17 @@ struct GateBillingStatementCommand: ParsableCommand {
     var csvPath: String
 
     func run() throws {
-        let csvRows = try FileManager.default.readLines(atPath: csvPath).dropFirst() // drop header row
-        let gateRows = try csvRows.map(GateBillingRow.init)
+        let gateRows = try Self.decodeGateBillingCSV(path: csvPath)
         let statement = try GateStatement(rows: gateRows)
-        try FileManager.default.writeCSV(rows: statement.toCoinTrackingRows(), filename: "GateBillingStatement")
+        try CoinTrackingCSVEncoder().encode(rows: statement.toCoinTrackingRows(), filename: "GateBillingStatement")
+    }
+
+    static func decodeGateBillingCSV(path: String) throws -> [GateBillingRow] {
+        let decoder = CSVDecoder { configuration in
+            configuration.headerStrategy = .firstLine
+            configuration.delimiters.field = "\t"
+        }
+        return try decoder.decode([GateBillingRow].self, from: URL(fileURLWithPath: path))
     }
 }
 

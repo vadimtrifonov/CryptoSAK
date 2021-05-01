@@ -3,7 +3,7 @@ import FoundationExtensions
 import Networking
 import Tezos
 
-public struct TzStats {
+public enum TzStats {
 
     public struct CycleInfo: Decodable {
         public let cycle: Int

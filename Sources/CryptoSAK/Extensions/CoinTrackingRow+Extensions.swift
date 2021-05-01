@@ -49,7 +49,8 @@ extension CoinTrackingRow {
             exchange: transaction.exchange ?? exchange,
             group: transaction.group ?? group,
             comment: transaction.insertAdditionalComment(to: comment),
-            date: transaction.date ?? date
+            date: transaction.date ?? date,
+            transactionID: transactionID
         )
     }
 }

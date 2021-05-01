@@ -2,7 +2,6 @@ import Combine
 import Foundation
 import FoundationExtensions
 import Kusama
-import Lambda
 import Networking
 
 public struct SubscanKusamaGateway: KusamaGateway {
@@ -58,7 +57,7 @@ public struct SubscanKusamaGateway: KusamaGateway {
             maxPublishers: .max(1)
         ) { extrinsics, hasMore -> AnyPublisher<[Subscan.ExtrinsicsReponse.ResponseData.Extrinsic], Error> in
             guard hasMore else {
-                return Just(extrinsics).mapError(toError).eraseToAnyPublisher()
+                return Just(extrinsics).setFailureType(to: Error.self).eraseToAnyPublisher()
             }
 
             return self.recusrsivelyFetchExtrinsics(

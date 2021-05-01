@@ -24,10 +24,7 @@ struct AlgorandStatementCommand: ParsableCommand {
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
-
-        let knownTransactions = try knownTransactionsPath
-            .map(FileManager.default.readLines(atPath:))
-            .map(KnownTransactionsCSV.makeTransactions) ?? []
+        let knownTransactions = try knownTransactionsPath.map(KnownTransactionsCSVDecoder().decode) ?? []
 
         Self.exportAlgorandStatement(
             address: address,
@@ -41,7 +38,7 @@ struct AlgorandStatementCommand: ParsableCommand {
         }, receiveValue: { statement in
             do {
                 print(statement.balance)
-                try FileManager.default.writeCSV(
+                try CoinTrackingCSVEncoder().encode(
                     rows: statement.toCoinTrackingRows(knownTransactions: knownTransactions),
                     filename: "AlgorandStatement"
                 )
@@ -89,7 +86,7 @@ private extension CoinTrackingRow {
         self.init(
             type: .incoming(.deposit),
             buyAmount: transaction.amount,
-            buyCurrency: Algorand.ticker,
+            buyCurrency: Algorand.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -108,7 +105,7 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: transaction.amount,
-            sellCurrency: Algorand.ticker,
+            sellCurrency: Algorand.symbol,
             fee: 0,
             feeCurrency: "",
             exchange: transaction.senderNameForCoinTracking,
@@ -125,7 +122,7 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: transaction.fee,
-            sellCurrency: Algorand.ticker,
+            sellCurrency: Algorand.symbol,
             fee: 0,
             feeCurrency: "",
             exchange: transaction.senderNameForCoinTracking,
@@ -139,7 +136,7 @@ private extension CoinTrackingRow {
         try self.init(
             type: .incoming(.otherIncome),
             buyAmount: transaction.getClose().amount,
-            buyCurrency: Algorand.ticker,
+            buyCurrency: Algorand.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -155,7 +152,7 @@ private extension CoinTrackingRow {
         self.init(
             type: .incoming(.staking),
             buyAmount: transaction.receiverRewards,
-            buyCurrency: Algorand.ticker,
+            buyCurrency: Algorand.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -171,7 +168,7 @@ private extension CoinTrackingRow {
         self.init(
             type: .incoming(.staking),
             buyAmount: transaction.senderRewards,
-            buyCurrency: Algorand.ticker,
+            buyCurrency: Algorand.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -187,7 +184,7 @@ private extension CoinTrackingRow {
         try self.init(
             type: .incoming(.staking),
             buyAmount: transaction.getClose().rewards,
-            buyCurrency: Algorand.ticker,
+            buyCurrency: Algorand.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,

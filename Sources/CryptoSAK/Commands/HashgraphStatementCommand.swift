@@ -5,7 +5,6 @@ import Foundation
 import FoundationExtensions
 import Hashgraph
 import HashgraphDragonGlass
-import Lambda
 import Networking
 
 struct HashgraphStatementCommand: ParsableCommand {
@@ -48,7 +47,7 @@ struct HashgraphStatementCommand: ParsableCommand {
                 print("Account service: \(statement.balance.accountService)")
                 print("Fees: \(statement.balance.fees)")
 
-                try FileManager.default.writeCSV(
+                try CoinTrackingCSVEncoder().encode(
                     rows: statement.toCoinTrackingRows(),
                     filename: "HashgraphStatement"
                 )
@@ -90,7 +89,7 @@ private extension CoinTrackingRow {
         self.init(
             type: .incoming(.deposit),
             buyAmount: transaction.amount,
-            buyCurrency: Hashgraph.ticker,
+            buyCurrency: Hashgraph.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -108,7 +107,7 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: transaction.amount,
-            sellCurrency: Hashgraph.ticker,
+            sellCurrency: Hashgraph.symbol,
             fee: 0,
             feeCurrency: "",
             exchange: "Hashgraph \(transaction.senderID)",
@@ -126,9 +125,9 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: totalAmount,
-            sellCurrency: Hashgraph.ticker,
+            sellCurrency: Hashgraph.symbol,
             fee: transaction.fee,
-            feeCurrency: Hashgraph.ticker,
+            feeCurrency: Hashgraph.symbol,
             exchange: "Hashgraph \(transaction.senderID)",
             group: "Account",
             comment: Self.makeComment(
@@ -145,7 +144,7 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: transaction.fee,
-            sellCurrency: Hashgraph.ticker,
+            sellCurrency: Hashgraph.symbol,
             fee: 0,
             feeCurrency: "",
             exchange: "Hashgraph \(transaction.senderID)",

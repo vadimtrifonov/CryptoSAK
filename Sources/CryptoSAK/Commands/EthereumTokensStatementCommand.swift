@@ -1,4 +1,5 @@
 import ArgumentParser
+import CodableCSV
 import CoinTracking
 import Combine
 import Ethereum
@@ -16,8 +17,8 @@ struct EthereumTokensStatementCommand: ParsableCommand {
     @Argument(help: "Ethereum address")
     var address: String
 
-    @Flag(help: "Export token balances in a separate file")
-    var balance = false
+    @Flag(name: .customLong("balance"), help: "Export token balances in a separate file")
+    var includeBalance = false
 
     @Option(
         name: .customLong("token-list"),
@@ -31,23 +32,24 @@ struct EthereumTokensStatementCommand: ParsableCommand {
     )
     var tokenListPath: String?
 
+    @Option(name: .customLong("known-transactions"), help: .knownTransactions)
+    var knownTransactionsPath: String?
+
     @Option(help: .startDate())
     var startDate: Date = .distantPast
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
 
-        let rows = try tokenListPath.map(FileManager.default.readLines(atPath:)) ?? []
-        let tokenContractAddresses = rows.compactMap { row in
-            row.split(separator: ",").map(String.init).first
-        }
+        let knownEthereumTokens = try tokenListPath.map(Self.decodeKnownEthereumTokensCSV) ?? []
+        let knownTransactions = try knownTransactionsPath.map(KnownTransactionsCSVDecoder().decode) ?? []
 
         let gateway = EtherscanEthereumGateway(apiKey: Config.etherscanAPIKey)
         gateway.fetchTokenTransactions(address: address, startDate: startDate)
             .map { transactions in
                 Self.filteredTokenTransactions(
                     transactions: transactions,
-                    tokenContractAddresses: tokenContractAddresses
+                    tokenContractAddresses: knownEthereumTokens.map(\.contractAddress)
                 )
             }
             .sink(receiveCompletion: { completion in
@@ -62,10 +64,24 @@ struct EthereumTokensStatementCommand: ParsableCommand {
                         address: address
                     )
                     statement.balance.printRows()
-                    if balance {
-                        try FileManager.default.writeCSV(rows: statement.balance.toCSVRows(), filename: "EthereumTokenBalance", encoding: .utf8)
+
+                    let rows = statement.toCoinTrackingRows(knownTransactions: knownTransactions)
+                    let overriden = rows.filter { row in
+                        knownTransactions.contains(where: { $0.transactionID == row.transactionID })
                     }
-                    try FileManager.default.writeCSV(rows: statement.toCoinTrackingRows(), filename: "EthereumTokenStatement")
+                    print("Known transactions: \(knownTransactions.count)")
+                    print("Overriden transactions: \(overriden.count)")
+
+                    if includeBalance {
+                        try Self.encodeEthereumTokensBalanceRecords(
+                            records: statement.balance.toRecords(),
+                            filename: "EthereumTokenBalance"
+                        )
+                    }
+                    try CoinTrackingCSVEncoder().encode(
+                        rows: rows,
+                        filename: "EthereumTokenStatement"
+                    )
                 } catch {
                     print(error)
                 }
@@ -73,6 +89,18 @@ struct EthereumTokensStatementCommand: ParsableCommand {
             .store(in: &subscriptions)
 
         RunLoop.main.run()
+    }
+
+    static func decodeKnownEthereumTokensCSV(path: String) throws -> [KnownEthereumToken] {
+        try CSVDecoder().decode([KnownEthereumToken].self, from: URL(fileURLWithPath: path))
+    }
+
+    static func encodeEthereumTokensBalanceRecords(
+        records: [EthereumTokensBalanceRecord],
+        filename: String
+    ) throws {
+        let url = FileManager.default.desktopDirectoryForCurrentUser.appendingPathComponent(filename + ".csv")
+        try CSVEncoder().encode(records, into: url)
     }
 
     static func filteredTokenTransactions(
@@ -89,10 +117,40 @@ struct EthereumTokensStatementCommand: ParsableCommand {
     }
 }
 
+struct KnownEthereumToken: Decodable {
+    let contractAddress: String
+    let symbol: String
+
+    enum CodingKeys: Int, CodingKey {
+        case contractAddress
+        case symbol
+    }
+}
+
+struct EthereumTokensBalanceRecord: Encodable {
+    let contractAddress: String
+    let symbol: String
+    let name: String
+    let balance: Decimal
+
+    enum CodingKeys: Int, CodingKey {
+        case contractAddress
+        case symbol
+        case name
+        case balance
+    }
+}
+
 private extension EthereumTokensBalance {
-    func toCSVRows() -> [String] {
+
+    func toRecords() -> [EthereumTokensBalanceRecord] {
         balancePerToken.sorted(by: <).map { key, value in
-            "\(key.contractAddress),\(key.symbol),\(key.name),\(value)"
+            EthereumTokensBalanceRecord(
+                contractAddress: key.contractAddress,
+                symbol: key.symbol,
+                name: key.name,
+                balance: value
+            )
         }
     }
 
@@ -104,10 +162,10 @@ private extension EthereumTokensBalance {
 }
 
 private extension EthereumTokensStatement {
-    func toCoinTrackingRows() -> [CoinTrackingRow] {
+    func toCoinTrackingRows(knownTransactions: [KnownTransaction]) -> [CoinTrackingRow] {
         let rows = incoming.map(CoinTrackingRow.makeDeposit)
             + outgoing.map(CoinTrackingRow.makeWithdrawal)
-        return rows.sorted(by: >)
+        return rows.overriden(with: knownTransactions).sorted(by: >)
     }
 }
 
@@ -124,7 +182,8 @@ private extension CoinTrackingRow {
             exchange: transaction.destinationNameForCoinTracking,
             group: "",
             comment: Self.makeComment(eventID: transaction.hash),
-            date: transaction.date
+            date: transaction.date,
+            transactionID: transaction.hash
         )
     }
 
@@ -140,7 +199,8 @@ private extension CoinTrackingRow {
             exchange: transaction.sourceNameForCoinTracking,
             group: "",
             comment: Self.makeComment(eventID: transaction.hash),
-            date: transaction.date
+            date: transaction.date,
+            transactionID: transaction.hash
         )
     }
 }

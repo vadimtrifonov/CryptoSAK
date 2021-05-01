@@ -30,12 +30,12 @@ public struct TezosStatement {
     public init(
         operations: TezosOperationGroup,
         account: String,
-        delegateAccounts: [String]
+        delegatePayoutAccounts: [String]
     ) {
         let incoming = Self.toIncoming(
             operations: operations,
             account: account,
-            delegateAccounts: delegateAccounts
+            delegatePayoutAccounts: delegatePayoutAccounts
         )
 
         self.transactions = .init(
@@ -44,7 +44,7 @@ public struct TezosStatement {
             outgoing: Self.toOutgoing(operations: operations, account: account)
         )
 
-        self.successfulDelegations = operations.delegations.filter({ $0.isSuccessful }).sorted(by: >)
+        self.successfulDelegations = operations.delegations.filter(\.isSuccessful).sorted(by: >)
         self.feeIncuringOperations = Self.toFeeIncurring(operations: operations, account: account)
         self.accountActivation = operations.other.first(where: { $0.operationType == .accountActivation })
     }
@@ -52,14 +52,14 @@ public struct TezosStatement {
     private static func toIncoming(
         operations: TezosOperationGroup,
         account: String,
-        delegateAccounts: [String]
+        delegatePayoutAccounts: [String]
     ) -> (delegationRewards: [TezosTransactionOperation], otherIncoming: [TezosTransactionOperation]) {
         let incoming = operations.transactions
             .filter({ $0.isIncoming(account: account) })
-            .filter({ $0.isSuccessful })
+            .filter(\.isSuccessful)
             .filter({ !$0.amount.isZero })
 
-        let delegationRewards = incoming.filter({ delegateAccounts.containsCaseInsensetive($0.sender) })
+        let delegationRewards = incoming.filter({ delegatePayoutAccounts.containsCaseInsensetive($0.sender) })
         let otherIncoming = Set(incoming).subtracting(Set(delegationRewards))
 
         return (
@@ -74,7 +74,7 @@ public struct TezosStatement {
     ) -> [TezosTransactionOperation] {
         operations.transactions
             .filter({ $0.isOutgoing(account: account) })
-            .filter({ $0.isSuccessful })
+            .filter(\.isSuccessful)
             .filter({ !$0.amount.isZero })
     }
 

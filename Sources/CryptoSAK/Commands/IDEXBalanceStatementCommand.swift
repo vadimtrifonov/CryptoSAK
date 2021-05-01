@@ -1,11 +1,11 @@
 import ArgumentParser
+import CodableCSV
 import CoinTracking
 import Combine
 import Ethereum
 import EthereumEtherscan
 import Foundation
 import IDEX
-import Lambda
 
 struct IDEXBalanceStatementCommand: ParsableCommand {
 
@@ -29,10 +29,8 @@ struct IDEXBalanceStatementCommand: ParsableCommand {
     var tsvPath: String
 
     func run() throws {
-        let tsvRows = try FileManager.default.readLines(atPath: tsvPath).dropFirst() // drop header row
-        let balanceRows = try tsvRows.map(IDEXBalanceRow.init)
-
         var subscriptions = Set<AnyCancellable>()
+        let balanceRows = try Self.decodeIDEXBalancesTSV(path: tsvPath)
         let gateway = EtherscanEthereumGateway(apiKey: Config.etherscanAPIKey)
 
         Self.exportStatement(
@@ -46,7 +44,7 @@ struct IDEXBalanceStatementCommand: ParsableCommand {
             Self.exit()
         }, receiveValue: { rows in
             do {
-                try FileManager.default.writeCSV(rows: rows, filename: "IDEXBalanceStatement")
+                try CoinTrackingCSVEncoder().encode(rows: rows, filename: "IDEXBalanceStatement")
             } catch {
                 print(error)
             }
@@ -54,6 +52,14 @@ struct IDEXBalanceStatementCommand: ParsableCommand {
         .store(in: &subscriptions)
 
         RunLoop.main.run()
+    }
+
+    static func decodeIDEXBalancesTSV(path: String) throws -> [IDEXBalanceRow] {
+        let decoder = CSVDecoder { configuration in
+            configuration.headerStrategy = .firstLine
+            configuration.delimiters.field = "\t"
+        }
+        return try decoder.decode([IDEXBalanceRow].self, from: URL(fileURLWithPath: path))
     }
 
     static func exportStatement(
@@ -87,7 +93,7 @@ struct IDEXBalanceStatementCommand: ParsableCommand {
     ) -> AnyPublisher<[(IDEXBalanceRow, IDEXBalanceTransaction)], Error> {
         var rowsIterator = rowsIterator
         guard let row = rowsIterator.next() else {
-            return Just(accumulatedRowsWithTransactions).mapError(toError).eraseToAnyPublisher()
+            return Just(accumulatedRowsWithTransactions).setFailureType(to: Error.self).eraseToAnyPublisher()
         }
 
         return fetchTransaction(row)
@@ -128,7 +134,7 @@ struct IDEXBalanceStatementCommand: ParsableCommand {
                     .eraseToAnyPublisher()
             case .token:
                 return Just(IDEXBalanceTransaction.token)
-                    .mapError(toError)
+                    .setFailureType(to: Error.self)
                     .eraseToAnyPublisher()
             }
         }

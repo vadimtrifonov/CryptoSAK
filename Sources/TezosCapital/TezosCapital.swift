@@ -2,7 +2,7 @@ import Foundation
 import FoundationExtensions
 import Networking
 
-public struct TezosCapital {
+public enum TezosCapital {
 
     public struct Reward {
         public let cycle: Int

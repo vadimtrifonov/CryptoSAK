@@ -16,26 +16,12 @@ struct EthereumICOStatementCommand: ParsableCommand {
         """
     )
 
-    @Argument(
-        help: .init(
-            "Path to a CSV file with the information about the ICO",
-            discussion: """
-            - One row (no header row)
-            - Format: <ico-name>,<token-contract-address>,<contribution-transaction-hash-1>,<contribution-transaction-hash-2>,...
-            """
-        )
-    )
+    @Argument(help: "Path to a JSON file with the information about the ICO")
     var inputPath: String
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
-        let csvRows = try FileManager.default.readLines(atPath: inputPath)
-
-        guard let ico = try csvRows.map(EthereumICO.init).first else {
-            print("Nothing to export")
-            Self.exit()
-        }
-
+        let ico = try Self.decodeEthereumICOJSON(path: inputPath)
         let gateway = EtherscanEthereumGateway(apiKey: Config.etherscanAPIKey)
 
         Self.exportICOTransactions(
@@ -51,7 +37,7 @@ struct EthereumICOStatementCommand: ParsableCommand {
             Self.exit()
         }, receiveValue: { rows in
             do {
-                try FileManager.default.writeCSV(rows: rows, filename: "EthereumICOExport")
+                try CoinTrackingCSVEncoder().encode(rows: rows, filename: "EthereumICOExport")
             } catch {
                 print(error)
             }
@@ -59,6 +45,11 @@ struct EthereumICOStatementCommand: ParsableCommand {
         .store(in: &subscriptions)
 
         RunLoop.main.run()
+    }
+
+    static func decodeEthereumICOJSON(path: String) throws -> EthereumICO {
+        let data = try Data(contentsOf: URL(fileURLWithPath: path))
+        return try JSONDecoder().decode(EthereumICO.self, from: data)
     }
 }
 
@@ -172,8 +163,8 @@ extension EthereumICOStatementCommand {
     }
 }
 
-public struct EthereumICO {
-    public let name: String
+public struct EthereumICO: Decodable {
+    public let icoName: String
     public let tokenContractAddress: String
     public let contributionHashes: [String]
 
@@ -182,26 +173,9 @@ public struct EthereumICO {
         tokenContractAddress: String,
         contributionHashes: [String]
     ) {
-        self.name = name
+        self.icoName = name
         self.tokenContractAddress = tokenContractAddress
         self.contributionHashes = contributionHashes
-    }
-}
-
-private extension EthereumICO {
-    init(csvRow: String) throws {
-        let columns = csvRow.split(separator: ",").map(String.init)
-
-        let minimumColumns = 3
-        guard columns.count >= minimumColumns else {
-            throw "Expected at least \(minimumColumns) columns, got \(columns)"
-        }
-
-        self.init(
-            name: columns[0],
-            tokenContractAddress: columns[1],
-            contributionHashes: Array(columns.dropFirst(2))
-        )
     }
 }
 
@@ -210,12 +184,12 @@ private extension CoinTrackingRow {
         CoinTrackingRow(
             type: .incoming(.deposit),
             buyAmount: transaction.amount,
-            buyCurrency: Ethereum.ticker,
+            buyCurrency: Ethereum.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
             feeCurrency: "",
-            exchange: ico.name,
+            exchange: ico.icoName,
             group: "",
             comment: Self.makeComment(eventID: transaction.hash),
             date: transaction.date
@@ -233,10 +207,10 @@ private extension CoinTrackingRow {
             buyAmount: proportionalPayoutAmount,
             buyCurrency: tokenSymbol,
             sellAmount: contributionTransaction.amount,
-            sellCurrency: Ethereum.ticker,
+            sellCurrency: Ethereum.symbol,
             fee: 0,
             feeCurrency: "",
-            exchange: ico.name,
+            exchange: ico.icoName,
             group: "",
             comment: Self.makeComment(),
             date: contributionTransaction.date
@@ -255,7 +229,7 @@ private extension CoinTrackingRow {
             sellCurrency: transaction.token.symbol,
             fee: 0,
             feeCurrency: "",
-            exchange: ico.name,
+            exchange: ico.icoName,
             group: "",
             comment: Self.makeComment(eventID: transaction.hash),
             date: transaction.date

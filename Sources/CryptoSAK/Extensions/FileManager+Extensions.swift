@@ -9,38 +9,6 @@ extension FileManager {
         return url ?? FileManager.default.homeDirectoryForCurrentUser
     }
 
-    func readLines(at url: URL) throws -> [String] {
-        let file = try String(contentsOf: url)
-        return file.components(separatedBy: .newlines).filter { !$0.isEmpty }
-    }
-
-    func readLines(atPath path: String) throws -> [String] {
-        try readLines(at: URL(fileURLWithPath: path))
-    }
-
-    func writeCSV(
-        rows: [String],
-        to directory: URL = FileManager.default.desktopDirectoryForCurrentUser,
-        filename: String,
-        encoding: String.Encoding = .ascii
-    ) throws {
-        let file = rows.joined(separator: "\n")
-        let url = directory.appendingPathComponent(filename + ".csv")
-        try file.write(to: url, atomically: true, encoding: encoding)
-        print("Done, wrote \(rows.count) rows to \(url.path)")
-    }
-
-    func writeCSV(
-        rows: [CoinTrackingRow],
-        to directory: URL = FileManager.default.desktopDirectoryForCurrentUser,
-        filename: String
-    ) throws {
-        let csv = CoinTrackingCSV.makeCSV(rows: rows)
-        let url = directory.appendingPathComponent(filename + ".csv")
-        try csv.write(to: url, atomically: true, encoding: .ascii)
-        print("Done, wrote \(rows.count) rows to \(url.path)")
-    }
-
     func directoryExists(atPath path: String) -> Bool {
         var isDirectory: ObjCBool = false
         let exists = fileExists(atPath: path, isDirectory: &isDirectory)

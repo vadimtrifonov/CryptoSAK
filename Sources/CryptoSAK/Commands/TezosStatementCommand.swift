@@ -1,4 +1,5 @@
 import ArgumentParser
+import CodableCSV
 import CoinTracking
 import Combine
 import Foundation
@@ -32,26 +33,19 @@ struct TezosStatementCommand: ParsableCommand {
     @Option(name: .customLong("known-transactions"), help: .knownTransactions)
     var knownTransactionsPath: String?
 
-    @Option(help: .startDate(eventsName: "operations"))
+    @Option(help: .startDate(recordsName: "operations"))
     var startDate: Date = .distantPast
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
 
-        let delegateAccounts = try delegateListPath
-            .map(FileManager.default.readLines(atPath:))?
-            .compactMap { row in
-                row.split(separator: ",").map(String.init).first
-            } ?? []
-
-        let knownTransactions = try knownTransactionsPath
-            .map(FileManager.default.readLines(atPath:))
-            .map(KnownTransactionsCSV.makeTransactions) ?? []
+        let delegates = try delegateListPath.map(Self.decodeTezosDelegatesCSV) ?? []
+        let knownTransactions = try knownTransactionsPath.map(KnownTransactionsCSVDecoder().decode) ?? []
 
         Self.exportTezosStatement(
             operationsPublisher: TzStatsTezosGateway().fetchOperations(account: account, startDate: startDate),
             account: account,
-            delegateAccounts: delegateAccounts
+            delegatePayoutAccounts: delegates.map(\.payoutAccount)
         )
         .sink(receiveCompletion: { completion in
             if case let .failure(error) = completion {
@@ -61,7 +55,7 @@ struct TezosStatementCommand: ParsableCommand {
         }, receiveValue: { statement in
             do {
                 print(statement.balance)
-                try FileManager.default.writeCSV(
+                try CoinTrackingCSVEncoder().encode(
                     rows: statement.toCoinTrackingRows(knownTransactions: knownTransactions),
                     filename: "TesosStatement"
                 )
@@ -74,17 +68,21 @@ struct TezosStatementCommand: ParsableCommand {
         RunLoop.main.run()
     }
 
+    static func decodeTezosDelegatesCSV(path: String) throws -> [TezosDelegate] {
+        try CSVDecoder().decode([TezosDelegate].self, from: URL(fileURLWithPath: path))
+    }
+
     static func exportTezosStatement(
         operationsPublisher: AnyPublisher<TezosOperationGroup, Error>,
         account: String,
-        delegateAccounts: [String]
+        delegatePayoutAccounts: [String]
     ) -> AnyPublisher<TezosStatement, Error> {
         operationsPublisher
             .map { operations in
                 let statement = TezosStatement(
                     operations: operations,
                     account: account,
-                    delegateAccounts: delegateAccounts
+                    delegatePayoutAccounts: delegatePayoutAccounts
                 )
 
                 print("Transactions count: \(statement.transactions.all.count)")
@@ -97,6 +95,16 @@ struct TezosStatementCommand: ParsableCommand {
                 return statement
             }
             .eraseToAnyPublisher()
+    }
+}
+
+struct TezosDelegate: Decodable {
+    let payoutAccount: String
+    let delegateName: String
+
+    enum CodingKeys: Int, CodingKey {
+        case payoutAccount
+        case delegateName
     }
 }
 
@@ -122,7 +130,7 @@ private extension CoinTrackingRow {
         self.init(
             type: .incoming(.deposit),
             buyAmount: operation.amount,
-            buyCurrency: Tezos.ticker,
+            buyCurrency: Tezos.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -143,7 +151,7 @@ private extension CoinTrackingRow {
         self.init(
             type: .incoming(.staking),
             buyAmount: operation.amount,
-            buyCurrency: Tezos.ticker,
+            buyCurrency: Tezos.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -160,7 +168,7 @@ private extension CoinTrackingRow {
         self.init(
             type: .incoming(.deposit),
             buyAmount: operation.amount,
-            buyCurrency: Tezos.ticker,
+            buyCurrency: Tezos.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -179,7 +187,7 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: operation.amount,
-            sellCurrency: Tezos.ticker,
+            sellCurrency: Tezos.symbol,
             fee: 0,
             feeCurrency: "",
             exchange: operation.senderNameForCoinTracking,
@@ -198,7 +206,7 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: totalFee,
-            sellCurrency: Tezos.ticker,
+            sellCurrency: Tezos.symbol,
             fee: 0,
             feeCurrency: "",
             exchange: operation.senderNameForCoinTracking,

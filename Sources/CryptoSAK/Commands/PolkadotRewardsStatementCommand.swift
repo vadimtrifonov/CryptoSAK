@@ -1,7 +1,9 @@
 import ArgumentParser
+import CodableCSV
 import CoinTracking
 import Combine
 import Foundation
+import FoundationExtensions
 import Polkadot
 import PolkadotSubscan
 
@@ -19,34 +21,30 @@ struct PolkadotRewardsStatementCommand: ParsableCommand {
     @Argument(help: "Path to a CSV file with rewards from Subscan (https://polkadot.subscan.io/) OR a directory of such files")
     var rewardsCSVPath: String
 
-    @Option(help: .startBlock(eventsName: "rewards"))
+    @Option(help: .startBlock(recordsName: "rewards"))
     var startBlock: UInt = 0
 
-    @Option(help: .startDate(eventsName: "rewards"))
+    @Option(help: .startDate(recordsName: "rewards"))
     var startDate: Date = .distantPast
 
     func run() throws {
-        let csvRows: [String]
+        let rewards: [PolkadotReward]
         if FileManager.default.directoryExists(atPath: rewardsCSVPath) {
-            csvRows = try FileManager.default.files(atPath: rewardsCSVPath, extension: "csv")
-                .flatMap { url in
-                    try FileManager.default.readLines(at: url).dropFirst(withPrefix: "Event ID")
-                }
+            let files = try FileManager.default.files(atPath: rewardsCSVPath, extension: "csv")
+            rewards = try files.map(\.path).flatMap(Self.decodePolkadotRewardsCSV)
         } else {
-            csvRows = try FileManager.default.readLines(atPath: rewardsCSVPath).dropFirst(withPrefix: "Event ID")
+            rewards = try Self.decodePolkadotRewardsCSV(path: rewardsCSVPath)
         }
-
-        let rewardRows = try csvRows.map(PolkadotRewardRow.init)
 
         let coinTrackingRows = Self.toCoinTrackingRows(
             address: address,
-            rewards: rewardRows,
+            rewards: rewards,
             startBlock: startBlock,
             startDate: startDate
         )
 
         do {
-            try FileManager.default.writeCSV(
+            try CoinTrackingCSVEncoder().encode(
                 rows: coinTrackingRows,
                 filename: "PolkadotRewardsStatement"
             )
@@ -54,39 +52,38 @@ struct PolkadotRewardsStatementCommand: ParsableCommand {
             print(error)
         }
     }
-}
 
-struct PolkadotRewardRow: Comparable {
-    let eventID: String
-    let block: UInt
-    let blockTimestamp: Date
-    let extrinsicHash: String
-    let action: String
-    let value: Decimal
-
-    static func < (lhs: PolkadotRewardRow, rhs: PolkadotRewardRow) -> Bool {
-        lhs.blockTimestamp < rhs.blockTimestamp
+    static func decodePolkadotRewardsCSV(path: String) throws -> [PolkadotReward] {
+        try CSVDecoder(configuration: { $0.headerStrategy = .firstLine })
+            .decode([PolkadotReward].self, from: URL(fileURLWithPath: path))
     }
 }
 
-extension PolkadotRewardRow {
+struct PolkadotReward: Decodable, Comparable {
+    let eventID: String
+    let block: UInt
+    @CustomCoded<SecondsSince1970> var blockTimestamp: Date
+    private let time: String
+    let extrinsicHash: String
+    let action: String
+    private let planckAmount: UInt
 
-    init(csvRow: String) throws {
-        let columns = csvRow.split(separator: Character(",")).map(String.init)
+    var amount: Decimal {
+        Decimal(planckAmount) / Polkadot.planckInDOT
+    }
 
-        let expectedColumns = 7
-        guard columns.count == expectedColumns else {
-            throw "Expected \(expectedColumns) columns, got \(columns.count)"
-        }
+    enum CodingKeys: Int, CodingKey {
+        case eventID
+        case block
+        case blockTimestamp
+        case time
+        case extrinsicHash
+        case action
+        case planckAmount
+    }
 
-        self.init(
-            eventID: columns[0],
-            block: try UInt(string: columns[1]),
-            blockTimestamp: try Date(timeIntervalSince1970: TimeInterval(string: columns[2])),
-            extrinsicHash: columns[4],
-            action: columns[5],
-            value: try Decimal(string: columns[6]) / Polkadot.planckInDOT
-        )
+    static func < (lhs: PolkadotReward, rhs: PolkadotReward) -> Bool {
+        lhs.blockTimestamp < rhs.blockTimestamp
     }
 }
 
@@ -94,7 +91,7 @@ extension PolkadotRewardsStatementCommand {
 
     static func toCoinTrackingRows(
         address: String,
-        rewards: [PolkadotRewardRow],
+        rewards: [PolkadotReward],
         startBlock: UInt,
         startDate: Date
     ) -> [CoinTrackingRow] {
@@ -102,17 +99,17 @@ extension PolkadotRewardsStatementCommand {
             .sorted(by: >)
             .filter({ $0.block >= startBlock })
             .filter({ $0.blockTimestamp >= startDate })
-            .map({ CoinTrackingRow.makeReward(address: address, rewardRow: $0) })
+            .map({ CoinTrackingRow.makeReward(address: address, reward: $0) })
     }
 }
 
 private extension CoinTrackingRow {
 
-    static func makeReward(address: String, rewardRow: PolkadotRewardRow) -> CoinTrackingRow {
+    static func makeReward(address: String, reward: PolkadotReward) -> CoinTrackingRow {
         self.init(
             type: .incoming(.staking),
-            buyAmount: rewardRow.value,
-            buyCurrency: Polkadot.coinTrackingTicker,
+            buyAmount: reward.amount,
+            buyCurrency: Polkadot.coinTrackingSymbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -120,15 +117,15 @@ private extension CoinTrackingRow {
             exchange: "Polkadot \(address.prefix(8)).",
             group: "Reward",
             comment: Self.makeComment(
-                "ID: \(rewardRow.eventID)",
+                "ID: \(reward.eventID)",
                 eventName: "Extrinsic",
-                eventID: rewardRow.extrinsicHash
+                eventID: reward.extrinsicHash
             ),
-            date: rewardRow.blockTimestamp
+            date: reward.blockTimestamp
         )
     }
 }
 
 extension Polkadot {
-    static let coinTrackingTicker = "DOT2"
+    static let coinTrackingSymbol = "DOT2"
 }

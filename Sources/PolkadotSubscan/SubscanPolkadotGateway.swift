@@ -1,7 +1,6 @@
 import Combine
 import Foundation
 import FoundationExtensions
-import Lambda
 import Networking
 import Polkadot
 
@@ -58,7 +57,7 @@ public struct SubscanPolkadotGateway: PolkadotGateway {
             maxPublishers: .max(1)
         ) { extrinsics, hasMore -> AnyPublisher<[Subscan.ExtrinsicsReponse.ResponseData.Extrinsic], Error> in
             guard hasMore else {
-                return Just(extrinsics).mapError(toError).eraseToAnyPublisher()
+                return Just(extrinsics).setFailureType(to: Error.self).eraseToAnyPublisher()
             }
 
             return self.recusrsivelyFetchExtrinsics(

@@ -41,8 +41,8 @@ public struct EthereumStatement {
         let outgoingInternal = Set(internalTransactions.filter { $0.isOutgoing(address: address) })
         let outgoing = outgoingNormal.union(outgoingInternal)
 
-        let successfulOutgoingNormal = outgoingNormal.filter { $0.isSuccessful }
-        let successfulOutgoingInternal = outgoingInternal.filter { $0.isSuccessful }
+        let successfulOutgoingNormal = outgoingNormal.filter(\.isSuccessful)
+        let successfulOutgoingInternal = outgoingInternal.filter(\.isSuccessful)
 
         incomingNormalTransactions = incomingNormal.filter({ !$0.amount.isZero }).sorted(by: >)
         incomingInternalTransactions = incomingInternal.filter({ !$0.amount.isZero }).sorted(by: >)

@@ -1,7 +1,7 @@
 import Foundation
 import FoundationExtensions
 
-public struct IDEXTradeRow {
+public struct IDEXTrade {
 
     public enum TradeType: String {
         case sell
@@ -20,66 +20,56 @@ public struct IDEXTradeRow {
 
     public let transactionId: String
     public let transactionHash: String
-    public let date: Date
+    @CustomCoded<RFC3339LocalTime> public var date: Date
     public let market: Market
     public let makerOrTaker: MakerOrTaker
     public let tradeType: TradeType
-    public let tokenAmount: Decimal
-    public let etherAmount: Decimal
-    public let fee: Decimal
-    public let gasFee: Decimal?
+    public var tokenAmount: Decimal
+    public var etherAmount: Decimal
+    private var usdAmount: Decimal
+    public var fee: Decimal
+    @CustomCoded<OptionalType<Decimal>> public var gasFee: Decimal?
     public let feeCurrency: String
 }
 
-extension IDEXTradeRow {
+extension IDEXTrade: Decodable {
 
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        formatter.timeZone = TimeZone.current
-        return formatter
-    }()
-
-    public init(csvRow: String) throws {
-        let columns = csvRow.split(separator: Character(",")).map(String.init)
-
-        let expectedColumns = 12
-        guard columns.count == expectedColumns else {
-            throw "Expected \(expectedColumns) columns, got \(columns)"
-        }
-
-        self.init(
-            transactionId: columns[0],
-            transactionHash: columns[1],
-            date: try Self.dateFormatter.date(from: columns[2]),
-            market: try Market(string: columns[3]),
-            makerOrTaker: try MakerOrTaker(string: columns[4]),
-            tradeType: try TradeType(string: columns[5]),
-            tokenAmount: try Decimal(string: columns[6]),
-            etherAmount: try Decimal(string: columns[7]),
-            fee: try Decimal(string: columns[9]),
-            gasFee: Decimal(string: columns[10]),
-            feeCurrency: columns[11]
-        )
+    enum CodingKeys: Int, CodingKey {
+        case transactionId
+        case transactionHash
+        case date
+        case market
+        case makerOrTaker
+        case tradeType
+        case tokenAmount
+        case etherAmount
+        case usdAmount
+        case fee
+        case gasFee
+        case feeCurrency
     }
 }
 
-private extension IDEXTradeRow.Market {
+extension IDEX.IDEXTrade.Market: Decodable {
 
-    static let delistedCurrencies = [
+    private static let delistedCurrencies = [
         "0xf244176246168f24e3187f7288edbca29267739b": "HAV",
     ]
 
-    init(string: String) throws {
-        let components = string.split(separator: "/").map(String.init)
+    public init(from decoder: Decoder) throws {
+        let rawValue = try decoder.singleValueContainer().decode(String.self)
+        let components = rawValue.split(separator: "/").map(String.init)
 
         guard var baseCurrency = components[safe: 0], var quoteCurrency = components[safe: 1] else {
-            throw "Invalid currency pair \(string)"
+            throw "Invalid currency pair \(rawValue)"
         }
 
-        baseCurrency = IDEXTradeRow.Market.delistedCurrencies[baseCurrency] ?? baseCurrency
-        quoteCurrency = IDEXTradeRow.Market.delistedCurrencies[quoteCurrency] ?? quoteCurrency
+        baseCurrency = Self.delistedCurrencies[baseCurrency] ?? baseCurrency
+        quoteCurrency = Self.delistedCurrencies[quoteCurrency] ?? quoteCurrency
 
         self.init(baseCurrency: baseCurrency, quoteCurrency: quoteCurrency)
     }
 }
+
+extension IDEXTrade.MakerOrTaker: Decodable {}
+extension IDEXTrade.TradeType: Decodable {}

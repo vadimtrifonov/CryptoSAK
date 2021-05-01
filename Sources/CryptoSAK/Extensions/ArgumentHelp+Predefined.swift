@@ -3,19 +3,24 @@ import ArgumentParser
 extension ArgumentHelp {
 
     static var knownTransactions: ArgumentHelp {
-        .init("Path to a CSV file with the list of known transactions")
+        .init(
+            "Path to a CSV file with the list of known transactions",
+            discussion: """
+            - Header: \(KnownTransaction.csvHeaders.joined(separator: ","))
+            """
+        )
     }
 
-    static func startBlock(eventsName: String = "transactions") -> ArgumentHelp {
+    static func startBlock(recordsName: String = "transactions") -> ArgumentHelp {
         .init(
-            "Oldest block from which \(eventsName) will be exported",
+            "Oldest block from which \(recordsName) will be exported",
             discussion: "Alternative to --start-date"
         )
     }
 
-    static func startDate(eventsName: String = "transactions") -> ArgumentHelp {
+    static func startDate(recordsName: String = "transactions") -> ArgumentHelp {
         .init(
-            "Oldest date from which \(eventsName) will be exported",
+            "Oldest date from which \(recordsName) will be exported",
             discussion: """
             - Format: YYYY-MM-DD
             - Alternative to --start-block

@@ -18,18 +18,16 @@ struct KusamaExtrinsicsStatementCommand: ParsableCommand {
     @Option(name: .customLong("known-transactions"), help: .knownTransactions)
     var knownTransactionsPath: String?
 
-    @Option(help: .startBlock(eventsName: "extrinsics"))
+    @Option(help: .startBlock(recordsName: "extrinsics"))
     var startBlock: UInt = 0
 
-    @Option(help: .startDate(eventsName: "extrinsics"))
+    @Option(help: .startDate(recordsName: "extrinsics"))
     var startDate: Date = .distantPast
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
 
-        let knownTransactions = try knownTransactionsPath
-            .map(FileManager.default.readLines(atPath:))
-            .map(KnownTransactionsCSV.makeTransactions) ?? []
+        let knownTransactions = try knownTransactionsPath.map(KnownTransactionsCSVDecoder().decode) ?? []
 
         Self.exportExtrinsicsStatement(
             address: address,
@@ -44,9 +42,9 @@ struct KusamaExtrinsicsStatementCommand: ParsableCommand {
             Self.exit()
         }, receiveValue: { statement in
             do {
-                try FileManager.default.writeCSV(
+                try CoinTrackingCSVEncoder().encode(
                     rows: statement.toCoinTrackingRows(knownTransactions: knownTransactions),
-                    filename: "KusamaRewardsStatement"
+                    filename: "KusamaExtrinsicsStatement"
                 )
             } catch {
                 print(error)
@@ -91,7 +89,7 @@ private extension CoinTrackingRow {
         CoinTrackingRow(
             type: .incoming(.deposit),
             buyAmount: 0,
-            buyCurrency: Kusama.coinTrackingTicker,
+            buyCurrency: Kusama.coinTrackingSymbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -110,7 +108,7 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: extrinsic.fee,
-            sellCurrency: Kusama.coinTrackingTicker,
+            sellCurrency: Kusama.coinTrackingSymbol,
             fee: 0,
             feeCurrency: "",
             exchange: extrinsic.fromNameForCoinTracking,
@@ -139,5 +137,5 @@ private extension KusamaExtrinsic {
 }
 
 extension Kusama {
-    static let coinTrackingTicker = "KSM"
+    static let coinTrackingSymbol = "KSM"
 }

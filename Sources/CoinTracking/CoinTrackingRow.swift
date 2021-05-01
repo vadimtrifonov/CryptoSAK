@@ -14,8 +14,8 @@ public struct CoinTrackingRow: Equatable {
     public let exchange: String
     public let group: String
     public let comment: String
-    public let date: Date
-    public let transactionID: String
+    @CustomCoded<RFC3339LocalTime> public var date: Date
+    public var transactionID: String?
 
     public init(
         type: TransactionType,
@@ -29,7 +29,7 @@ public struct CoinTrackingRow: Equatable {
         group: String,
         comment: String,
         date: Date,
-        transactionID: String = ""
+        transactionID: String? = nil
     ) {
         self.type = type
         self.buyAmount = buyAmount
@@ -41,7 +41,7 @@ public struct CoinTrackingRow: Equatable {
         self.exchange = exchange
         self.group = group
         self.comment = comment
-        self.date = date
+        self._date = CustomCoded(wrappedValue: date)
         self.transactionID = transactionID
     }
 }
@@ -109,5 +109,38 @@ extension CoinTrackingRow {
 extension CoinTrackingRow: Comparable {
     public static func < (lhs: CoinTrackingRow, rhs: CoinTrackingRow) -> Bool {
         lhs.date < rhs.date
+    }
+}
+
+extension CoinTrackingRow: Codable {
+
+    enum CodingKeys: String, CaseIterable, CodingKey {
+        case type = "Type"
+        case buyAmount = "Buy Amount"
+        case buyCurrency = "Buy Currency"
+        case sellAmount = "Sell Amount"
+        case sellCurrency = "Sell Currency"
+        case fee = "Fee"
+        case feeCurrency = "Fee Currency"
+        case exchange = "Exchange"
+        case group = "Trade-Group"
+        case comment = "Comment"
+        case date = "Date"
+    }
+
+    public static var csvHeaders: [String] {
+        CodingKeys.allCases.map(\.rawValue)
+    }
+}
+
+extension CoinTrackingRow.TransactionType: Codable {
+
+    public init(from decoder: Decoder) throws {
+        try self.init(rawValue: decoder.singleValueContainer().decode(String.self))
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
     }
 }

@@ -17,7 +17,7 @@ struct EthereumStatementCommand: ParsableCommand {
 
     @Argument(help: "Etherium address")
     var address: String
-    
+
     @Option(name: .customLong("known-transactions"), help: .knownTransactions)
     var knownTransactionsPath: String?
 
@@ -27,10 +27,8 @@ struct EthereumStatementCommand: ParsableCommand {
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
         let gateway = EtherscanEthereumGateway(apiKey: Config.etherscanAPIKey)
-        
-        let knownTransactions = try knownTransactionsPath
-            .map(FileManager.default.readLines(atPath:))
-            .map(KnownTransactionsCSV.makeTransactions) ?? []
+
+        let knownTransactions = try knownTransactionsPath.map(KnownTransactionsCSVDecoder().decode) ?? []
 
         Publishers.Zip(
             gateway.fetchNormalTransactions(address: address, startDate: startDate),
@@ -48,11 +46,14 @@ struct EthereumStatementCommand: ParsableCommand {
                     internalTransactions: internalTransactions,
                     address: address
                 )
+                let rows = statement.toCoinTrackingRows(knownTransactions: knownTransactions)
+                let overriden = rows.filter { row in
+                    knownTransactions.contains(where: { $0.transactionID == row.transactionID })
+                }
                 print(statement.balance)
-                try FileManager.default.writeCSV(
-                    rows: statement.toCoinTrackingRows(knownTransactions: knownTransactions),
-                    filename: "EthereumStatement"
-                )
+                print("Known transactions: \(knownTransactions.count)")
+                print("Overriden transactions: \(overriden.count)")
+                try CoinTrackingCSVEncoder().encode(rows: rows, filename: "EthereumStatement")
             } catch {
                 print(error)
             }
@@ -81,7 +82,7 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: transaction.fee,
-            sellCurrency: Ethereum.ticker,
+            sellCurrency: Ethereum.symbol,
             fee: 0,
             feeCurrency: "",
             exchange: transaction.sourceNameForCoinTracking,
@@ -95,7 +96,7 @@ private extension CoinTrackingRow {
         CoinTrackingRow(
             type: .incoming(.deposit),
             buyAmount: transaction.amount,
-            buyCurrency: Ethereum.ticker,
+            buyCurrency: Ethereum.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -112,7 +113,7 @@ private extension CoinTrackingRow {
         CoinTrackingRow(
             type: .incoming(.deposit),
             buyAmount: transaction.amount,
-            buyCurrency: Ethereum.ticker,
+            buyCurrency: Ethereum.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,
@@ -131,7 +132,7 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: transaction.amount,
-            sellCurrency: Ethereum.ticker,
+            sellCurrency: Ethereum.symbol,
             fee: 0,
             feeCurrency: "",
             exchange: transaction.sourceNameForCoinTracking,
@@ -148,7 +149,7 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: transaction.amount,
-            sellCurrency: Ethereum.ticker,
+            sellCurrency: Ethereum.symbol,
             fee: 0,
             feeCurrency: "",
             exchange: transaction.sourceNameForCoinTracking,

@@ -10,12 +10,14 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.0.1"),
+        .package(url: "https://github.com/dehesa/CodableCSV.git", from: "0.6.5")
     ],
     targets: [
         .target(
             name: "CryptoSAK",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                .product(name: "CodableCSV", package: "CodableCSV"),
                 "Algorand",
                 "AlgorandAlgoExplorer",
                 "CoinTracking",
@@ -28,7 +30,6 @@ let package = Package(
                 "IDEX",
                 "Kusama",
                 "KusamaSubscan",
-                "Lambda",
                 "Networking",
                 "Polkadot",
                 "PolkadotSubscan",
@@ -108,10 +109,6 @@ let package = Package(
             ]
         ),
         .target(
-            name: "Lambda",
-            dependencies: []
-        ),
-        .target(
             name: "Networking",
             dependencies: []
         ),
@@ -143,8 +140,7 @@ let package = Package(
             dependencies: [
                 "Tezos",
                 "FoundationExtensions",
-                "Networking",
-                "Lambda"
+                "Networking"
             ]
         ),
     ]

@@ -13,7 +13,8 @@ extension AlgorandTransaction {
         if
             let receiver = transaction.payment.close,
             let amount = transaction.payment.closeamount.map({ Decimal($0) / Algorand.microAlgoInAlgo }),
-            let rewards = transaction.payment.closerewards.map({ Decimal($0) / Algorand.microAlgoInAlgo }) {
+            let rewards = transaction.payment.closerewards.map({ Decimal($0) / Algorand.microAlgoInAlgo })
+        {
             close = .init(remainderReceiver: receiver, amount: amount, rewards: rewards)
         }
 

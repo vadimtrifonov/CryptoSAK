@@ -1,6 +1,8 @@
 import ArgumentParser
+import CodableCSV
 import CoinTracking
 import Foundation
+import FoundationExtensions
 
 struct BlockstackICOStatementCommand: ParsableCommand {
 
@@ -13,39 +15,31 @@ struct BlockstackICOStatementCommand: ParsableCommand {
     @Argument(help: "Blockstack address")
     var address: String
 
-    @Argument(
-        help: .init(
-            "Path to a CSV file with the information about ICO",
-            discussion: """
-            - One row (no header row)
-            - Format: <ico-name>,<contribution-amount>,<contribution-currency>,<contribution-timestamp>
-            """
-        ))
-    var icoCSVPath: String
+    @Argument(help: "Path to a JSON file with the information about ICO")
+    var icoJSONPath: String
 
     @Argument(help: "Path to a CSV file with the Stacks cumulative vested payouts")
     var payoutsCSVPath: String
 
     func run() throws {
-        let icoCSVRows = try FileManager.default.readLines(atPath: icoCSVPath)
-        let icos = try icoCSVRows.map(BlockstackICO.init)
-
-        guard let ico = icos.first, icos.count == 1 else {
-            throw """
-            There should be only 1 ICO entry in the CSV file,
-            as payouts from the other file are taken as corresponding to this ICO.
-            """
-        }
-
-        let payoutCSVRows = try FileManager.default.readLines(atPath: payoutsCSVPath)
-        let payoutRows = try payoutCSVRows.map(BlockstackVestedPayoutRow.init)
+        let ico = try Self.decodeBlockstackICOJSON(path: icoJSONPath)
+        let payoutRows = try Self.decodeBlockstackVestedPayoutsCSV(path: payoutsCSVPath)
 
         let payouts = Self.toNonCumulativePayouts(rows: payoutRows)
         let icoRows = Self.makeICOCoinTrackingRows(ico: ico, payouts: payouts)
         let depositRows = payouts.map({ CoinTrackingRow.makeDeposit(address: address, payout: $0) })
         let rows = (icoRows + depositRows).sorted(by: >)
 
-        try FileManager.default.writeCSV(rows: rows, filename: "BlockstackICOStatementCommand")
+        try CoinTrackingCSVEncoder().encode(rows: rows, filename: "BlockstackICOStatementCommand")
+    }
+
+    static func decodeBlockstackICOJSON(path: String) throws -> BlockstackICO {
+        let data = try Data(contentsOf: URL(fileURLWithPath: path))
+        return try JSONDecoder().decode(BlockstackICO.self, from: data)
+    }
+
+    static func decodeBlockstackVestedPayoutsCSV(path: String) throws -> [BlockstackVestedPayoutRow] {
+        try CSVDecoder().decode([BlockstackVestedPayoutRow].self, from: URL(fileURLWithPath: path))
     }
 }
 
@@ -77,7 +71,7 @@ extension BlockstackICOStatementCommand {
 }
 
 enum Blockstack {
-    static let ticker = "STX2" // CoinTracking ticker
+    static let symbol = "STX2" // CoinTracking symbol
     static let microStacksInStack = Decimal(pow(10, 6))
 }
 
@@ -86,54 +80,28 @@ struct BlockstackVestedPayout {
     let amount: Decimal
 }
 
-struct BlockstackICO {
-    let name: String
+struct BlockstackICO: Decodable {
+    let icoName: String
     let contributionAmount: Decimal
     let contributionCurrency: String
-    let timestamp: Date
+    @CustomCoded<ISO8601> var timestamp: Date
 }
 
-extension BlockstackICO {
+struct ConvertMicroStacksToStacks: CustomDecoding {
 
-    init(csvRow: String) throws {
-        let columns = csvRow.split(separator: Character(",")).map(String.init)
-
-        let expectedColumns = 4
-        guard columns.count == expectedColumns else {
-            throw "Expected \(expectedColumns) columns, got \(columns)"
-        }
-
-        self.init(
-            name: columns[0],
-            contributionAmount: try Decimal(string: columns[1]),
-            contributionCurrency: columns[2],
-            timestamp: try ISO8601DateFormatter().date(from: columns[3])
-        )
+    static func decode(from decoder: Decoder) throws -> Decimal {
+        let microStackAmount = try UInt(from: decoder)
+        return Decimal(microStackAmount) / Blockstack.microStacksInStack
     }
 }
 
-struct BlockstackVestedPayoutRow {
-    let timestamp: Date
-    let cumulativeAmount: Decimal
-}
+struct BlockstackVestedPayoutRow: Decodable {
+    @CustomCoded<SecondsSince1970> var timestamp: Date
+    @CustomCoded<ConvertMicroStacksToStacks> var cumulativeAmount: Decimal
 
-extension BlockstackVestedPayoutRow {
-
-    init(csvRow: String) throws {
-        let columns = csvRow.split(separator: Character(",")).map(String.init)
-
-        let expectedColumns = 2
-        guard columns.count == expectedColumns else {
-            throw "Expected \(expectedColumns) columns, got \(columns)"
-        }
-
-        let timestamp = try Date(timeIntervalSince1970: TimeInterval(string: columns[0]))
-        let amount = try Decimal(string: columns[1]) / Blockstack.microStacksInStack
-
-        self.init(
-            timestamp: timestamp,
-            cumulativeAmount: amount
-        )
+    enum CodingKeys: Int, CodingKey {
+        case timestamp
+        case cumulativeAmount
     }
 }
 
@@ -148,10 +116,10 @@ private extension CoinTrackingRow {
             buyAmount: 0,
             buyCurrency: "",
             sellAmount: payout.amount,
-            sellCurrency: Blockstack.ticker,
+            sellCurrency: Blockstack.symbol,
             fee: 0,
             feeCurrency: "",
-            exchange: ico.name,
+            exchange: ico.icoName,
             group: "",
             comment: Self.makeComment(),
             date: payout.timestamp
@@ -165,12 +133,12 @@ private extension CoinTrackingRow {
         CoinTrackingRow(
             type: .trade,
             buyAmount: totalPayoutAmount,
-            buyCurrency: Blockstack.ticker,
+            buyCurrency: Blockstack.symbol,
             sellAmount: ico.contributionAmount,
             sellCurrency: ico.contributionCurrency,
             fee: 0,
             feeCurrency: "",
-            exchange: ico.name,
+            exchange: ico.icoName,
             group: "",
             comment: Self.makeComment(),
             date: ico.timestamp
@@ -184,7 +152,7 @@ private extension CoinTrackingRow {
         CoinTrackingRow(
             type: .incoming(.deposit),
             buyAmount: payout.amount,
-            buyCurrency: Blockstack.ticker,
+            buyCurrency: Blockstack.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,

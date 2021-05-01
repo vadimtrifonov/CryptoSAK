@@ -2,7 +2,6 @@ import ArgumentParser
 import CoinTracking
 import Combine
 import Foundation
-import Lambda
 import Networking
 import Tezos
 import TezosCapital
@@ -19,7 +18,7 @@ struct TezosCapitalStatementCommand: ParsableCommand {
     @Argument(help: "Bond pool address")
     var address: String
 
-    @Option(help: .startDate(eventsName: "operations"))
+    @Option(help: .startDate(recordsName: "operations"))
     var startDate: Date = .distantPast
 
     func run() throws {
@@ -38,7 +37,7 @@ struct TezosCapitalStatementCommand: ParsableCommand {
             Self.exit()
         }, receiveValue: { rows in
             do {
-                try FileManager.default.writeCSV(rows: rows, filename: "TezosCapitalStatement")
+                try CoinTrackingCSVEncoder().encode(rows: rows, filename: "TezosCapitalStatement")
             } catch {
                 print(error)
             }
@@ -90,7 +89,7 @@ struct TezosCapitalStatementCommand: ParsableCommand {
     ) -> AnyPublisher<[(TezosCapital.Reward, TezosCycle)], Error> {
         var rewardsIterator = rewardsIterator
         guard let reward = rewardsIterator.next() else {
-            return Just(accumulatedRewardsWithCycles).mapError(toError).eraseToAnyPublisher()
+            return Just(accumulatedRewardsWithCycles).setFailureType(to: Error.self).eraseToAnyPublisher()
         }
 
         return fetchCycle(reward.cycle)
@@ -104,7 +103,7 @@ struct TezosCapitalStatementCommand: ParsableCommand {
             }
             .flatMap(maxPublishers: .max(1)) { accumulatedRewardsWithCycles, startDateReached -> AnyPublisher<[(TezosCapital.Reward, TezosCycle)], Error> in
                 if startDateReached {
-                    return Just(accumulatedRewardsWithCycles).mapError(toError).eraseToAnyPublisher()
+                    return Just(accumulatedRewardsWithCycles).setFailureType(to: Error.self).eraseToAnyPublisher()
                 }
 
                 return recursivelyFetchRewardCycles(
@@ -161,7 +160,7 @@ extension CoinTrackingRow {
         self.init(
             type: .incoming(.staking),
             buyAmount: reward.reward,
-            buyCurrency: Tezos.ticker,
+            buyCurrency: Tezos.symbol,
             sellAmount: 0,
             sellCurrency: "",
             fee: 0,

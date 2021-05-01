@@ -83,15 +83,15 @@ extension GateTransaction {
 extension GateTrade {
 
     init?(rows: [GateBillingRow]) {
-        guard !rows.isEmpty, Set(rows.map({ $0.orderID })).count == 1 else {
+        guard !rows.isEmpty, Set(rows.map(\.orderID)).count == 1 else {
             return nil
         }
 
         let rowsByType = Dictionary(grouping: rows, by: { $0.type })
 
         guard Set(rowsByType.keys).isSubset(of: Set([.orderPlaced, .orderFulfilled, .traderFee])),
-            let orderPlaced = rowsByType[.orderPlaced]?.first,
-            let orderFulfilled = rowsByType[.orderFulfilled]?.first
+              let orderPlaced = rowsByType[.orderPlaced]?.first,
+              let orderFulfilled = rowsByType[.orderFulfilled]?.first
         else {
             return nil
         }

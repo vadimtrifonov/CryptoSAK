@@ -20,7 +20,18 @@ public struct GateBillingRow {
     public let currency: String
 }
 
-extension GateBillingRow {
+extension GateBillingRow: Decodable {
+
+    enum CodingKeys: Int, CodingKey {
+        case number
+        case accountType
+        case date
+        case type
+        case orderID
+        case amount
+        case availableAmount
+        case additionalInfo
+    }
 
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -29,25 +40,17 @@ extension GateBillingRow {
         return formatter
     }()
 
-    private static let columns = 8
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
 
-    public init(csvRow: String) throws {
-        let columns = csvRow.split(separator: "\t").map(String.init)
+        date = try Self.dateFormatter.date(from: values.decode(String.self, forKey: .date))
+        type = try values.decode(ActionType.self, forKey: .type)
+        orderID = try values.decode(String.self, forKey: .orderID)
 
-        guard columns.count == Self.columns else {
-            throw "Expected \(Self.columns) columns, got \(columns.count)"
-        }
-
-        self.init(
-            date: try Self.dateFormatter.date(from: columns[2]),
-            type: try ActionType(string: columns[3]),
-            orderID: columns[4],
-            amount: abs(try Decimal(string: columns[5])),
-            currency: Self.makeCurrency(string: columns[5])
-        )
-    }
-
-    private static func makeCurrency(string: String) -> String {
-        string.trimmingCharacters(in: CharacterSet.uppercaseLetters.inverted)
+        let rawAmount = try values.decode(String.self, forKey: .amount)
+        amount = abs(try Decimal(string: rawAmount))
+        currency = rawAmount.trimmingCharacters(in: CharacterSet.uppercaseLetters.inverted)
     }
 }
+
+extension GateBillingRow.ActionType: Decodable {}
