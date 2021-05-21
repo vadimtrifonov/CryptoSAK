@@ -13,7 +13,7 @@ struct KnownTransaction: Equatable {
     let exchange: String?
     let group: String?
     let comment: String?
-    @CustomCoded<RFC3339LocalTime> let date: Date?
+    let date: Date?
     let transactionID: String
 }
 

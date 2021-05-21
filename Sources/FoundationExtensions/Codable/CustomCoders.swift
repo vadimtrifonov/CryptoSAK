@@ -1,7 +1,7 @@
 import Foundation
 
 public struct SecondsSince1970: CustomCoding {
-    
+
     public static func decode(from decoder: Decoder) throws -> Date {
         try Date(timeIntervalSince1970: TimeInterval(from: decoder))
     }
@@ -13,7 +13,7 @@ public struct SecondsSince1970: CustomCoding {
 
 public struct RFC3339LocalTime: CustomCoding {
 
-    private static let dateFormatter: DateFormatter = {
+    public static let dateFormatter: DateFormatter = {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         dateFormatter.timeZone = TimeZone.current
@@ -30,7 +30,7 @@ public struct RFC3339LocalTime: CustomCoding {
 }
 
 public struct ISO8601: CustomDecoding {
-    private static let dateFormatter = ISO8601DateFormatter()
+    public static let dateFormatter = ISO8601DateFormatter()
 
     public static func decode(from decoder: Decoder) throws -> Date {
         try dateFormatter.date(from: String(from: decoder))
