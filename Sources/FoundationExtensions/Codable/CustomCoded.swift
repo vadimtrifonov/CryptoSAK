@@ -1,5 +1,5 @@
 @propertyWrapper
-public struct CustomCoded<CustomCoder: AssociatedTypeProtocol> {
+public struct CustomCoded<CustomCoder: AnyCustomCoding> {
     public let wrappedValue: CustomCoder.Value
 
     public init(wrappedValue: CustomCoder.Value) {

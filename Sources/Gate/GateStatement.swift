@@ -23,7 +23,7 @@ public struct GateStatement {
             return try GateTransaction(row: firstRow)
         case (1, .airdropBonus):
             return try GateTransaction(row: firstRow)
-        case (_, .traderFee), (_, .orderFulfilled), (_, .orderCancelled), (_, .orderPlaced):
+        case (_, .tradingFee), (_, .orderFulfilled), (_, .orderCancelled), (_, .orderPlaced):
             return nil
         case (_, .withdraw), (_, .deposit), (_, .airdropBonus):
             throw "Order with type \(firstRow.type) should have only one row"
@@ -38,7 +38,7 @@ public struct GateStatement {
         switch (rows.count, firstRow.type) {
         case (_, .withdraw), (_, .deposit), (_, .airdropBonus):
             return []
-        case (_, .orderPlaced), (_, .orderFulfilled), (_, .orderCancelled), (_, .traderFee):
+        case (_, .orderPlaced), (_, .orderFulfilled), (_, .orderCancelled), (_, .tradingFee):
             return rows
                 // group rows per trade
                 .reduce(into: [[GateBillingRow]]()) { rowGroups, row in
@@ -89,7 +89,7 @@ extension GateTrade {
 
         let rowsByType = Dictionary(grouping: rows, by: { $0.type })
 
-        guard Set(rowsByType.keys).isSubset(of: Set([.orderPlaced, .orderFulfilled, .traderFee])),
+        guard Set(rowsByType.keys).isSubset(of: Set([.orderPlaced, .orderFulfilled, .tradingFee])),
               let orderPlaced = rowsByType[.orderPlaced]?.first,
               let orderFulfilled = rowsByType[.orderFulfilled]?.first
         else {
@@ -102,8 +102,8 @@ extension GateTrade {
         let buyAmount = rowsByType[.orderFulfilled, default: []].reduce(0, { $0 + $1.amount })
         let buyCurrency = orderFulfilled.currency
 
-        let feeAmount = rowsByType[.traderFee, default: []].reduce(0, { $0 + $1.amount })
-        let feeCurrency = rowsByType[.traderFee]?.first?.currency ?? ""
+        let feeAmount = rowsByType[.tradingFee, default: []].reduce(0, { $0 + $1.amount })
+        let feeCurrency = rowsByType[.tradingFee]?.first?.currency ?? ""
 
         self.init(
             date: orderFulfilled.date,

@@ -3,14 +3,11 @@ import Foundation
 public struct AlgorandStatement {
     public let incomingTransactions: [AlgorandTransaction]
     public let outgoingTransactions: [AlgorandTransaction]
+    public let feeIncuringTransactions: [AlgorandTransaction]
     public let closeTransactions: [AlgorandTransaction]
     public let incomingRewards: [AlgorandTransaction]
     public let outgoingRewards: [AlgorandTransaction]
     public let closeRewards: [AlgorandTransaction]
-
-    public var feeIncuringTransactions: [AlgorandTransaction] {
-        outgoingTransactions
-    }
 
     public var balance: AlgorandBalance {
         .init(
@@ -35,7 +32,8 @@ public struct AlgorandStatement {
         let closeRewards = closures.filter({ !$0.senderRewards.isZero })
 
         self.incomingTransactions = incoming
-        self.outgoingTransactions = outgoing
+        self.outgoingTransactions = outgoing.filter { !$0.amount.isZero }
+        self.feeIncuringTransactions = outgoing
         self.closeTransactions = closures
         self.incomingRewards = incomingRewards
         self.outgoingRewards = outgoingRewards

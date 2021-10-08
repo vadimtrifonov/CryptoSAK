@@ -4,20 +4,20 @@ import FoundationExtensions
 public struct GateBillingRow {
 
     public enum ActionType: String, Hashable {
-        case withdraw = "Withdraw"
-        case deposit = "Deposit"
-        case traderFee = "Trade Fee"
-        case orderFulfilled = "Order Fullfilled"
+        case withdraw = "Withdrawals"
+        case deposit = "Deposits"
+        case tradingFee = "Trading Fees"
+        case orderFulfilled = "Order Filled"
         case orderCancelled = "Order Cancelled"
         case orderPlaced = "Order Placed"
         case airdropBonus = "Airdrop bonus"
     }
-
+    
     public let date: Date
     public let type: ActionType
+    public let currency: String
     public let orderID: String
     public let amount: Decimal
-    public let currency: String
 }
 
 extension GateBillingRow: Decodable {
@@ -27,6 +27,7 @@ extension GateBillingRow: Decodable {
         case accountType
         case date
         case type
+        case currency
         case orderID
         case amount
         case availableAmount
@@ -45,11 +46,11 @@ extension GateBillingRow: Decodable {
 
         date = try Self.dateFormatter.date(from: values.decode(String.self, forKey: .date))
         type = try values.decode(ActionType.self, forKey: .type)
+        currency = try values.decode(String.self, forKey: .currency)
         orderID = try values.decode(String.self, forKey: .orderID)
 
         let rawAmount = try values.decode(String.self, forKey: .amount)
         amount = abs(try Decimal(string: rawAmount))
-        currency = rawAmount.trimmingCharacters(in: CharacterSet.uppercaseLetters.inverted)
     }
 }
 
