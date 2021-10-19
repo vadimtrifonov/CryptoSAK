@@ -18,7 +18,7 @@ struct PolkadotRewardsStatementCommand: ParsableCommand {
     @Argument(help: "Polkadot address")
     var address: String
 
-    @Argument(help: "Path to a CSV file with rewards from Subscan (https://polkadot.subscan.io/) OR a directory of such files")
+    @Argument(help: "Path to a CSV file with rewards from Subscan (https://polkadot.subscan.io/)")
     var rewardsCSVPath: String
 
     @Option(help: .startBlock(recordsName: "rewards"))
@@ -28,13 +28,7 @@ struct PolkadotRewardsStatementCommand: ParsableCommand {
     var startDate: Date = .distantPast
 
     func run() throws {
-        let rewards: [PolkadotReward]
-        if FileManager.default.directoryExists(atPath: rewardsCSVPath) {
-            let files = try FileManager.default.files(atPath: rewardsCSVPath, extension: "csv")
-            rewards = try files.map(\.path).flatMap(Self.decodePolkadotRewardsCSV)
-        } else {
-            rewards = try Self.decodePolkadotRewardsCSV(path: rewardsCSVPath)
-        }
+        let rewards: [PolkadotReward] = try Self.decodePolkadotRewardsCSV(path: rewardsCSVPath)
 
         let coinTrackingRows = Self.toCoinTrackingRows(
             address: address,
@@ -61,29 +55,23 @@ struct PolkadotRewardsStatementCommand: ParsableCommand {
 
 struct PolkadotReward: Decodable, Comparable {
     let eventID: String
+    @CustomCoded<RFC3339UTC> var date: Date
     let block: UInt
-    @CustomCoded<SecondsSince1970> var blockTimestamp: Date
-    private let time: String
     let extrinsicHash: String
+    let amount: Decimal
     let action: String
-    private let planckAmount: UInt
-
-    var amount: Decimal {
-        Decimal(planckAmount) / Polkadot.planckInDOT
-    }
 
     enum CodingKeys: Int, CodingKey {
         case eventID
+        case date
         case block
-        case blockTimestamp
-        case time
         case extrinsicHash
+        case amount
         case action
-        case planckAmount
     }
 
     static func < (lhs: PolkadotReward, rhs: PolkadotReward) -> Bool {
-        lhs.blockTimestamp < rhs.blockTimestamp
+        lhs.date < rhs.date
     }
 }
 
@@ -98,7 +86,7 @@ extension PolkadotRewardsStatementCommand {
         rewards
             .sorted(by: >)
             .filter({ $0.block >= startBlock })
-            .filter({ $0.blockTimestamp >= startDate })
+            .filter({ $0.date >= startDate })
             .map({ CoinTrackingRow.makeReward(address: address, reward: $0) })
     }
 }
@@ -121,7 +109,7 @@ private extension CoinTrackingRow {
                 eventName: "Extrinsic",
                 eventID: reward.extrinsicHash
             ),
-            date: reward.blockTimestamp
+            date: reward.date
         )
     }
 }

@@ -22,7 +22,7 @@ public enum TzStats {
         let is_success: Bool
         let volume: JSONNumber
         let fee: JSONNumber
-        let burned: JSONNumber
+        let burned: JSONNumber?
         let sender: String
         let receiver: String?
         let delegate: String?

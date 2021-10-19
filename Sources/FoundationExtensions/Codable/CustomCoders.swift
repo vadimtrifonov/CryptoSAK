@@ -11,6 +11,24 @@ public struct SecondsSince1970: CustomCoding {
     }
 }
 
+public struct RFC3339UTC: CustomCoding {
+
+    public static let dateFormatter: DateFormatter = {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        dateFormatter.timeZone = TimeZone(identifier: "UTC")
+        return dateFormatter
+    }()
+
+    public static func decode(from decoder: Decoder) throws -> Date {
+        try dateFormatter.date(from: String(from: decoder))
+    }
+
+    public static func encode(value: Date, to encoder: Encoder) throws {
+        try dateFormatter.string(from: value).encode(to: encoder)
+    }
+}
+
 public struct RFC3339LocalTime: CustomCoding {
 
     public static let dateFormatter: DateFormatter = {

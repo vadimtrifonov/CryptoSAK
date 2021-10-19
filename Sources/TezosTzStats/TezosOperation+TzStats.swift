@@ -41,7 +41,7 @@ extension TezosOperation {
             sender: operation.sender,
             amount: operation.volume.decimal,
             fee: operation.fee.decimal,
-            burn: operation.burned.decimal,
+            burn: operation.burned?.decimal ?? .zero,
             timestamp: try operation.timestamp(),
             isSuccessful: operation.is_success
         )

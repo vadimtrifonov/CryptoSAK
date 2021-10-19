@@ -17,7 +17,7 @@ struct KusamaRewardsStatementCommand: ParsableCommand {
     @Argument(help: "Kusama address")
     var address: String
 
-    @Argument(help: "Path to a CSV file with rewards from Subscan (https://kusama.subscan.io/) OR a directory of such files")
+    @Argument(help: "Path to a CSV file with rewards from Subscan (https://kusama.subscan.io/)")
     var rewardsCSVPath: String
 
     @Option(help: .startBlock(recordsName: "rewards"))
@@ -27,13 +27,7 @@ struct KusamaRewardsStatementCommand: ParsableCommand {
     var startDate: Date = .distantPast
 
     func run() throws {
-        let rewards: [KusamaReward]
-        if FileManager.default.directoryExists(atPath: rewardsCSVPath) {
-            let files = try FileManager.default.files(atPath: rewardsCSVPath, extension: "csv")
-            rewards = try files.map(\.path).flatMap(Self.decodeKusamaRewardsCSV)
-        } else {
-            rewards = try Self.decodeKusamaRewardsCSV(path: rewardsCSVPath)
-        }
+        let rewards = try Self.decodeKusamaRewardsCSV(path: rewardsCSVPath)
 
         let coinTrackingRows = Self.toCoinTrackingRows(
             address: address,
@@ -58,35 +52,25 @@ struct KusamaRewardsStatementCommand: ParsableCommand {
     }
 }
 
-struct ConvertPlanckToKSM: CustomDecoding {
-
-    static func decode(from decoder: Decoder) throws -> Decimal {
-        let planckAmount = try UInt(from: decoder)
-        return Decimal(planckAmount) / Kusama.planckInKSM
-    }
-}
-
 struct KusamaReward: Decodable, Comparable {
     let eventID: String
+    @CustomCoded<RFC3339UTC> var date: Date
     let block: UInt
-    @CustomCoded<SecondsSince1970> var blockTimestamp: Date
-    private let time: String
     let extrinsicHash: String
+    let amount: Decimal
     let action: String
-    @CustomCoded<ConvertPlanckToKSM> var amount: Decimal
 
     enum CodingKeys: Int, CodingKey {
         case eventID
+        case date
         case block
-        case blockTimestamp
-        case time
         case extrinsicHash
-        case action
         case amount
+        case action
     }
 
     static func < (lhs: KusamaReward, rhs: KusamaReward) -> Bool {
-        lhs.blockTimestamp < rhs.blockTimestamp
+        lhs.date < rhs.date
     }
 }
 
@@ -102,7 +86,7 @@ extension KusamaRewardsStatementCommand {
             .sorted(by: >)
             .filter({ $0.eventID != "4077354-61" }) // Known invalid event ID
             .filter({ $0.block >= startBlock })
-            .filter({ $0.blockTimestamp >= startDate })
+            .filter({ $0.date >= startDate })
             .map({ CoinTrackingRow.makeReward(address: address, reward: $0) })
     }
 }
@@ -125,7 +109,7 @@ private extension CoinTrackingRow {
                 eventName: "Extrinsic",
                 eventID: reward.extrinsicHash
             ),
-            date: reward.blockTimestamp
+            date: reward.date
         )
     }
 }
