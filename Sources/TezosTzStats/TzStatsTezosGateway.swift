@@ -12,14 +12,16 @@ public struct TzStatsTezosGateway: TezosGateway {
 
     public func fetchOperations(
         account: String,
-        startDate: Date
+        startDate: Date,
+        startBlock: Int
     ) -> AnyPublisher<TezosOperationGroup, Error> {
         recursivelyFetchOperations(
             account: account,
             accumulatedOperations: [],
             limit: 100,
             offset: 0,
-            startDate: startDate
+            startDate: startDate,
+            startBlock: startBlock
         )
         .tryMap { (operations: [TzStats.Operation]) in
             try TezosOperationGroup(operations: operations)
@@ -32,12 +34,14 @@ public struct TzStatsTezosGateway: TezosGateway {
         accumulatedOperations: [TzStats.Operation],
         limit: Int,
         offset: Int,
-        startDate: Date
+        startDate: Date,
+        startBlock: Int
     ) -> AnyPublisher<[TzStats.Operation], Error> {
         fetchOperations(
             account: account,
             limit: limit,
-            offset: offset
+            offset: offset,
+            startBlock: startBlock
         )
         .tryMap { newOperations in
             try Self.accumulateOperations(
@@ -59,7 +63,8 @@ public struct TzStatsTezosGateway: TezosGateway {
                 accumulatedOperations: operations,
                 limit: limit,
                 offset: offset + limit / 2, /// Some offset overlap is needed to compensate for the TzStats strange operations return order
-                startDate: startDate
+                startDate: startDate,
+                startBlock: startBlock
             )
         }
         .eraseToAnyPublisher()
@@ -68,13 +73,15 @@ public struct TzStatsTezosGateway: TezosGateway {
     private func fetchOperations(
         account: String,
         limit: Int,
-        offset: Int
+        offset: Int,
+        startBlock: Int
     ) -> AnyPublisher<[TzStats.Operation], Error> {
         do {
             let endpoint = try TzStats.makeAccountOperationsEndpoint(
                 account: account,
                 limit: limit,
-                offset: offset
+                offset: offset,
+                startBlock: startBlock
             )
             return urlSession.dataTaskPublisher(for: endpoint).map(\.ops).eraseToAnyPublisher()
         } catch {

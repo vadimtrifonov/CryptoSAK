@@ -40,12 +40,13 @@ public enum TzStats {
     public static func makeAccountOperationsEndpoint(
         account: String,
         limit: Int,
-        offset: Int
+        offset: Int,
+        startBlock: Int
     ) throws -> Endpoint<AccountOperations> {
         try Endpoint(
             .get,
             url: URL(string: "https://api.tzstats.com/explorer/account/\(account)/op"),
-            queryItems: ["limit": limit, "offset": offset]
+            queryItems: ["limit": limit, "offset": offset, "since": startBlock]
         )
     }
 }

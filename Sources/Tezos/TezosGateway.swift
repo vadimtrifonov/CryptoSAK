@@ -2,7 +2,11 @@ import Combine
 import Foundation
 
 public protocol TezosGateway {
-    func fetchOperations(account: String, startDate: Date) -> AnyPublisher<TezosOperationGroup, Error>
+    func fetchOperations(
+        account: String,
+        startDate: Date,
+        startBlock: Int
+    ) -> AnyPublisher<TezosOperationGroup, Error>
 }
 
 public struct TezosOperationGroup {

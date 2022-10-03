@@ -35,6 +35,9 @@ struct TezosStatementCommand: ParsableCommand {
 
     @Option(help: .startDate(recordsName: "operations"))
     var startDate: Date = .distantPast
+    
+    @Option(help: .startBlock(recordsName: "operations"))
+    var startBlock: Int = 0
 
     func run() throws {
         var subscriptions = Set<AnyCancellable>()
@@ -43,7 +46,11 @@ struct TezosStatementCommand: ParsableCommand {
         let knownTransactions = try knownTransactionsPath.map(KnownTransactionsCSVDecoder().decode) ?? []
 
         Self.exportTezosStatement(
-            operationsPublisher: TzStatsTezosGateway().fetchOperations(account: account, startDate: startDate),
+            operationsPublisher: TzStatsTezosGateway().fetchOperations(
+                account: account,
+                startDate: startDate,
+                startBlock: startBlock
+            ),
             account: account,
             delegatePayoutAccounts: delegates.map(\.payoutAccount)
         )
